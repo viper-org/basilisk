@@ -7,17 +7,25 @@
 
 namespace parser
 {
-    Function::Function(std::string name, ScopePtr ownScope, std::vector<ASTNodePtr> body)
-        : ASTNode(ownScope->parent)
+    Function::Function(std::string name, FunctionType* functionType, ScopePtr ownScope, std::vector<ASTNodePtr> body)
+        : ASTNode(ownScope->parent, functionType)
         , mName(std::move(name))
         , mBody(std::move(body))
         , mOwnScope(std::move(ownScope))
     {
+        mOwnScope->currentReturnType = functionType->getReturnType();
     }
 
     vipir::Value* Function::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        vipir::FunctionType* functionType = vipir::FunctionType::Create(vipir::Type::GetIntegerType(32), {});
+        vipir::FunctionType* functionType = dynamic_cast<vipir::FunctionType*>(mType->getVipirType());
+
+        // This should never happen but good to check just in case
+        if (!functionType)
+        {
+            diag.fatalError("mType of parser::Function is not a function type.");
+            std::exit(1);
+        }
 
         vipir::Function* function = vipir::Function::Create(functionType, module, mName, false);
 

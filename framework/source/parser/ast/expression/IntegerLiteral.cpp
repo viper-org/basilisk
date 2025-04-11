@@ -9,7 +9,7 @@
 namespace parser
 {
     IntegerLiteral::IntegerLiteral(Scope* scope, std::uintmax_t value)
-        : ASTNode(scope)
+        : ASTNode(scope, Type::Get("i32"))
         , mValue(value)
     {
     }

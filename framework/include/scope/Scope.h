@@ -3,6 +3,8 @@
 #ifndef BASILISK_FRAMEWORK_SCOPE_SCOPE_H
 #define BASILISK_FRAMEWORK_SCOPE_SCOPE_H 1
 
+#include "type/Type.h"
+
 #include <vipir/IR/Value.h>
 #include <vipir/IR/BasicBlock.h>
 
@@ -15,12 +17,12 @@ struct Symbol;
 
 struct Symbol
 {
-    Symbol(std::string name);
+    Symbol(std::string name, Type* type);
 
     vipir::Value* getLatestValue(vipir::BasicBlock* basicBlock = nullptr);
 
     std::string name;
-    // TODO: Add type
+    Type* type;
     std::vector<std::pair<vipir::BasicBlock*, vipir::Value*> > values;
 };
 using SymbolPtr = std::unique_ptr<Symbol>;
@@ -35,6 +37,8 @@ struct Scope
     Symbol* resolveSymbol(std::string name);
 
     Scope* parent;
+
+    Type* currentReturnType;
 
     std::vector<SymbolPtr> symbols;
 

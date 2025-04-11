@@ -41,6 +41,8 @@ namespace parser
 
         void expectToken(lexer::TokenType tokenType);
 
+        Type* parseType();
+
         ASTNodePtr parseGlobal();
         ASTNodePtr parseExpression(int precedence = 1);
         ASTNodePtr parsePrimary();

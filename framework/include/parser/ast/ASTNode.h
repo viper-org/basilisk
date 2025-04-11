@@ -24,7 +24,7 @@ namespace parser
     public:
         using ASTNodePtr = std::unique_ptr<ASTNode>;
 
-        ASTNode(Scope* scope) : mScope(scope) {}
+        ASTNode(Scope* scope, Type* type = nullptr) : mScope(scope), mType(type) {}
         virtual ~ASTNode() { }
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) = 0;
@@ -33,6 +33,7 @@ namespace parser
         
     protected:
         Scope* mScope;
+        Type* mType;
     };
     using ASTNodePtr = std::unique_ptr<ASTNode>;
 

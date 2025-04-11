@@ -5,6 +5,8 @@
 
 #include "parser/ast/ASTNode.h"
 
+#include "type/FunctionType.h"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -14,7 +16,7 @@ namespace parser
     class Function : public ASTNode
     {
     public:
-        Function(std::string name, ScopePtr ownScope, std::vector<ASTNodePtr> body);
+        Function(std::string name, FunctionType* functionType, ScopePtr ownScope, std::vector<ASTNodePtr> body);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 

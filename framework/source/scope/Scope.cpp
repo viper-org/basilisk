@@ -4,8 +4,9 @@
 
 #include <algorithm>
 
-Symbol::Symbol(std::string name)
+Symbol::Symbol(std::string name, Type* type)
     : name(std::move(name))
+    , type(type)
 {
 }
 

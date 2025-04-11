@@ -8,12 +8,12 @@
 
 namespace parser
 {
-    VariableDeclaration::VariableDeclaration(Scope* scope, std::string name, ASTNodePtr initValue)
-        : ASTNode(scope)
+    VariableDeclaration::VariableDeclaration(Scope* scope, std::string name, Type* type, ASTNodePtr initValue)
+        : ASTNode(scope, type)
         , mName(std::move(name))
         , mInitValue(std::move(initValue))
     {
-        mScope->symbols.push_back(std::make_unique<Symbol>(mName));
+        mScope->symbols.push_back(std::make_unique<Symbol>(mName, type));
         mSymbol = mScope->symbols.back().get();
     }
 

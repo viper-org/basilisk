@@ -61,6 +61,13 @@ namespace parser
     }
 
 
+    Type* Parser::parseType()
+    {
+        expectToken(lexer::TokenType::Type);
+        return Type::Get(std::string(consume().getText()));
+    }
+
+
     ASTNodePtr Parser::parseGlobal()
     {
         switch (current().getTokenType())
@@ -130,9 +137,7 @@ namespace parser
         expectToken(lexer::TokenType::RightArrow);
         consume();
 
-        // TODO: Parse type
-        expectToken(lexer::TokenType::Type);
-        consume();
+        auto returnType = parseType();
 
         expectToken(lexer::TokenType::LeftBrace);
         consume();
@@ -151,7 +156,9 @@ namespace parser
 
         mActiveScope = scope->parent;
 
-        return std::make_unique<Function>(std::move(name), std::move(scope), std::move(body));
+        auto functionType = FunctionType::Create(returnType, {});
+
+        return std::make_unique<Function>(std::move(name), functionType, std::move(scope), std::move(body));
     }
 
 
@@ -176,9 +183,7 @@ namespace parser
         expectToken(lexer::TokenType::Colon);
         consume();
 
-        // TODO: Parse type
-        expectToken(lexer::TokenType::Type);
-        consume();
+        auto type = parseType();
 
         ASTNodePtr initialValue = nullptr;
         if (current().getTokenType() == lexer::TokenType::Equal)
@@ -187,7 +192,7 @@ namespace parser
             initialValue = parseExpression();
         }
 
-        return std::make_unique<VariableDeclaration>(mActiveScope, std::move(name), std::move(initialValue));
+        return std::make_unique<VariableDeclaration>(mActiveScope, std::move(name), type, std::move(initialValue));
     }
 
 

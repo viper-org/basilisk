@@ -23,6 +23,11 @@ set(SOURCES
     "source/diagnostic/Diagnostic.cpp"
 
     "source/scope/Scope.cpp"
+
+    "source/type/Type.cpp"
+    "source/type/IntegerType.cpp"
+    "source/type/VoidType.cpp"
+    "source/type/FunctionType.cpp"
 )
 
 set(HEADERS
@@ -37,6 +42,11 @@ set(HEADERS
     "include/diagnostic/Diagnostic.h"
 
     "include/scope/Scope.h"
+
+    "include/type/Type.h"
+    "include/type/IntegerType.h"
+    "include/type/VoidType.h"
+    "include/type/FunctionType.h"
 )
 
 source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})

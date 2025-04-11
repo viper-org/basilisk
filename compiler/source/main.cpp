@@ -34,6 +34,8 @@ int main(int argc, char** argv)
 
     diagnostic::Diagnostics diag;
     diag.setText(text);
+
+    Type::Init();
     
     parser::Parser parser(tokens, diag);
     auto ast = parser.parse();

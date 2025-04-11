@@ -6,6 +6,7 @@ CMakeFiles/
 Makefile
 *.json
 *.a
+*.o
 *.so
 
 CMakeCache.txt

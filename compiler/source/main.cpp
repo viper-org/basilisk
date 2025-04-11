@@ -3,9 +3,16 @@
 #include <lexer/Lexer.h>
 #include <lexer/Token.h>
 
+#include <parser/Parser.h>
+
+#include <vipir/Module.h>
+#include <vipir/ABI/SysV.h>
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
+
+using namespace std::literals;
 
 int main(int argc, char** argv)
 {
@@ -24,10 +31,22 @@ int main(int argc, char** argv)
 
     lexer::Lexer lexer(text, inputFilePath);
     auto tokens = lexer.lex();
-    for (auto& token : tokens)
+    
+    parser::Parser parser(tokens);
+    auto ast = parser.parse();
+
+    vipir::Module module(inputFilePath);
+    module.setABI<vipir::abi::SysV>();
+    vipir::IRBuilder builder;
+
+    for (auto& node : ast)
     {
-        std::cout << token.getName() << "\n";
+        node->codegen(builder, module);
     }
+
+    std::ofstream outputFile(inputFilePath + ".o"s);
+    module.setOutputFormat(vipir::OutputFormat::ELF);
+    module.emit(outputFile);
 
     return 0;
 }

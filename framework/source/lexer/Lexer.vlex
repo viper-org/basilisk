@@ -11,4 +11,9 @@ tokens {
 
     _identifier
     _integer_literal
+
+    i8 Type
+    i16 Type
+    i32 Type
+    i64 Type
 }

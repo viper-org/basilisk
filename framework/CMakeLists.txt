@@ -13,9 +13,18 @@ FetchContent_Declare(vlex
 FetchContent_MakeAvailable(vlex)
 
 set(SOURCES
+    "source/parser/Parser.cpp"
+    "source/parser/ast/global/Function.cpp"
+    "source/parser/ast/statement/ReturnStatement.cpp"
+    "source/parser/ast/expression/IntegerLiteral.cpp"
 )
 
 set(HEADERS
+    "include/parser/Parser.h"
+    "include/parser/ast/ASTNode.h"
+    "include/parser/ast/global/Function.h"
+    "include/parser/ast/statement/ReturnStatement.h"
+    "include/parser/ast/expression/IntegerLiteral.h"
 )
 
 source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})

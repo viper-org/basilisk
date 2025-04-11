@@ -7,13 +7,29 @@
 
 namespace parser
 {
-    Function::Function(std::string name, FunctionType* functionType, ScopePtr ownScope, std::vector<ASTNodePtr> body, SourcePair source)
+    FunctionArgument::FunctionArgument(Type* type, std::string name)
+        : type(type)
+        , name(std::move(name))
+    {
+    }
+    
+
+    Function::Function(std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, std::vector<ASTNodePtr> body, SourcePair source)
         : ASTNode(ownScope->parent, source, functionType)
         , mName(std::move(name))
+        , mArguments(std::move(arguments))
         , mBody(std::move(body))
         , mOwnScope(std::move(ownScope))
     {
         mOwnScope->currentReturnType = functionType->getReturnType();
+        mScope->symbols.push_back(std::make_unique<Symbol>(mName, functionType));
+        mSymbol = mScope->symbols.back().get();
+
+        for (auto& argument : mArguments)
+        {
+            mOwnScope->symbols.push_back(std::make_unique<Symbol>(argument.name, argument.type));
+            argument.symbol = mOwnScope->symbols.back().get();
+        }
     }
 
     vipir::Value* Function::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
@@ -29,8 +45,17 @@ namespace parser
 
         vipir::Function* function = vipir::Function::Create(functionType, module, mName, false);
 
+        mSymbol->values.push_back(std::make_pair(nullptr, function));
+
         vipir::BasicBlock* entryBB = vipir::BasicBlock::Create("", function);
         builder.setInsertPoint(entryBB);
+        
+        unsigned int index = 0;
+        for (auto& argument : mArguments)
+        {
+            auto arg = function->getArgument(index++);
+            argument.symbol->values.push_back(std::make_pair(entryBB, arg));
+        }
 
         for (auto& node : mBody)
         {

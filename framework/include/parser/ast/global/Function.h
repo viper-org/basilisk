@@ -13,10 +13,19 @@
 
 namespace parser
 {
+    struct FunctionArgument
+    {
+        FunctionArgument(Type* type, std::string name);
+        Type* type;
+        std::string name;
+
+        Symbol* symbol;
+    };
+
     class Function : public ASTNode
     {
     public:
-        Function(std::string name, FunctionType* functionType, ScopePtr ownScope, std::vector<ASTNodePtr> body, SourcePair source);
+        Function(std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, std::vector<ASTNodePtr> body, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
@@ -24,9 +33,11 @@ namespace parser
 
     private:
         std::string mName;
+        std::vector<FunctionArgument> mArguments;
         std::vector<ASTNodePtr> mBody;
 
         ScopePtr mOwnScope;
+        Symbol* mSymbol;
     };
     using FunctionPtr = std::unique_ptr<Function>;
 }

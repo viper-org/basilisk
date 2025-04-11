@@ -1,5 +1,4 @@
-func hello() -> i64 {
-    let x: i16 = 5;
-    x = 6;
+func main(argc: i32) -> i64 {
+    let x: i16 = argc;
     return x + 3 * 4;
 }

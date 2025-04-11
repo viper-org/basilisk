@@ -18,22 +18,34 @@ struct ASTNodeIntrospector;
 
 namespace parser
 {
+    struct SourcePair
+    {
+        lexer::SourceLocation start;
+        lexer::SourceLocation end;
+    };
+
     class ASTNode
     {
     friend struct ::ASTNodeIntrospector;
     public:
         using ASTNodePtr = std::unique_ptr<ASTNode>;
 
-        ASTNode(Scope* scope, Type* type = nullptr) : mScope(scope), mType(type) {}
+        ASTNode(Scope* scope, SourcePair source, Type* type = nullptr) : mScope(scope), mType(type), mSource(source) {}
         virtual ~ASTNode() { }
+
+        Type* getType() { return mType; }
+        SourcePair getSourcePair() { return mSource; }
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) = 0;
 
-        // TODO: Add typechecking and casting stuff
+        virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) = 0;
+
+        // TODO: Add casting
         
     protected:
         Scope* mScope;
         Type* mType;
+        SourcePair mSource;
     };
     using ASTNodePtr = std::unique_ptr<ASTNode>;
 

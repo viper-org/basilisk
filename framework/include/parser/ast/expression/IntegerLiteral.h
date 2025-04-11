@@ -13,11 +13,13 @@ namespace parser
     class IntegerLiteral : public ASTNode
     {
     public:
-        IntegerLiteral(Scope* scope, std::uintmax_t value);
+        IntegerLiteral(Scope* scope, std::uintmax_t value, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
-        // TODO: Add typechecking and casting
+        virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
+
+        // TODO: Add casting
 
     private:
         std::uintmax_t mValue;

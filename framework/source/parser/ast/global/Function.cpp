@@ -7,8 +7,8 @@
 
 namespace parser
 {
-    Function::Function(std::string name, FunctionType* functionType, ScopePtr ownScope, std::vector<ASTNodePtr> body)
-        : ASTNode(ownScope->parent, functionType)
+    Function::Function(std::string name, FunctionType* functionType, ScopePtr ownScope, std::vector<ASTNodePtr> body, SourcePair source)
+        : ASTNode(ownScope->parent, source, functionType)
         , mName(std::move(name))
         , mBody(std::move(body))
         , mOwnScope(std::move(ownScope))
@@ -38,5 +38,13 @@ namespace parser
         }
 
         return function;
+    }
+
+    void Function::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
+    {
+        for (auto& node : mBody)
+        {
+            node->typeCheck(diag, exit);
+        }
     }
 }

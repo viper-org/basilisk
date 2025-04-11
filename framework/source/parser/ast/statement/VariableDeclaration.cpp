@@ -8,8 +8,8 @@
 
 namespace parser
 {
-    VariableDeclaration::VariableDeclaration(Scope* scope, std::string name, Type* type, ASTNodePtr initValue)
-        : ASTNode(scope, type)
+    VariableDeclaration::VariableDeclaration(Scope* scope, std::string name, Type* type, ASTNodePtr initValue, SourcePair source)
+        : ASTNode(scope, source, type)
         , mName(std::move(name))
         , mInitValue(std::move(initValue))
     {
@@ -26,5 +26,48 @@ namespace parser
         }
 
         return nullptr;
+    }
+
+    void VariableDeclaration::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
+    {
+        if (!mType)
+        {
+            if (!mInitValue)
+            {
+                diag.reportCompilerError(
+                    mSource.start,
+                    mSource.end,
+                    std::format("object '{}{}{}' has unknown type",
+                        fmt::bold, mName, fmt::defaults)
+                );
+                exit = true;
+                mType = Type::Get("error-type");
+                return;
+            }
+
+            mInitValue->typeCheck(diag, exit);
+            mType = mInitValue->getType();
+            mSymbol->type = mType; // This needs to be set again as it was set to nullptr in the constructor
+        }
+
+        if (mInitValue)
+        {
+            mInitValue->typeCheck(diag, exit);
+
+            if (mInitValue->getType() != mType)
+            {
+                // TODO: Attempt to cast init value
+                {
+                    diag.reportCompilerError(
+                        mInitValue->getSourcePair().start,
+                        mInitValue->getSourcePair().end,
+                        std::format("value of type '{}{}{}' is not compatible with variable of type '{}{}{}'",
+                            fmt::bold, mInitValue->getType()->getName(), fmt::defaults,
+                            fmt::bold, mType->getName(), fmt::defaults)
+                    );
+                    exit = true;
+                }
+            }
+        }
     }
 }

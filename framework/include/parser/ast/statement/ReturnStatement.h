@@ -12,11 +12,13 @@ namespace parser
     class ReturnStatement : public ASTNode
     {
     public:
-        ReturnStatement(Scope* scope, ASTNodePtr returnValue);
+        ReturnStatement(Scope* scope, ASTNodePtr returnValue, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
-        // TODO: Add typechecking and casting
+        virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
+
+        // TODO: Add casting
 
     private:
         ASTNodePtr mReturnValue;

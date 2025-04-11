@@ -28,6 +28,7 @@ set(SOURCES
     "source/type/IntegerType.cpp"
     "source/type/VoidType.cpp"
     "source/type/FunctionType.cpp"
+    "source/type/ErrorType.cpp"
 )
 
 set(HEADERS
@@ -47,6 +48,7 @@ set(HEADERS
     "include/type/IntegerType.h"
     "include/type/VoidType.h"
     "include/type/FunctionType.h"
+    "include/type/ErrorType.h"
 )
 
 source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})

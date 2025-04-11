@@ -11,8 +11,8 @@
 
 namespace parser
 {
-    VariableExpression::VariableExpression(Scope* scope, std::string name)
-        : ASTNode(scope)
+    VariableExpression::VariableExpression(Scope* scope, std::string name, SourcePair source)
+        : ASTNode(scope, source)
         , mName(std::move(name))
     {
     }
@@ -22,5 +22,26 @@ namespace parser
         Symbol* symbol = mScope->resolveSymbol(mName);
         
         return symbol->getLatestValue(builder.getInsertPoint());
+    }
+
+    void VariableExpression::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
+    {
+        Symbol* symbol = mScope->resolveSymbol(mName);
+
+        if (!symbol)
+        {
+            diag.reportCompilerError(
+                mSource.start,
+                mSource.end,
+                std::format("undeclared identifier '{}{}{}'",
+                    fmt::bold, mName, fmt::defaults)
+            );
+            exit = true;
+            mType = Type::Get("error-type");
+        }
+        else
+        {
+            mType = symbol->type;
+        }
     }
 }

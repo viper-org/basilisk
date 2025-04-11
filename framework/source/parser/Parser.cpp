@@ -123,7 +123,12 @@ namespace parser
 
     FunctionPtr Parser::parseFunction()
     {
+        SourcePair source;
+        source.start = current().getStartLocation();
+
         consume(); // func
+        
+        source.end = current().getEndLocation();
 
         expectToken(lexer::TokenType::Identifier);
         std::string name(consume().getText());
@@ -158,21 +163,27 @@ namespace parser
 
         auto functionType = FunctionType::Create(returnType, {});
 
-        return std::make_unique<Function>(std::move(name), functionType, std::move(scope), std::move(body));
+        return std::make_unique<Function>(std::move(name), functionType, std::move(scope), std::move(body), std::move(source));
     }
 
 
     ReturnStatementPtr Parser::parseReturnStatement()
     {
+        SourcePair source;
+        source.start = current().getStartLocation();
         consume(); // return
 
         auto returnValue = parseExpression();
+
+        source.end = peek(-1).getEndLocation();
         
-        return std::make_unique<ReturnStatement>(mActiveScope, std::move(returnValue));
+        return std::make_unique<ReturnStatement>(mActiveScope, std::move(returnValue), std::move(source));
     }
 
     VariableDeclarationPtr Parser::parseVariableDeclaration()
     {
+        SourcePair source;
+        source.start = current().getStartLocation();
         consume(); // let
 
         expectToken(lexer::TokenType::Identifier);
@@ -192,20 +203,24 @@ namespace parser
             initialValue = parseExpression();
         }
 
-        return std::make_unique<VariableDeclaration>(mActiveScope, std::move(name), type, std::move(initialValue));
+        source.end = peek(-1).getEndLocation();
+
+        return std::make_unique<VariableDeclaration>(mActiveScope, std::move(name), type, std::move(initialValue), std::move(source));
     }
 
 
     IntegerLiteralPtr Parser::parseIntegerLiteral()
     {
+        SourcePair source{current().getStartLocation(), current().getEndLocation()};
         std::string text(consume().getText());
         auto value = std::stoull(text, nullptr, 0);
-        return std::make_unique<IntegerLiteral>(mActiveScope, value);
+        return std::make_unique<IntegerLiteral>(mActiveScope, value, std::move(source));
     }
 
     VariableExpressionPtr Parser::parseVariableExpression()
     {
+        SourcePair source{current().getStartLocation(), current().getEndLocation()};
         std::string text(consume().getText());
-        return std::make_unique<VariableExpression>(mActiveScope, std::move(text));
+        return std::make_unique<VariableExpression>(mActiveScope, std::move(text), std::move(source));
     }
 }

@@ -43,6 +43,13 @@ int main(int argc, char** argv)
     vipir::Module module(inputFilePath);
     module.setABI<vipir::abi::SysV>();
     vipir::IRBuilder builder;
+    
+    bool exit = false;
+    for (auto& node : ast)
+    {
+        node->typeCheck(diag, exit);
+    }
+    if (exit) return 1;
 
     for (auto& node : ast)
     {

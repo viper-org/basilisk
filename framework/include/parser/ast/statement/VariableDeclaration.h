@@ -12,9 +12,11 @@ namespace parser
     class VariableDeclaration : public ASTNode
     {
     public:
-        VariableDeclaration(Scope* scope, std::string name, Type* type, ASTNodePtr initValue);
+        VariableDeclaration(Scope* scope, std::string name, Type* type, ASTNodePtr initValue, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
+
+        virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
 
     private:
         std::string mName;

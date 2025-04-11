@@ -8,8 +8,8 @@
 
 namespace parser
 {
-    ReturnStatement::ReturnStatement(Scope* scope, ASTNodePtr value)
-        : ASTNode(scope)
+    ReturnStatement::ReturnStatement(Scope* scope, ASTNodePtr value, SourcePair source)
+        : ASTNode(scope, source)
         , mReturnValue(std::move(value))
     {
     }
@@ -19,5 +19,57 @@ namespace parser
         auto returnValue = mReturnValue->codegen(builder, module, diag);
 
         return builder.CreateRet(returnValue);
+    }
+
+    void ReturnStatement::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
+    {
+        if (mReturnValue)
+        {
+            mReturnValue->typeCheck(diag, exit);
+        }
+
+        auto returnType = mScope->currentReturnType;
+        if (returnType->isVoidType())
+        {
+            if (mReturnValue != nullptr)
+            {
+                diag.reportCompilerError(
+                    mReturnValue->getSourcePair().start,
+                    mReturnValue->getSourcePair().end,
+                    std::format("value of type '{}{}{}' is not compatible with return type '{}{}{}'",
+                        fmt::bold, mReturnValue->getType()->getName(), fmt::defaults,
+                        fmt::bold, returnType->getName(), fmt::defaults)
+                );
+                exit = true;
+            }
+        }
+        else
+        {
+            if (!mReturnValue)
+            {
+                diag.reportCompilerError(
+                    mSource.start,
+                    mSource.end,
+                    std::format("non-void function returning '{}{}{}' cannot return '{}void{}'",
+                        fmt::bold, returnType->getName(), fmt::defaults,
+                        fmt::bold, fmt::defaults)
+                );
+                exit = true;
+            }
+            else if (returnType != mReturnValue->getType())
+            {
+                // TODO: Attempt to cast return value
+                {
+                    diag.reportCompilerError(
+                        mReturnValue->getSourcePair().start,
+                        mReturnValue->getSourcePair().end,
+                        std::format("value of type '{}{}{}' is not compatible with return type '{}{}{}'",
+                            fmt::bold, mReturnValue->getType()->getName(), fmt::defaults,
+                            fmt::bold, returnType->getName(), fmt::defaults)
+                    );
+                    exit = true;
+                }
+            }
+        }
     }
 }

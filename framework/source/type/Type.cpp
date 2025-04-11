@@ -3,6 +3,7 @@
 #include "type/Type.h"
 #include "type/IntegerType.h"
 #include "type/VoidType.h"
+#include "type/ErrorType.h"
 
 #include <unordered_map>
 
@@ -25,6 +26,7 @@ void Type::Init()
     types["u64"] = std::make_unique<IntegerType>(64, false);
 
     types["void"] = std::make_unique<VoidType>();
+    types["error-type"] = std::make_unique<ErrorType>();
 }
 
 bool Type::Exists(const std::string& name)

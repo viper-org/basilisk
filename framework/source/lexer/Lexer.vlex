@@ -5,9 +5,12 @@ tokens {
     {
     _right_brace
     ;
+    :
+    =
 
     return
     func
+    let
 
     _identifier
     _integer_literal

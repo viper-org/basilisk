@@ -44,7 +44,7 @@ int main(int argc, char** argv)
 
     for (auto& node : ast)
     {
-        node->codegen(builder, module);
+        node->codegen(builder, module, diag);
     }
 
     std::ofstream outputFile(inputFilePath + ".o"s);

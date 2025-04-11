@@ -8,8 +8,10 @@
 #include "parser/ast/global/Function.h"
 
 #include "parser/ast/statement/ReturnStatement.h"
+#include "parser/ast/statement/VariableDeclaration.h"
 
 #include "parser/ast/expression/IntegerLiteral.h"
+#include "parser/ast/expression/VariableExpression.h"
 
 #include "diagnostic/Diagnostic.h"
 
@@ -30,6 +32,8 @@ namespace parser
 
         diagnostic::Diagnostics& mDiag;
 
+        Scope* mActiveScope;
+
 
         lexer::Token current() const;
         lexer::Token consume();
@@ -44,8 +48,10 @@ namespace parser
         FunctionPtr parseFunction();
 
         ReturnStatementPtr parseReturnStatement();
+        VariableDeclarationPtr parseVariableDeclaration();
 
         IntegerLiteralPtr parseIntegerLiteral();
+        VariableExpressionPtr parseVariableExpression();
     };
 }
 

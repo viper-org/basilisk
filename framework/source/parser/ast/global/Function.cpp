@@ -7,13 +7,15 @@
 
 namespace parser
 {
-    Function::Function(std::string name, std::vector<ASTNodePtr> body)
-        : mName(std::move(name))
+    Function::Function(std::string name, ScopePtr ownScope, std::vector<ASTNodePtr> body)
+        : ASTNode(ownScope->parent)
+        , mName(std::move(name))
         , mBody(std::move(body))
+        , mOwnScope(std::move(ownScope))
     {
     }
 
-    vipir::Value* Function::codegen(vipir::IRBuilder& builder, vipir::Module& module)
+    vipir::Value* Function::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         vipir::FunctionType* functionType = vipir::FunctionType::Create(vipir::Type::GetIntegerType(32), {});
 
@@ -24,7 +26,7 @@ namespace parser
 
         for (auto& node : mBody)
         {
-            node->codegen(builder, module);
+            node->codegen(builder, module, diag);
         }
 
         return function;

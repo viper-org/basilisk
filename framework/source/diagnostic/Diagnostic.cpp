@@ -50,7 +50,7 @@ namespace diagnostic
 
     void Diagnostics::fatalError(std::string_view message)
     {
-        std::cerr << std::format("{}viper: {}fatal error: {}{}\n", fmt::bold, fmt::red, fmt::defaults, message);
+        std::cerr << std::format("{}basilisk: {}fatal error: {}{}\n", fmt::bold, fmt::red, fmt::defaults, message);
 
         std::exit(EXIT_FAILURE);
     }

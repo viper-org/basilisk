@@ -3,7 +3,11 @@
 #ifndef BASILISK_FRAMEWORK_PARSER_AST_AST_NODE_H
 #define BASILISK_FRAMEWORK_PARSER_AST_AST_NODE_H 1
 
+#include "scope/Scope.h"
+
 #include "lexer/Token.h"
+
+#include "diagnostic//Diagnostic.h"
 
 #include <vipir/IR/IRBuilder.h>
 
@@ -20,12 +24,15 @@ namespace parser
     public:
         using ASTNodePtr = std::unique_ptr<ASTNode>;
 
-        ASTNode() {}
+        ASTNode(Scope* scope) : mScope(scope) {}
         virtual ~ASTNode() { }
 
-        virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module) = 0;
+        virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) = 0;
 
         // TODO: Add typechecking and casting stuff
+        
+    protected:
+        Scope* mScope;
     };
     using ASTNodePtr = std::unique_ptr<ASTNode>;
 

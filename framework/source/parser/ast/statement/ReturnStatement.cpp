@@ -8,14 +8,15 @@
 
 namespace parser
 {
-    ReturnStatement::ReturnStatement(ASTNodePtr value)
-        : mReturnValue(std::move(value))
+    ReturnStatement::ReturnStatement(Scope* scope, ASTNodePtr value)
+        : ASTNode(scope)
+        , mReturnValue(std::move(value))
     {
     }
 
-    vipir::Value* ReturnStatement::codegen(vipir::IRBuilder& builder, vipir::Module& module)
+    vipir::Value* ReturnStatement::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        auto returnValue = mReturnValue->codegen(builder, module);
+        auto returnValue = mReturnValue->codegen(builder, module, diag);
 
         return builder.CreateRet(returnValue);
     }

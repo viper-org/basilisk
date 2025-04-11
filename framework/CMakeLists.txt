@@ -16,9 +16,13 @@ set(SOURCES
     "source/parser/Parser.cpp"
     "source/parser/ast/global/Function.cpp"
     "source/parser/ast/statement/ReturnStatement.cpp"
+    "source/parser/ast/statement/VariableDeclaration.cpp"
     "source/parser/ast/expression/IntegerLiteral.cpp"
+    "source/parser/ast/expression/VariableExpression.cpp"
 
     "source/diagnostic/Diagnostic.cpp"
+
+    "source/scope/Scope.cpp"
 )
 
 set(HEADERS
@@ -26,9 +30,13 @@ set(HEADERS
     "include/parser/ast/ASTNode.h"
     "include/parser/ast/global/Function.h"
     "include/parser/ast/statement/ReturnStatement.h"
+    "include/parser/ast/statement/VariableDeclaration.h"
     "include/parser/ast/expression/IntegerLiteral.h"
+    "include/parser/ast/expression/VariableExpression.h"
 
     "include/diagnostic/Diagnostic.h"
+
+    "include/scope/Scope.h"
 )
 
 source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})

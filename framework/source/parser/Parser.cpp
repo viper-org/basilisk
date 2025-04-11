@@ -8,6 +8,7 @@ namespace parser
         : mTokens(tokens)
         , mPosition(0)
         , mDiag(diag)
+        , mActiveScope(Scope::GetGlobalScope())
     {
     }
 
@@ -92,9 +93,15 @@ namespace parser
         {
             case lexer::TokenType::ReturnKeyword:
                 return parseReturnStatement();
+
+            case lexer::TokenType::LetKeyword:
+                return parseVariableDeclaration();
             
             case lexer::TokenType::IntegerLiteral:
                 return parseIntegerLiteral();
+
+            case lexer::TokenType::Identifier:
+                return parseVariableExpression();
 
             default:
                 mDiag.reportCompilerError(
@@ -129,7 +136,10 @@ namespace parser
 
         expectToken(lexer::TokenType::LeftBrace);
         consume();
-        // TODO: Create scope
+        
+        ScopePtr scope = std::make_unique<Scope>(mActiveScope);
+        mActiveScope = scope.get();
+
         std::vector<ASTNodePtr> body;
         while (current().getTokenType() != lexer::TokenType::RightBrace)
         {
@@ -139,7 +149,9 @@ namespace parser
         }
         consume();
 
-        return std::make_unique<Function>(std::move(name), std::move(body));
+        mActiveScope = scope->parent;
+
+        return std::make_unique<Function>(std::move(name), std::move(scope), std::move(body));
     }
 
 
@@ -149,7 +161,33 @@ namespace parser
 
         auto returnValue = parseExpression();
         
-        return std::make_unique<ReturnStatement>(std::move(returnValue));
+        return std::make_unique<ReturnStatement>(mActiveScope, std::move(returnValue));
+    }
+
+    VariableDeclarationPtr Parser::parseVariableDeclaration()
+    {
+        consume(); // let
+
+        expectToken(lexer::TokenType::Identifier);
+        std::string name(consume().getText());
+
+        // TODO: Implicit typing
+
+        expectToken(lexer::TokenType::Colon);
+        consume();
+
+        // TODO: Parse type
+        expectToken(lexer::TokenType::Type);
+        consume();
+
+        ASTNodePtr initialValue = nullptr;
+        if (current().getTokenType() == lexer::TokenType::Equal)
+        {
+            consume();
+            initialValue = parseExpression();
+        }
+
+        return std::make_unique<VariableDeclaration>(mActiveScope, std::move(name), std::move(initialValue));
     }
 
 
@@ -157,6 +195,12 @@ namespace parser
     {
         std::string text(consume().getText());
         auto value = std::stoull(text, nullptr, 0);
-        return std::make_unique<IntegerLiteral>(value);
+        return std::make_unique<IntegerLiteral>(mActiveScope, value);
+    }
+
+    VariableExpressionPtr Parser::parseVariableExpression()
+    {
+        std::string text(consume().getText());
+        return std::make_unique<VariableExpression>(mActiveScope, std::move(text));
     }
 }

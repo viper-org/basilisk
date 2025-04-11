@@ -1,0 +1,14 @@
+tokens {
+    (
+    )
+    ->
+    {
+    _right_brace
+    ;
+
+    return
+    func
+
+    _identifier
+    _integer_literal
+}

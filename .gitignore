@@ -1,0 +1,12 @@
+_deps/
+CMakeFiles/
+.cache/
+
+*.cmake
+Makefile
+*.json
+*.a
+*.so
+
+CMakeCache.txt
+basilisk

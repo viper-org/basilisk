@@ -18,8 +18,6 @@ namespace parser
 
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
 
-        // TODO: Add casting
-
     private:
         ASTNodePtr mReturnValue;
     };

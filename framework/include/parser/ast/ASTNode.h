@@ -44,8 +44,6 @@ namespace parser
         bool canImplicitCast(diagnostic::Diagnostics& diag, Type* destType);
 
         static ASTNodePtr Cast(ASTNodePtr& node, Type* destType);
-
-        // TODO: Add casting
         
     protected:
         Scope* mScope;

@@ -4,9 +4,10 @@
 
 namespace parser
 {
-    Parser::Parser(std::vector<lexer::Token>& tokens)
+    Parser::Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag)
         : mTokens(tokens)
         , mPosition(0)
+        , mDiag(diag)
     {
     }
 
@@ -46,7 +47,14 @@ namespace parser
     {
         if (current().getTokenType() != tokenType)
         {
-            // TODO: Print error and exit
+            lexer::Token temp("", tokenType, lexer::SourceLocation(), lexer::SourceLocation());
+            mDiag.reportCompilerError(
+                current().getStartLocation(),
+                current().getEndLocation(),
+                std::format("Expected '{}{}{}', found '{}{}{}'",
+                    fmt::bold, temp.getName(), fmt::defaults,
+                    fmt::bold, current().getText(), fmt::defaults)
+            );
             std::exit(1);
         }
     }
@@ -64,7 +72,11 @@ namespace parser
                 return nullptr;
             
             default:
-                // TODO: Print error and exit
+                mDiag.reportCompilerError(
+                    current().getStartLocation(),
+                    current().getEndLocation(),
+                    std::format("Expected global expression. Found '{}{}{}'", fmt::bold, current().getText(), fmt::defaults)
+                );
                 std::exit(1);
         }
     }
@@ -85,7 +97,11 @@ namespace parser
                 return parseIntegerLiteral();
 
             default:
-                // TODO: Print error and exit
+                mDiag.reportCompilerError(
+                    current().getStartLocation(),
+                    current().getEndLocation(),
+                    std::format("Expected an expression. Found '{}{}{}'", fmt::bold, current().getText(), fmt::defaults)
+                );
                 std::exit(1);
         }
     }

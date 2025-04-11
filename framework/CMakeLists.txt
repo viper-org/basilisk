@@ -17,6 +17,8 @@ set(SOURCES
     "source/parser/ast/global/Function.cpp"
     "source/parser/ast/statement/ReturnStatement.cpp"
     "source/parser/ast/expression/IntegerLiteral.cpp"
+
+    "source/diagnostic/Diagnostic.cpp"
 )
 
 set(HEADERS
@@ -25,6 +27,8 @@ set(HEADERS
     "include/parser/ast/global/Function.h"
     "include/parser/ast/statement/ReturnStatement.h"
     "include/parser/ast/expression/IntegerLiteral.h"
+
+    "include/diagnostic/Diagnostic.h"
 )
 
 source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})

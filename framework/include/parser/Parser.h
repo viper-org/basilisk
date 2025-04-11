@@ -11,6 +11,8 @@
 
 #include "parser/ast/expression/IntegerLiteral.h"
 
+#include "diagnostic/Diagnostic.h"
+
 #include "lexer/Token.h"
 
 namespace parser
@@ -18,13 +20,15 @@ namespace parser
     class Parser
     {
     public:
-        Parser(std::vector<lexer::Token>& tokens);
+        Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag);
 
         std::vector<ASTNodePtr> parse();
 
     private:
         std::vector<lexer::Token>& mTokens;
         unsigned int mPosition;
+
+        diagnostic::Diagnostics& mDiag;
 
 
         lexer::Token current() const;

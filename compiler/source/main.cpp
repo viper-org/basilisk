@@ -31,8 +31,11 @@ int main(int argc, char** argv)
 
     lexer::Lexer lexer(text, inputFilePath);
     auto tokens = lexer.lex();
+
+    diagnostic::Diagnostics diag;
+    diag.setText(text);
     
-    parser::Parser parser(tokens);
+    parser::Parser parser(tokens, diag);
     auto ast = parser.parse();
 
     vipir::Module module(inputFilePath);

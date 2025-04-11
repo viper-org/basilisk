@@ -1,12 +1,16 @@
 tokens {
     (
     )
-    ->
     {
     _right_brace
     ;
     :
     =
+    +
+    -
+    *
+    /
+    ->
 
     return
     func
@@ -19,4 +23,5 @@ tokens {
     i16 Type
     i32 Type
     i64 Type
+    void Type
 }

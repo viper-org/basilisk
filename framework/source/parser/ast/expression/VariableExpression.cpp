@@ -44,4 +44,9 @@ namespace parser
             mType = symbol->type;
         }
     }
+
+    std::string VariableExpression::getName()
+    {
+        return mName;
+    }
 }

@@ -20,6 +20,8 @@ namespace parser
 
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
 
+        std::string getName();
+
     private:
         std::string mName;
     };

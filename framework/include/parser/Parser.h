@@ -12,6 +12,7 @@
 
 #include "parser/ast/expression/IntegerLiteral.h"
 #include "parser/ast/expression/VariableExpression.h"
+#include "parser/ast/expression/BinaryExpression.h"
 
 #include "diagnostic/Diagnostic.h"
 
@@ -40,6 +41,8 @@ namespace parser
         lexer::Token peek(int offset) const;
 
         void expectToken(lexer::TokenType tokenType);
+
+        int getBinaryOperatorPrecedence(lexer::TokenType tokenType);
 
         Type* parseType();
 

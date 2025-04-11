@@ -2,6 +2,8 @@
 
 #include "parser/Parser.h"
 
+#include "parser/ast/expression/BinaryExpression.h"
+
 namespace parser
 {
     Parser::Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag)
@@ -60,6 +62,25 @@ namespace parser
         }
     }
 
+    int Parser::getBinaryOperatorPrecedence(lexer::TokenType tokenType)
+    {
+        switch (tokenType) 
+        {
+            case lexer::TokenType::Star:
+            case lexer::TokenType::Slash:
+                return 75;
+            case lexer::TokenType::Plus:
+            case lexer::TokenType::Minus:
+                return 70;
+
+            case lexer::TokenType::Equal:
+                return 20;
+
+            default:
+                return 0;
+        }
+    }
+
 
     Type* Parser::parseType()
     {
@@ -91,7 +112,25 @@ namespace parser
 
     ASTNodePtr Parser::parseExpression(int precedence)
     {
-        return parsePrimary();
+        SourcePair source;
+        source.start = current().getStartLocation();
+        ASTNodePtr left = parsePrimary();
+
+        while (true)
+        {
+            int binaryOperatorPrecedence = getBinaryOperatorPrecedence(current().getTokenType());
+            if (binaryOperatorPrecedence < precedence)
+            {
+                break;
+            }
+
+            lexer::Token operatorToken = consume();
+            ASTNodePtr right = parseExpression(binaryOperatorPrecedence);
+            source.end = peek(-1).getEndLocation();
+            left = std::make_unique<BinaryExpression>(mActiveScope, std::move(left), std::move(operatorToken), std::move(right), std::move(source));
+        }
+
+        return left;
     }
 
     ASTNodePtr Parser::parsePrimary()

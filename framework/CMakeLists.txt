@@ -14,11 +14,13 @@ FetchContent_MakeAvailable(vlex)
 
 set(SOURCES
     "source/parser/Parser.cpp"
+    "source/parser/ast/ASTNode.cpp"
     "source/parser/ast/global/Function.cpp"
     "source/parser/ast/statement/ReturnStatement.cpp"
     "source/parser/ast/statement/VariableDeclaration.cpp"
     "source/parser/ast/expression/IntegerLiteral.cpp"
     "source/parser/ast/expression/VariableExpression.cpp"
+    "source/parser/ast/expression/CastExpression.cpp"
 
     "source/diagnostic/Diagnostic.cpp"
 
@@ -39,6 +41,7 @@ set(HEADERS
     "include/parser/ast/statement/VariableDeclaration.h"
     "include/parser/ast/expression/IntegerLiteral.h"
     "include/parser/ast/expression/VariableExpression.h"
+    "include/parser/ast/expression/CastExpression.h"
 
     "include/diagnostic/Diagnostic.h"
 

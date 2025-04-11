@@ -1,4 +1,4 @@
 func hello() -> i32 {
-    let x: i32 = 5;
+    let x: i16 = 5;
     return x;
 }

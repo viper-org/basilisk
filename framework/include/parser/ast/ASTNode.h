@@ -40,6 +40,11 @@ namespace parser
 
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) = 0;
 
+        virtual bool triviallyImplicitCast(diagnostic::Diagnostics& diag, Type* destType) { return false; }
+        bool canImplicitCast(diagnostic::Diagnostics& diag, Type* destType);
+
+        static ASTNodePtr Cast(ASTNodePtr& node, Type* destType);
+
         // TODO: Add casting
         
     protected:

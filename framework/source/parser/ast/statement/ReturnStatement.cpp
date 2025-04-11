@@ -58,7 +58,11 @@ namespace parser
             }
             else if (returnType != mReturnValue->getType())
             {
-                // TODO: Attempt to cast return value
+                if (mReturnValue->canImplicitCast(diag, returnType))
+                {
+                    mReturnValue = Cast(mReturnValue, returnType);
+                }
+                else
                 {
                     diag.reportCompilerError(
                         mReturnValue->getSourcePair().start,

@@ -56,7 +56,11 @@ namespace parser
 
             if (mInitValue->getType() != mType)
             {
-                // TODO: Attempt to cast init value
+                if (mInitValue->canImplicitCast(diag, mType))
+                {
+                    mInitValue = Cast(mInitValue, mType);
+                }
+                else
                 {
                     diag.reportCompilerError(
                         mInitValue->getSourcePair().start,

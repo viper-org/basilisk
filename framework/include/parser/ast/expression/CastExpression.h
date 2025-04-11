@@ -1,7 +1,7 @@
 // Copyright 2025 solar-mist
 
-#ifndef BASILISK_FRAMEWORK_PARSER_AST_EXPRESSION_INTEGER_LITERAL_H
-#define BASILISK_FRAMEWORK_PARSER_AST_EXPRESSION_INTEGER_LITERAL_H 1
+#ifndef BASILISK_FRAMEWORK_PARSER_AST_EXPRESSION_CAST_EXPRESSION_H
+#define BASILISK_FRAMEWORK_PARSER_AST_EXPRESSION_CAST_EXPRESSION_H 1
 
 #include "parser/ast/ASTNode.h"
 
@@ -10,21 +10,20 @@
 
 namespace parser
 {
-    class IntegerLiteral : public ASTNode
+    class CastExpression : public ASTNode
     {
     public:
-        IntegerLiteral(Scope* scope, std::uintmax_t value, SourcePair source);
+        CastExpression(Scope* scope, ASTNodePtr value, Type* destType);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
-        
         virtual bool triviallyImplicitCast(diagnostic::Diagnostics& diag, Type* destType) override;
 
     private:
-        std::uintmax_t mValue;
+        ASTNodePtr mValue;
     };
-    using IntegerLiteralPtr = std::unique_ptr<IntegerLiteral>;
+    using CastExpressionPtr = std::unique_ptr<CastExpression>;
 }
 
-#endif // BASILISK_FRAMEWORK_PARSER_AST_EXPRESSION_INTEGER_LITERAL_H
+#endif // BASILISK_FRAMEWORK_PARSER_AST_EXPRESSION_CAST_EXPRESSION_H

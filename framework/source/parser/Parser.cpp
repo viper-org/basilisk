@@ -302,6 +302,8 @@ namespace parser
             }
             consume(); // =
             ASTNodePtr initialValue = parseExpression();
+            source.end = peek(-1).getEndLocation();
+
             return std::make_unique<VariableDeclaration>(mActiveScope, std::move(name), nullptr, std::move(initialValue), std::move(source));
         }
 

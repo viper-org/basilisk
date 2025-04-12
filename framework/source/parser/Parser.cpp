@@ -276,6 +276,15 @@ namespace parser
         consume();
 
         auto returnType = parseType();
+        auto functionType = FunctionType::Create(returnType, std::move(argumentTypes));
+        std::vector<ASTNodePtr> body;
+
+        if (current().getTokenType() == lexer::TokenType::Semicolon)
+        {
+            consume();
+            ScopePtr scope = std::make_unique<Scope>(mActiveScope);
+            return std::make_unique<Function>(std::move(name), functionType, std::move(arguments), std::move(scope), true, std::move(body), std::move(source));
+        }
 
         expectToken(lexer::TokenType::LeftBrace);
         consume();
@@ -283,7 +292,6 @@ namespace parser
         ScopePtr scope = std::make_unique<Scope>(mActiveScope);
         mActiveScope = scope.get();
 
-        std::vector<ASTNodePtr> body;
         while (current().getTokenType() != lexer::TokenType::RightBrace)
         {
             body.push_back(parseExpression());
@@ -293,10 +301,8 @@ namespace parser
         consume();
 
         mActiveScope = scope->parent;
-        
-        auto functionType = FunctionType::Create(returnType, std::move(argumentTypes));
 
-        return std::make_unique<Function>(std::move(name), functionType, std::move(arguments), std::move(scope), std::move(body), std::move(source));
+        return std::make_unique<Function>(std::move(name), functionType, std::move(arguments), std::move(scope), false, std::move(body), std::move(source));
     }
 
 

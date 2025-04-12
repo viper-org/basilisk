@@ -25,7 +25,7 @@ namespace parser
     class Function : public ASTNode
     {
     public:
-        Function(std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, std::vector<ASTNodePtr> body, SourcePair source);
+        Function(std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
@@ -34,6 +34,7 @@ namespace parser
     private:
         std::string mName;
         std::vector<FunctionArgument> mArguments;
+        bool mExternal;
         std::vector<ASTNodePtr> mBody;
 
         ScopePtr mOwnScope;

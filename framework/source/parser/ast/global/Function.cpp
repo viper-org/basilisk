@@ -14,10 +14,11 @@ namespace parser
     }
     
 
-    Function::Function(std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, std::vector<ASTNodePtr> body, SourcePair source)
+    Function::Function(std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source)
         : ASTNode(ownScope->parent, source, functionType)
         , mName(std::move(name))
         , mArguments(std::move(arguments))
+        , mExternal(external)
         , mBody(std::move(body))
         , mOwnScope(std::move(ownScope))
     {
@@ -46,6 +47,12 @@ namespace parser
         vipir::Function* function = vipir::Function::Create(functionType, module, mName, false);
 
         mSymbol->values.push_back(std::make_pair(nullptr, function));
+
+        if (mExternal)
+        {
+            assert(mBody.empty());
+            return function;
+        }
 
         vipir::BasicBlock* entryBB = vipir::BasicBlock::Create("", function);
         builder.setInsertPoint(entryBB);

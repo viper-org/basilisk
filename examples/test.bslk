@@ -1,3 +1,5 @@
+func print(value: i32) -> void;
+
 func add(a: i32, b: i32) -> i32 {
     return a + b;
 }
@@ -14,5 +16,6 @@ func main(argc: i32) -> i64 {
     else {
         x = 5;
     }
+    print(x);
     return add(*y, 3);
 }

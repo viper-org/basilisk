@@ -24,6 +24,7 @@ set(SOURCES
     "source/parser/ast/expression/VariableExpression.cpp"
     "source/parser/ast/expression/CastExpression.cpp"
     "source/parser/ast/expression/BinaryExpression.cpp"
+    "source/parser/ast/expression/CallExpression.cpp"
 
     "source/diagnostic/Diagnostic.cpp"
 
@@ -49,6 +50,7 @@ set(HEADERS
     "include/parser/ast/expression/VariableExpression.h"
     "include/parser/ast/expression/CastExpression.h"
     "include/parser/ast/expression/BinaryExpression.h"
+    "include/parser/ast/expression/CallExpression.h"
 
     "include/diagnostic/Diagnostic.h"
 

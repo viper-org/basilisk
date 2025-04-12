@@ -66,6 +66,9 @@ namespace parser
     {
         switch (tokenType) 
         {
+            case lexer::TokenType::LeftParen:
+                return 90;
+
             case lexer::TokenType::Star:
             case lexer::TokenType::Slash:
                 return 75;
@@ -135,9 +138,16 @@ namespace parser
             }
 
             lexer::Token operatorToken = consume();
-            ASTNodePtr right = parseExpression(binaryOperatorPrecedence);
-            source.end = peek(-1).getEndLocation();
-            left = std::make_unique<BinaryExpression>(mActiveScope, std::move(left), std::move(operatorToken), std::move(right), std::move(source));
+            if (operatorToken.getTokenType() == lexer::TokenType::LeftParen)
+            {
+                left = parseCallExpression(std::move(left));
+            }
+            else
+            {
+                ASTNodePtr right = parseExpression(binaryOperatorPrecedence);
+                source.end = peek(-1).getEndLocation();
+                left = std::make_unique<BinaryExpression>(mActiveScope, std::move(left), std::move(operatorToken), std::move(right), std::move(source));
+            }
         }
 
         return left;
@@ -383,5 +393,27 @@ namespace parser
         SourcePair source{current().getStartLocation(), current().getEndLocation()};
         std::string text(consume().getText());
         return std::make_unique<VariableExpression>(mActiveScope, std::move(text), std::move(source));
+    }
+
+    CallExpressionPtr Parser::parseCallExpression(ASTNodePtr callee)
+    {
+        SourcePair source;
+        source.start = callee->getSourcePair().start;
+        std::vector<ASTNodePtr> parameters;
+        while (current().getTokenType() != lexer::TokenType::RightParen)
+        {
+            parameters.push_back(parseExpression());
+
+            if (current().getTokenType() != lexer::TokenType::RightParen)
+            {
+                expectToken(lexer::TokenType::Comma);
+                consume();
+            }
+        }
+
+        consume();
+        source.end = peek(-1).getEndLocation();
+
+        return std::make_unique<CallExpression>(mActiveScope, std::move(callee), std::move(parameters), std::move(source));
     }
 }

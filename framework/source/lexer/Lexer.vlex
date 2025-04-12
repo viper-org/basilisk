@@ -25,4 +25,5 @@ tokens {
     i32 Type
     i64 Type
     void Type
+    bool Type
 }

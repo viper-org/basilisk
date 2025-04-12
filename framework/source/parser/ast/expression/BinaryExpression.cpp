@@ -107,7 +107,6 @@ namespace parser
 
                     builder.CreateStore(pointerOperand, right);
                 }
-                // TODO: Implement
             }
 
             default:

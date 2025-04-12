@@ -89,7 +89,8 @@ namespace diagnostic
         std::string spacesBefore = std::string(std::to_string(start.line).length(), ' ');
         std::string spacesAfter = std::string(before.length(), ' ');
 
-        std::cerr << std::format("{}{}:{}:{} {}warning: {}{}\n", fmt::bold, start.file, start.line, start.col, fmt::yellow, fmt::defaults, message);
+        std::cerr << std::format("{}{}:{}:{} {}warning: {}{}", fmt::bold, start.file, start.line, start.col, fmt::yellow, fmt::defaults, message);
+        std::cerr << std::format(" [{}{}-W{}{}]\n", fmt::bold, fmt::yellow, type, fmt::defaults);
         std::cerr << std::format("    {} | {}{}{}{}{}{}\n", start.line, before, fmt::bold, fmt::yellow, error, fmt::defaults, after);
         std::cerr << std::format("    {} | {}{}{}^{}{}\n", spacesBefore, spacesAfter, fmt::bold, fmt::yellow, std::string(error.length()-1, '~'), fmt::defaults);
     }

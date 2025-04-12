@@ -246,7 +246,24 @@ namespace parser
         expectToken(lexer::TokenType::Identifier);
         std::string name(consume().getText());
 
-        // TODO: Implicit typing
+        if (current().getTokenType() != lexer::TokenType::Colon)
+        {
+            if (current().getTokenType() != lexer::TokenType::Equal)
+            {
+                source.end = peek(-1).getEndLocation();
+                mDiag.reportCompilerError(
+                    source.start,
+                    source.end,
+                    std::format("untyped declaration of '{}{}{}' has no initializer",
+                        fmt::bold, name, fmt::defaults
+                    )
+                );
+                std::exit(1);
+            }
+            consume(); // =
+            ASTNodePtr initialValue = parseExpression();
+            return std::make_unique<VariableDeclaration>(mActiveScope, std::move(name), nullptr, std::move(initialValue), std::move(source));
+        }
 
         expectToken(lexer::TokenType::Colon);
         consume();

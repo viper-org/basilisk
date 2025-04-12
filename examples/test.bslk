@@ -1,4 +1,5 @@
 func main(argc: i32) -> i64 {
     let x: i16 = argc;
+    let p;
     return x + 3 * 4;
 }

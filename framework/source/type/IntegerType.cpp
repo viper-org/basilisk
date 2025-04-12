@@ -33,6 +33,10 @@ Type::CastLevel IntegerType::castTo(Type* destType) const
         }
         return Type::CastLevel::Implicit;
     }
+    else if (destType->isBooleanType())
+    {
+        return Type::CastLevel::ImplicitWarning;
+    }
     return Type::CastLevel::Disallowed;
 }
 

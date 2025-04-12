@@ -30,6 +30,7 @@ set(SOURCES
     "source/type/Type.cpp"
     "source/type/IntegerType.cpp"
     "source/type/VoidType.cpp"
+    "source/type/BooleanType.cpp"
     "source/type/FunctionType.cpp"
     "source/type/ErrorType.cpp"
 )
@@ -52,6 +53,7 @@ set(HEADERS
     "include/type/Type.h"
     "include/type/IntegerType.h"
     "include/type/VoidType.h"
+    "include/type/BooleanType.h"
     "include/type/FunctionType.h"
     "include/type/ErrorType.h"
 )

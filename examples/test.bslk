@@ -4,6 +4,7 @@ func add(a: i32, b: i32) -> i32 {
 
 func main(argc: i32) -> i64 {
     let x: i16 = argc;
+    let y: i16*;
     let p = (x == 1);
     if (p) {
         x = 6;

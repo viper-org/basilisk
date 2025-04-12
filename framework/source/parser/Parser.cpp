@@ -4,6 +4,8 @@
 
 #include "parser/ast/expression/BinaryExpression.h"
 
+#include "type/PointerType.h"
+
 namespace parser
 {
     Parser::Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag)
@@ -98,7 +100,15 @@ namespace parser
     Type* Parser::parseType()
     {
         expectToken(lexer::TokenType::Type);
-        return Type::Get(std::string(consume().getText()));
+        auto type = Type::Get(std::string(consume().getText()));
+
+        while (current().getTokenType() == lexer::TokenType::Star)
+        {
+            type = PointerType::Get(type);
+            consume();
+        }
+
+        return type;
     }
 
 

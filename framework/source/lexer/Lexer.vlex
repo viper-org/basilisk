@@ -23,6 +23,7 @@ tokens {
     >=
 
     =
+    &
 
     return
     func

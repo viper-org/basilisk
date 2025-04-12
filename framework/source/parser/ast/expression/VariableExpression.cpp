@@ -21,7 +21,13 @@ namespace parser
     {
         Symbol* symbol = mScope->resolveSymbol(mName);
         
-        return symbol->getLatestValue(builder.getInsertPoint());
+        auto latestValue = symbol->getLatestValue(builder.getInsertPoint());
+
+        if (dynamic_cast<vipir::AllocaInst*>(latestValue))
+        {
+            return builder.CreateLoad(latestValue);
+        }
+        return latestValue;
     }
 
     void VariableExpression::typeCheck(diagnostic::Diagnostics& diag, bool& exit)

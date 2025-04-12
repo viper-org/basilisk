@@ -3,6 +3,7 @@
 #include "parser/Parser.h"
 
 #include "parser/ast/expression/BinaryExpression.h"
+#include "parser/ast/expression/UnaryExpression.h"
 
 #include "type/PointerType.h"
 
@@ -96,6 +97,19 @@ namespace parser
         }
     }
 
+    int Parser::getUnaryOperatorPrecedence(lexer::TokenType tokenType)
+    {
+        switch (tokenType) 
+        {
+            case lexer::TokenType::Ampersand:
+            case lexer::TokenType::Star:
+                return 85;
+
+            default:
+                return 0;
+        }
+    }
+
 
     Type* Parser::parseType()
     {
@@ -136,8 +150,20 @@ namespace parser
     ASTNodePtr Parser::parseExpression(int precedence)
     {
         SourcePair source;
+        ASTNodePtr left;
         source.start = current().getStartLocation();
-        ASTNodePtr left = parsePrimary();
+        int unaryOperatorPrecedence = getUnaryOperatorPrecedence(current().getTokenType());
+        if (unaryOperatorPrecedence >= precedence)
+        {
+            lexer::Token operatorToken = consume();
+            auto operand = parseExpression(unaryOperatorPrecedence);
+            source.end = peek(-1).getEndLocation();
+            left = std::make_unique<UnaryExpression>(mActiveScope, std::move(operand), std::move(operatorToken), std::move(source));
+        }
+        else
+        {
+            left = parsePrimary();
+        }
 
         while (true)
         {

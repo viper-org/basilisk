@@ -4,7 +4,9 @@ func add(a: i32, b: i32) -> i32 {
 
 func main(argc: i32) -> i64 {
     let x: i16 = argc;
-    let y: i16*;
+    let y: i16* = &x;
+    *y = 1;
+    x = 2;
     let p = (x == 1);
     if (p) {
         x = 6;
@@ -12,5 +14,5 @@ func main(argc: i32) -> i64 {
     else {
         x = 5;
     }
-    return add(x, 3);
+    return add(*y, 3);
 }

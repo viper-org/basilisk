@@ -27,6 +27,8 @@ tokens {
     return
     func
     let
+    if
+    else
 
     _identifier
     _integer_literal

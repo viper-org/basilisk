@@ -11,7 +11,6 @@ namespace parser
 {
     class BinaryExpression : public ASTNode
     {
-    friend class ::ASTNodeIntrospector;
     public:
         enum class Operator 
         {

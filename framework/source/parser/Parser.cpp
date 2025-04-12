@@ -152,7 +152,11 @@ namespace parser
 
             case lexer::TokenType::LetKeyword:
                 return parseVariableDeclaration();
+
+            case lexer::TokenType::IfKeyword:
+                return parseIfStatement();
             
+
             case lexer::TokenType::IntegerLiteral:
                 return parseIntegerLiteral();
 
@@ -290,6 +294,37 @@ namespace parser
         source.end = peek(-1).getEndLocation();
 
         return std::make_unique<VariableDeclaration>(mActiveScope, std::move(name), type, std::move(initialValue), std::move(source));
+    }
+
+    IfStatementPtr Parser::parseIfStatement()
+    {
+        SourcePair source;
+        source.start = current().getStartLocation();
+        consume(); // if
+
+        expectToken(lexer::TokenType::LeftParen);
+        consume();
+        
+        auto condition = parseExpression();
+
+        expectToken(lexer::TokenType::RightParen);
+        consume();
+
+        source.end = peek(-1).getEndLocation();
+
+        auto body = parseExpression();
+
+        ASTNodePtr elseBody = nullptr;
+        if (peek(1).getTokenType() == lexer::TokenType::ElseKeyword)
+        {
+            expectToken(lexer::TokenType::Semicolon);
+            consume();
+
+            consume(); // else
+            elseBody = parseExpression();
+        }
+
+        return std::make_unique<IfStatement>(std::move(condition), std::move(body), std::move(elseBody), mActiveScope, std::move(source));
     }
 
 

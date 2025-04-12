@@ -3,15 +3,26 @@ tokens {
     )
     {
     _right_brace
+
+    ->
+
     ;
     ,
     :
-    =
+
     +
     -
     *
     /
-    ->
+
+    ==
+    !=
+    >
+    <
+    <=
+    >=
+
+    =
 
     return
     func

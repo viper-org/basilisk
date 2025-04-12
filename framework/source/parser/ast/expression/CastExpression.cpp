@@ -36,6 +36,10 @@ namespace parser
             auto constantInt = vipir::ConstantInt::Get(module, 0, mValue->getType()->getVipirType());
             return builder.CreateCmpNE(value, constantInt);
         }
+        else if (mType->isIntegerType() && mValue->getType()->isBooleanType())
+        {
+            return builder.CreateSExt(value, mType->getVipirType());
+        }
         return nullptr; // Should be unreachable
     }
     

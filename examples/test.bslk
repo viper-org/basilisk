@@ -1,6 +1,11 @@
 func main(argc: i32) -> i64 {
     let x: i16 = argc;
-    if (x == 1) x = 6;
-    else x = 5;
+    let p = (x == 1);
+    if (p) {
+        x = 6;
+    }
+    else {
+        x = 5;
+    }
     return x;
 }

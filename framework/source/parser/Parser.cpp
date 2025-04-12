@@ -156,12 +156,18 @@ namespace parser
             case lexer::TokenType::IfKeyword:
                 return parseIfStatement();
             
+            case lexer::TokenType::LeftBrace:
+                return parseCompoundStatement();
+            
 
             case lexer::TokenType::IntegerLiteral:
                 return parseIntegerLiteral();
 
             case lexer::TokenType::Identifier:
                 return parseVariableExpression();
+
+            case lexer::TokenType::LeftParen:
+                return parseParenthesizedExpression();
 
             default:
                 mDiag.reportCompilerError(
@@ -171,6 +177,16 @@ namespace parser
                 );
                 std::exit(1);
         }
+    }
+
+    ASTNodePtr Parser::parseParenthesizedExpression()
+    {
+        consume(); // (
+        auto expression = parseExpression();
+        expectToken(lexer::TokenType::RightParen);
+        consume();
+
+        return expression;
     }
 
 
@@ -325,6 +341,32 @@ namespace parser
         }
 
         return std::make_unique<IfStatement>(std::move(condition), std::move(body), std::move(elseBody), mActiveScope, std::move(source));
+    }
+
+    CompoundStatementPtr Parser::parseCompoundStatement()
+    {
+        SourcePair source;
+        source.start = current().getStartLocation();
+        source.end = current().getEndLocation(); // Maybe use something else as the end location?
+        consume(); // {
+
+        ScopePtr scope = std::make_unique<Scope>(mActiveScope);
+        mActiveScope = scope.get();
+        std::vector<ASTNodePtr> body;
+
+        while (current().getTokenType() != lexer::TokenType::RightBrace)
+        {
+            body.push_back(parseExpression());
+            expectToken(lexer::TokenType::Semicolon);
+            consume();
+        }
+        consume();
+
+        mTokens.insert(mTokens.begin() + mPosition, lexer::Token(";", lexer::TokenType::Semicolon, {}, {}));
+
+        mActiveScope = scope->parent;
+
+        return std::make_unique<CompoundStatement>(std::move(scope), std::move(body), std::move(source));
     }
 
 

@@ -10,6 +10,7 @@
 #include "parser/ast/statement/ReturnStatement.h"
 #include "parser/ast/statement/VariableDeclaration.h"
 #include "parser/ast/statement/IfStatement.h"
+#include "parser/ast/statement/CompoundStatement.h"
 
 #include "parser/ast/expression/IntegerLiteral.h"
 #include "parser/ast/expression/VariableExpression.h"
@@ -50,12 +51,14 @@ namespace parser
         ASTNodePtr parseGlobal();
         ASTNodePtr parseExpression(int precedence = 1);
         ASTNodePtr parsePrimary();
+        ASTNodePtr parseParenthesizedExpression();
 
         FunctionPtr parseFunction();
 
         ReturnStatementPtr parseReturnStatement();
         VariableDeclarationPtr parseVariableDeclaration();
         IfStatementPtr parseIfStatement();
+        CompoundStatementPtr parseCompoundStatement();
 
         IntegerLiteralPtr parseIntegerLiteral();
         VariableExpressionPtr parseVariableExpression();

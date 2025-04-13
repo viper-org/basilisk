@@ -1,9 +1,11 @@
 func print(value: i32) -> void;
+func prints(value: i8*) -> void;
 
-func main(argc: i32) -> i32 {
-    for (let x = argc; x < 10; x = x + 1) {
+func main(argc: i32, argv: i8**) -> i32 {
+    for (let x = 1; x < argc; x = x + 1) {
         print(x);
     }
+    prints(*argv);
 
     return 0;
 }

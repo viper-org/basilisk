@@ -79,7 +79,7 @@ namespace parser
                         return value.second == bodyBasicBlockValue;
                     });
                     symbols[i]->values.erase(it);
-                    phis[i]->eraseFromParent();
+                    //phis[i]->eraseFromParent();
                 }
             }
             else

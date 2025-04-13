@@ -16,15 +16,26 @@ vipir::Value* Symbol::getLatestValue(vipir::BasicBlock* basicBlock)
     {
         return values.back().second;
     }
+    // Avoid searching the same basicblock twice in case of recursion
+    if (std::find(searched.begin(), searched.end(), basicBlock) != searched.end()) return nullptr;
+    searched.push_back(basicBlock);
 
     auto it = std::find_if(values.rbegin(), values.rend(), [basicBlock](const auto& value) {
         return value.first == basicBlock;
     });
-    if (it != values.rend()) return it->second;
+    if (it != values.rend())
+    {
+        searched.clear();
+        return it->second;
+    }
     
     for (auto predecessor : basicBlock->predecessors())
     {
-        if (auto value = getLatestValue(predecessor)) return value;
+        if (auto value = getLatestValue(predecessor))
+        {
+            searched.clear();
+            return value;
+        }
     }
 
     return nullptr;

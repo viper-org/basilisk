@@ -204,6 +204,9 @@ namespace parser
             
             case lexer::TokenType::LeftBrace:
                 return parseCompoundStatement();
+
+            case lexer::TokenType::WhileKeyword:
+                return parseWhileStatement();
             
 
             case lexer::TokenType::IntegerLiteral:
@@ -421,6 +424,25 @@ namespace parser
         mActiveScope = scope->parent;
 
         return std::make_unique<CompoundStatement>(std::move(scope), std::move(body), std::move(source));
+    }
+
+    WhileStatementPtr Parser::parseWhileStatement()
+    {
+        SourcePair source;
+        source.start = current().getStartLocation();
+        consume(); // while
+
+        expectToken(lexer::TokenType::LeftParen);
+        consume();
+
+        auto condition = parseExpression();
+
+        expectToken(lexer::TokenType::RightParen);
+        source.end = consume().getEndLocation();
+
+        auto body = parseExpression();
+
+        return std::make_unique<WhileStatement>(std::move(condition), std::move(body), mActiveScope, std::move(source));
     }
 
 

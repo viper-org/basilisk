@@ -24,6 +24,7 @@ struct Symbol
     std::string name;
     Type* type;
     std::vector<std::pair<vipir::BasicBlock*, vipir::Value*> > values;
+    std::vector<vipir::BasicBlock*> searched;
 };
 using SymbolPtr = std::unique_ptr<Symbol>;
 

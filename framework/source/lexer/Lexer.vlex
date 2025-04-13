@@ -30,6 +30,7 @@ tokens {
     let
     if
     else
+    while
 
     _identifier
     _integer_literal

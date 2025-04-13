@@ -6,16 +6,10 @@ func add(a: i32, b: i32) -> i32 {
 
 func main(argc: i32) -> i64 {
     let x: i16 = argc;
-    let y: i16* = &x;
-    *y = 1;
-    x = 2;
     let p = (x == 1);
     if (p) {
         x = 6;
     }
-    else {
-        x = 5;
-    }
     print(x);
-    return add(*y, 3);
+    return add(x, 3);
 }

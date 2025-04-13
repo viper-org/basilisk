@@ -7,6 +7,7 @@
 
 #include <vipir/Module.h>
 #include <vipir/ABI/SysV.h>
+#include <vipir/Pass/DefaultPass.h>
 
 #include <fstream>
 #include <iostream>
@@ -42,6 +43,7 @@ int main(int argc, char** argv)
 
     vipir::Module module(inputFilePath);
     module.setABI<vipir::abi::SysV>();
+    module.getPassManager().insertBefore(vipir::PassType::LIREmission, std::make_unique<vipir::ConstantFoldingPass>());
     vipir::IRBuilder builder;
     
     bool exit = false;
@@ -57,6 +59,8 @@ int main(int argc, char** argv)
     }
 
     std::ofstream outputFile(inputFilePath + ".o"s);
+    std::ofstream IROutputFile(inputFilePath + ".vipir"s);
+    module.print(IROutputFile);
     module.setOutputFormat(vipir::OutputFormat::ELF);
     module.emit(outputFile);
 

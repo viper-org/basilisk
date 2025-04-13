@@ -207,6 +207,9 @@ namespace parser
 
             case lexer::TokenType::WhileKeyword:
                 return parseWhileStatement();
+
+            case lexer::TokenType::ForKeyword:
+                return parseForStatement();
             
 
             case lexer::TokenType::IntegerLiteral:
@@ -443,6 +446,33 @@ namespace parser
         auto body = parseExpression();
 
         return std::make_unique<WhileStatement>(std::move(condition), std::move(body), mActiveScope, std::move(source));
+    }
+
+    ForStatementPtr Parser::parseForStatement()
+    {
+        SourcePair source;
+        source.start = current().getStartLocation();
+        consume(); // for
+
+        expectToken(lexer::TokenType::LeftParen);
+        consume();
+
+        auto init = parseExpression();
+        expectToken(lexer::TokenType::Semicolon);
+        consume();
+
+        auto condition = parseExpression();
+        expectToken(lexer::TokenType::Semicolon);
+        consume();
+
+        auto it = parseExpression();
+
+        expectToken(lexer::TokenType::RightParen);
+        source.end = consume().getEndLocation();
+
+        auto body = parseExpression();
+
+        return std::make_unique<ForStatement>(std::move(init), std::move(condition), std::move(it), std::move(body), mActiveScope, std::move(source));
     }
 
 

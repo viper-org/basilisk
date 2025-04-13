@@ -31,6 +31,7 @@ tokens {
     if
     else
     while
+    for
 
     _identifier
     _integer_literal

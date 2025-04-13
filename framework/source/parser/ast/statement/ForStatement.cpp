@@ -1,6 +1,6 @@
 // Copyright 2025 solar-mist
 
-#include "parser/ast/statement/WhileStatement.h"
+#include "parser/ast/statement/ForStatement.h"
 #include "parser/ast/statement/VariableDeclaration.h"
 
 #include <vipir/IR/BasicBlock.h>
@@ -10,14 +10,16 @@
 
 namespace parser
 {
-    WhileStatement::WhileStatement(ASTNodePtr condition, ASTNodePtr body, Scope* scope, SourcePair source)
+    ForStatement::ForStatement(ASTNodePtr init, ASTNodePtr condition, ASTNodePtr it, ASTNodePtr body, Scope* scope, SourcePair source)
         : ASTNode(scope, source)
+        , mInit(std::move(init))
         , mCondition(std::move(condition))
+        , mIt(std::move(it))
         , mBody(std::move(body))
     {
     }
 
-    vipir::Value* WhileStatement::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* ForStatement::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         vipir::BasicBlock* startBasicBlock = builder.getInsertPoint();
 
@@ -38,10 +40,10 @@ namespace parser
             current = current->parent;
         }
 
+        mInit->codegen(builder, module, diag);
         vipir::Value* precondition = mCondition->codegen(builder, module, diag);
         builder.CreateCondBr(precondition, bodyBasicBlock, mergeBasicBlock);
 
-        startBasicBlock->loopEnd() = mergeBasicBlock;
         bodyBasicBlock->loopEnd() = mergeBasicBlock;
 
         builder.setInsertPoint(bodyBasicBlock);
@@ -56,6 +58,7 @@ namespace parser
             symbol->values.push_back(std::make_pair(bodyBasicBlock, phi));
         }
         mBody->codegen(builder, module, diag);
+        mIt->codegen(builder, module, diag);
         vipir::Value* condition = mCondition->codegen(builder, module, diag);
         builder.CreateCondBr(condition, bodyBasicBlock, mergeBasicBlock);
         
@@ -105,9 +108,11 @@ namespace parser
         return nullptr;
     }
 
-    void WhileStatement::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
+    void ForStatement::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
+        mInit->typeCheck(diag, exit);
         mCondition->typeCheck(diag, exit);
+        mIt->typeCheck(diag, exit);
         mBody->typeCheck(diag, exit);
 
         if (dynamic_cast<VariableDeclaration*>(mBody.get()))

@@ -5,6 +5,7 @@
 
 #include "type/IntegerType.h"
 #include "type/ArrayType.h"
+#include "type/PointerType.h"
 
 #include <vipir/Module.h>
 
@@ -154,14 +155,22 @@ namespace parser
             }
 
             case Operator::Index:
-                if (auto load = dynamic_cast<vipir::LoadInst*>(left))
+                if (mLeft->getType()->isPointerType())
                 {
-                    auto pointerOperand = vipir::getPointerOperand(load);
-                    auto instruction = static_cast<vipir::Instruction*>(left);
-                    instruction->eraseFromParent();
-
-                    auto gep = builder.CreateGEP(pointerOperand, right);
+                    auto gep = builder.CreateGEP(left, right);
                     return builder.CreateLoad(gep);
+                }
+                else
+                {
+                    if (auto load = dynamic_cast<vipir::LoadInst*>(left))
+                    {
+                        auto pointerOperand = vipir::getPointerOperand(load);
+                        auto instruction = static_cast<vipir::Instruction*>(left);
+                        instruction->eraseFromParent();
+
+                        auto gep = builder.CreateGEP(pointerOperand, right);
+                        return builder.CreateLoad(gep);
+                    }
                 }
                 break;
 
@@ -305,7 +314,7 @@ namespace parser
                 break;
             
             case Operator::Index:
-                if (!mLeft->getType()->isArrayType())
+                if (!mLeft->getType()->isArrayType() && !mLeft->getType()->isPointerType())
                 {
                     diag.reportCompilerError(
                         mSource.start,
@@ -334,7 +343,14 @@ namespace parser
                         exit = true;
                     }
                 }
-                mType = static_cast<ArrayType*>(mLeft->getType())->getElementType();
+                if (mLeft->getType()->isArrayType())
+                {
+                    mType = static_cast<ArrayType*>(mLeft->getType())->getElementType();
+                }
+                else
+                {
+                    mType = static_cast<PointerType*>(mLeft->getType())->getPointeeType();
+                }
                 break;
 
             default:

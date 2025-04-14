@@ -6,7 +6,7 @@ func main() -> i32 {
         x[idx] = idx * 2;
 
     let p: i32* = &x[0];
-    *(p + 1) = 66;
+    p[1] = 66;
 
     for (let j = 0; j < 5; j = j + 1)
         print(x[j]);

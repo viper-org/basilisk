@@ -50,6 +50,10 @@ namespace parser
                 if (auto var = dynamic_cast<VariableExpression*>(mOperand.get()))
                 {
                     auto symbol = mScope->resolveSymbol(var->getName());
+                    if (auto alloca = dynamic_cast<vipir::AllocaInst*>(symbol->getLatestValue()))
+                    {
+                        return builder.CreateAddrOf(alloca);
+                    }
 
                     builder.insertAfter(operand);
                     auto alloca = builder.CreateAlloca(symbol->type->getVipirType());

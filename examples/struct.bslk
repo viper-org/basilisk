@@ -1,8 +1,21 @@
+func print(value: i32) -> void;
+
 struct example_struct {
     size: i32;
+    things: i32[5];
 }
 
 func main() -> i32 {
     let x: struct example_struct;
+    x.size = 0;
+
+    for (let i = 0; i < 5; i = i + 1)
+        x.things[i] = i;
+
+    x.things[x.size] = 66;
+
+    for (let j = 0; j < 5; j = j + 1)
+        print(x.things[j]);
+
     return 0;
 }

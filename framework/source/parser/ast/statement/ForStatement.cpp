@@ -97,7 +97,8 @@ namespace parser
 
         builder.setInsertPoint(mergeBasicBlock);
 
-
+        return nullptr;
+        // Is this needed?
         for (auto symbol : symbols)
         {
             auto bodyBasicBlockValue = symbol->getLatestValue(bodyBasicBlock);

@@ -48,7 +48,7 @@ namespace parser
         if (auto var = dynamic_cast<VariableExpression*>(mCallee.get()))
         {
             mFunction = mScope->resolveSymbol(var->getName());
-            if (!mFunction->type->isFunctionType())
+            if (mFunction && !mFunction->type->isFunctionType())
             {
                 diag.reportCompilerError(
                     mSource.start,

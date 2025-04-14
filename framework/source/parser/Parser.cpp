@@ -4,6 +4,7 @@
 
 #include "parser/ast/expression/BinaryExpression.h"
 #include "parser/ast/expression/UnaryExpression.h"
+#include "parser/ast/expression/MemberAccess.h"
 
 #include "type/StructType.h"
 #include "type/PointerType.h"
@@ -73,6 +74,8 @@ namespace parser
         {
             case lexer::TokenType::LeftParen:
             case lexer::TokenType::LeftBracket:
+            case lexer::TokenType::Dot:
+            case lexer::TokenType::RightArrow:
                 return 90;
 
             case lexer::TokenType::Star:
@@ -221,6 +224,20 @@ namespace parser
                 source.end = consume().getEndLocation();
 
                 left = std::make_unique<BinaryExpression>(mActiveScope, std::move(left), std::move(operatorToken), std::move(index), std::move(source));
+            }
+            else if (operatorToken.getTokenType() == lexer::TokenType::Dot)
+            {
+                expectToken(lexer::TokenType::Identifier);
+                std::string id(consume().getText());
+                source.end = peek(-1).getEndLocation();
+                left = std::make_unique<MemberAccess>(mActiveScope, std::move(left), std::move(id), false, std::move(source));
+            }
+            else if (operatorToken.getTokenType() == lexer::TokenType::RightArrow)
+            {
+                expectToken(lexer::TokenType::Identifier);
+                std::string id(consume().getText());
+                source.end = peek(-1).getEndLocation();
+                left = std::make_unique<MemberAccess>(mActiveScope, std::move(left), std::move(id), true, std::move(source));
             }
             else
             {

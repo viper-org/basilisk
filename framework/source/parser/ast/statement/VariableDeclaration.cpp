@@ -19,7 +19,7 @@ namespace parser
 
     vipir::Value* VariableDeclaration::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        if (mType->isArrayType())
+        if (mType->isArrayType() || mType->isStructType())
         {
             auto alloca = builder.CreateAlloca(mType->getVipirType());
             mSymbol->values.push_back(std::make_pair(builder.getInsertPoint(), alloca));

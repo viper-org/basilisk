@@ -1,5 +1,7 @@
 // Copyright 2025 solar-mist
 
+#include "Options.h"
+
 #include <lexer/Lexer.h>
 #include <lexer/Token.h>
 
@@ -23,18 +25,31 @@ int main(int argc, char** argv)
         std::exit(1);
     }
 
-    std::string inputFilePath = argv[1]; // TODO: Command-line option parsing
+    auto options = Option::ParseOptions(argc, argv);
+    auto inputFilePath = Option::GetInputFile(options);
+
     std::ifstream inputFile(inputFilePath);
     std::stringstream buffer;
     buffer << inputFile.rdbuf();
     std::string text = std::move(buffer).str();
     inputFile.close();
 
-    lexer::Lexer lexer(text, inputFilePath);
-    auto tokens = lexer.lex();
-
     diagnostic::Diagnostics diag;
     diag.setText(text);
+    for (const auto& option : options)
+    {
+        if (option.type == OptionType::WarningSpec)
+        {
+            if (option.value.starts_with("no-"))
+                diag.setWarning(false, option.value.substr(3));
+            else
+                diag.setWarning(true, option.value);
+        }
+    }
+
+
+    lexer::Lexer lexer(text, inputFilePath);
+    auto tokens = lexer.lex();
 
     Type::Init();
     
@@ -43,7 +58,11 @@ int main(int argc, char** argv)
 
     vipir::Module module(inputFilePath);
     module.setABI<vipir::abi::SysV>();
-    module.getPassManager().insertBefore(vipir::PassType::LIREmission, std::make_unique<vipir::ConstantFoldingPass>());
+    Option::ParseOptimizingFlags(options, module, diag);
+    // Always do constant folding
+    if (module.getPassManager().findPass(vipir::PassType::ConstantFolding) == -1)
+        module.getPassManager().insertBefore(vipir::PassType::LIREmission, std::make_unique<vipir::ConstantFoldingPass>());
+
     vipir::IRBuilder builder;
     
     bool exit = false;

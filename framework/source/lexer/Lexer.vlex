@@ -3,6 +3,8 @@ tokens {
     )
     {
     _right_brace
+    [
+    ]
 
     ->
 

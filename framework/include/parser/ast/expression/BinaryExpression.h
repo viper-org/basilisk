@@ -30,6 +30,9 @@ namespace parser
 
             // Assignment
             Assign,
+
+            // Special
+            Index
         };
 
         BinaryExpression(Scope* scope, ASTNodePtr left, lexer::Token operatorToken, ASTNodePtr right, SourcePair source);

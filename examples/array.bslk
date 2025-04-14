@@ -1,0 +1,15 @@
+func print(value: i32) -> void;
+
+func main() -> i32 {
+    let x: i32[5];
+    for (let idx = 0; idx < 5; idx = idx + 1)
+        x[idx] = idx * 2;
+
+    let p: i32* = &x[0];
+    *p = 66;
+
+    for (let j = 0; j < 5; j = j + 1)
+        print(x[j]);
+
+    return x[2];
+}

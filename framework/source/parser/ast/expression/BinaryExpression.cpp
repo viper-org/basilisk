@@ -4,6 +4,7 @@
 #include "parser/ast/expression/VariableExpression.h"
 
 #include "type/IntegerType.h"
+#include "type/ArrayType.h"
 
 #include <vipir/Module.h>
 
@@ -11,6 +12,7 @@
 #include <vipir/IR/Instruction/StoreInst.h>
 #include <vipir/IR/Instruction/AllocaInst.h>
 #include <vipir/IR/Instruction/LoadInst.h>
+#include <vipir/IR/Instruction/GEPInst.h>
 
 namespace parser
 {
@@ -57,6 +59,11 @@ namespace parser
             case lexer::TokenType::Equal:
                 mOperator = Operator::Assign;
                 break;
+
+            case lexer::TokenType::LeftBracket:
+                mOperator = Operator::Index;
+                break;
+
             default:
                 break; // Unreachable
 		}
@@ -129,7 +136,6 @@ namespace parser
                     {
                         symbol->values.push_back(std::make_pair(builder.getInsertPoint(), right));
                     }
-                    return nullptr;
                 }
                 else if (auto load = dynamic_cast<vipir::LoadInst*>(left))
                 {
@@ -139,7 +145,20 @@ namespace parser
 
                     builder.CreateStore(pointerOperand, right);
                 }
+                return nullptr;
             }
+
+            case Operator::Index:
+                if (auto load = dynamic_cast<vipir::LoadInst*>(left))
+                {
+                    auto pointerOperand = vipir::getPointerOperand(load);
+                    auto instruction = static_cast<vipir::Instruction*>(left);
+                    instruction->eraseFromParent();
+
+                    auto gep = builder.CreateGEP(pointerOperand, right);
+                    return builder.CreateLoad(gep);
+                }
+                break;
 
             default:
                 break;
@@ -244,7 +263,7 @@ namespace parser
                         diag.reportCompilerError(
                             mSource.start,
                             mSource.end,
-                            std::format("No match for '{}operator{}{} with types '{}{}{}' and '{}{}{}'",
+                            std::format("No match for '{}operator{}{}' with types '{}{}{}' and '{}{}{}'",
                                 fmt::bold, mOperatorToken.getName(), fmt::defaults,
                                 fmt::bold, mLeft->getType()->getName(), fmt::defaults,
                                 fmt::bold, mRight->getType()->getName(), fmt::defaults)
@@ -252,6 +271,39 @@ namespace parser
                         exit = true;
                     }
                 }
+                break;
+            
+            case Operator::Index:
+                if (!mLeft->getType()->isArrayType())
+                {
+                    diag.reportCompilerError(
+                        mSource.start,
+                        mSource.end,
+                        std::format("No match for '{}operator[]{}' with type '{}{}{}'",
+                            fmt::bold, fmt::defaults,
+                            fmt::bold, mLeft->getType()->getName(), fmt::defaults)
+                    );
+                    exit = true;
+                }
+                if (!mRight->getType()->isIntegerType())
+                {
+                    if (mRight->canImplicitCast(diag, Type::Get("i32")))
+                    {
+                        mRight = Cast(mRight, Type::Get("i32"));
+                    }
+                    else
+                    {
+                        diag.reportCompilerError(
+                            mSource.start,
+                            mSource.end,
+                            std::format("No match for '{}operator[]{}' with index type '{}{}{}'",
+                                fmt::bold, fmt::defaults,
+                                fmt::bold, mRight->getType()->getName(), fmt::defaults)
+                        );
+                        exit = true;
+                    }
+                }
+                mType = static_cast<ArrayType*>(mLeft->getType())->getElementType();
                 break;
 
             default:

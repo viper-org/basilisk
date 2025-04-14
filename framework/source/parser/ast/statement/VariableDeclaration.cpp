@@ -19,6 +19,13 @@ namespace parser
 
     vipir::Value* VariableDeclaration::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
+        if (mType->isArrayType())
+        {
+            auto alloca = builder.CreateAlloca(mType->getVipirType());
+            mSymbol->values.push_back(std::make_pair(builder.getInsertPoint(), alloca));
+            // TODO: Check initValue here
+        }
+
         if (mInitValue)
         {
             vipir::Value* initValue = mInitValue->codegen(builder, module, diag);

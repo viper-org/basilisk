@@ -5,6 +5,7 @@
 
 #include <vipir/IR/BasicBlock.h>
 #include <vipir/IR/Instruction/PhiInst.h>
+#include <vipir/IR/Instruction/AllocaInst.h>
 
 #include <algorithm>
 
@@ -50,7 +51,11 @@ namespace parser
         for (auto symbol : symbols)
         {
             auto startBasicBlockValue = symbol->getLatestValue(startBasicBlock);
-            if (!startBasicBlockValue) continue;
+            if (!startBasicBlockValue || dynamic_cast<vipir::AllocaInst*>(startBasicBlockValue))
+            {
+                phis.push_back(nullptr);
+                continue;
+            }
             auto phi = builder.CreatePhi(symbol->type->getVipirType());
             phi->addIncoming(startBasicBlockValue, startBasicBlock);
             phis.push_back(phi);
@@ -64,6 +69,8 @@ namespace parser
         
         for (int i = 0; i < phis.size(); ++i)
         {
+            if (!phis[i]) continue;
+
             auto bodyBasicBlockValue = symbols[i]->getLatestValue(bodyBasicBlock);
             auto startBasicBlockValue = symbols[i]->getLatestValue(startBasicBlock);
             if (bodyBasicBlockValue && bodyBasicBlockValue != startBasicBlockValue)

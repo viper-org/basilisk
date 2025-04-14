@@ -38,6 +38,7 @@ set(SOURCES
     "source/type/VoidType.cpp"
     "source/type/BooleanType.cpp"
     "source/type/PointerType.cpp"
+    "source/type/ArrayType.cpp"
     "source/type/FunctionType.cpp"
     "source/type/ErrorType.cpp"
 )
@@ -68,6 +69,7 @@ set(HEADERS
     "include/type/VoidType.h"
     "include/type/BooleanType.h"
     "include/type/PointerType.h"
+    "include/type/ArrayType.h"
     "include/type/FunctionType.h"
     "include/type/ErrorType.h"
 )

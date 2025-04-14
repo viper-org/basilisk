@@ -6,6 +6,7 @@
 #include "parser/ast/expression/UnaryExpression.h"
 
 #include "type/PointerType.h"
+#include "type/ArrayType.h"
 
 namespace parser
 {
@@ -70,6 +71,7 @@ namespace parser
         switch (tokenType) 
         {
             case lexer::TokenType::LeftParen:
+            case lexer::TokenType::LeftBracket:
                 return 90;
 
             case lexer::TokenType::Star:
@@ -116,10 +118,27 @@ namespace parser
         expectToken(lexer::TokenType::Type);
         auto type = Type::Get(std::string(consume().getText()));
 
-        while (current().getTokenType() == lexer::TokenType::Star)
+        while (current().getTokenType() == lexer::TokenType::Star ||
+               current().getTokenType() == lexer::TokenType::LeftBracket)
         {
-            type = PointerType::Get(type);
-            consume();
+            if (current().getTokenType() == lexer::TokenType::Star)
+            {
+                type = PointerType::Get(type);
+                consume();
+            }
+            else // [
+            {
+                consume();
+
+                expectToken(lexer::TokenType::IntegerLiteral);
+                std::string text(consume().getText());
+                auto value = std::stoull(text, nullptr, 0);
+
+                expectToken(lexer::TokenType::RightBracket);
+                consume();
+
+                type = ArrayType::Get(type, value);
+            }
         }
 
         return type;
@@ -177,6 +196,14 @@ namespace parser
             if (operatorToken.getTokenType() == lexer::TokenType::LeftParen)
             {
                 left = parseCallExpression(std::move(left));
+            }
+            else if (operatorToken.getTokenType() == lexer::TokenType::LeftBracket)
+            {
+                ASTNodePtr index = parseExpression(binaryOperatorPrecedence);
+                expectToken(lexer::TokenType::RightBracket);
+                source.end = consume().getEndLocation();
+
+                left = std::make_unique<BinaryExpression>(mActiveScope, std::move(left), std::move(operatorToken), std::move(index), std::move(source));
             }
             else
             {

@@ -27,8 +27,10 @@ tokens {
     =
     &
 
-    return
     func
+    struct
+
+    return
     let
     if
     else

@@ -33,6 +33,7 @@ public:
     virtual bool isBooleanType()  const { return false; }
     virtual bool isPointerType()  const { return false; }
     virtual bool isArrayType()    const { return false; }
+    virtual bool isStructType()   const { return false; }
 
     static void Init();
     static bool Exists(const std::string& name);

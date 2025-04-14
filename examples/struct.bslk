@@ -1,0 +1,8 @@
+struct example_struct {
+    size: i32;
+}
+
+func main() -> i32 {
+    let x: struct example_struct;
+    return 0;
+}

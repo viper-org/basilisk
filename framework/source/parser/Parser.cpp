@@ -5,6 +5,7 @@
 #include "parser/ast/expression/BinaryExpression.h"
 #include "parser/ast/expression/UnaryExpression.h"
 
+#include "type/StructType.h"
 #include "type/PointerType.h"
 #include "type/ArrayType.h"
 
@@ -115,8 +116,21 @@ namespace parser
 
     Type* Parser::parseType()
     {
-        expectToken(lexer::TokenType::Type);
-        auto type = Type::Get(std::string(consume().getText()));
+        // TODO: Function pointers
+
+        Type* type;
+        if (current().getTokenType() == lexer::TokenType::StructKeyword)
+        {
+            consume();
+            expectToken(lexer::TokenType::Identifier);
+            std::string name(consume().getText());
+            type = StructType::Get(name);
+        }
+        else
+        {
+            expectToken(lexer::TokenType::Type);
+            type = Type::Get(std::string(consume().getText()));
+        }
 
         while (current().getTokenType() == lexer::TokenType::Star ||
                current().getTokenType() == lexer::TokenType::LeftBracket)
@@ -151,6 +165,9 @@ namespace parser
         {
             case lexer::TokenType::FuncKeyword:
                 return parseFunction();
+
+            case lexer::TokenType::StructKeyword:
+                return parseStructDeclaration();
 
             case lexer::TokenType::EndOfFile:
                 consume();
@@ -336,6 +353,38 @@ namespace parser
         mActiveScope = scope->parent;
 
         return std::make_unique<Function>(std::move(name), functionType, std::move(arguments), std::move(scope), false, std::move(body), std::move(source));
+    }
+
+    StructDeclarationPtr Parser::parseStructDeclaration()
+    {
+        SourcePair source;
+        source.start = current().getStartLocation();
+        consume(); // struct
+
+        expectToken(lexer::TokenType::Identifier);
+        std::string name(consume().getText());
+
+        expectToken(lexer::TokenType::LeftBrace);
+        consume();
+        std::vector<StructField> fields;
+        while (current().getTokenType() != lexer::TokenType::RightBrace)
+        {
+            expectToken(lexer::TokenType::Identifier);
+            std::string name(consume().getText());
+
+            expectToken(lexer::TokenType::Colon);
+            consume();
+            auto type = parseType();
+
+            fields.emplace_back(type, std::move(name));
+
+            expectToken(lexer::TokenType::Semicolon);
+            consume();
+        }
+        consume();
+        source.end = peek(-1).getEndLocation();
+
+        return std::make_unique<StructDeclaration>(mActiveScope, std::move(name), std::move(fields), std::move(source));
     }
 
 

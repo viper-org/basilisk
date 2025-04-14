@@ -6,6 +6,7 @@
 #include "parser/ast/ASTNode.h"
 
 #include "parser/ast/global/Function.h"
+#include "parser/ast/global/StructDeclaration.h"
 
 #include "parser/ast/statement/ReturnStatement.h"
 #include "parser/ast/statement/VariableDeclaration.h"
@@ -58,6 +59,7 @@ namespace parser
         ASTNodePtr parseParenthesizedExpression();
 
         FunctionPtr parseFunction();
+        StructDeclarationPtr parseStructDeclaration();
 
         ReturnStatementPtr parseReturnStatement();
         VariableDeclarationPtr parseVariableDeclaration();

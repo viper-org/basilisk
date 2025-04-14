@@ -77,6 +77,11 @@ namespace parser
         switch (mOperator) 
         {
             case Operator::Add:
+                if (mLeft->getType()->isPointerType())
+                {
+                    return builder.CreateGEP(left, right);
+                }
+
                 return builder.CreateAdd(left, right);
             case Operator::Sub:
                 return builder.CreateSub(left, right);
@@ -174,6 +179,32 @@ namespace parser
         switch (mOperator) 
         {
             case parser::BinaryExpression::Operator::Add:
+                if (mLeft->getType()->isPointerType())
+                {
+                    if (!mRight->getType()->isIntegerType())
+                    {
+                        if (mRight->canImplicitCast(diag, Type::Get("i64")))
+                        {
+                            mRight = Cast(mRight, Type::Get("i64"));
+                        }
+                        else
+                        {
+                            diag.reportCompilerError(
+                                mSource.start,
+                                mSource.end,
+                                std::format("No match for '{}operator{}{} with types '{}{}{}' and '{}{}{}'",
+                                    fmt::bold, mOperatorToken.getName(), fmt::defaults,
+                                    fmt::bold, mLeft->getType()->getName(), fmt::defaults,
+                                    fmt::bold, mRight->getType()->getName(), fmt::defaults)
+                            );
+                            exit = true;
+                            mType = Type::Get("error-type");
+                            break;
+                        }
+                    }
+                    mType = mLeft->getType();
+                    break;
+                }
             case parser::BinaryExpression::Operator::Sub:
             case parser::BinaryExpression::Operator::Mul:
             case parser::BinaryExpression::Operator::Div:

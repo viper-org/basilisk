@@ -44,7 +44,7 @@ namespace parser
         mInit->codegen(builder, module, diag);
         vipir::Value* precondition = mCondition->codegen(builder, module, diag);
         builder.CreateCondBr(precondition, bodyBasicBlock, mergeBasicBlock);
-
+        
         bodyBasicBlock->loopEnd() = mergeBasicBlock;
 
         builder.setInsertPoint(bodyBasicBlock);
@@ -86,6 +86,7 @@ namespace parser
                         return value.second == bodyBasicBlockValue;
                     });
                     symbols[i]->values.erase(it);
+                    phis[i]->addIncoming(phis[i], bodyBasicBlock);
                     //phis[i]->eraseFromParent();
                 }
             }

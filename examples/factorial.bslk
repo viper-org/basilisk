@@ -1,0 +1,22 @@
+func print(n: i32) -> void;
+
+func recursive_factorial(n: i32) -> i32 {
+    if (n == 0) return 1;
+
+    return n * recursive_factorial(n-1);
+}
+
+func loop_factorial(n: i32) -> i32 {
+    let f = 1;
+    while (n > 0) {
+        f = f * n;
+        n = n - 1;
+    }
+    return f;
+}
+
+func main(argc: i32) -> i32 {
+    print(loop_factorial(argc));
+    print(recursive_factorial(argc));
+    return 0;
+}

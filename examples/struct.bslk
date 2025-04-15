@@ -9,13 +9,15 @@ func main() -> i32 {
     let x: struct example_struct;
     x.size = 0;
 
+    let p = &x;
+
     for (let i = 0; i < 5; i = i + 1)
         x.things[i] = i;
 
     x.things[x.size] = 66;
 
     for (let j = 0; j < 5; j = j + 1)
-        print(x.things[j]);
+        print(p->things[j]);
 
     return 0;
 }

@@ -414,6 +414,12 @@ namespace parser
         source.start = current().getStartLocation();
         consume(); // return
 
+        if (current().getTokenType() == lexer::TokenType::Semicolon)
+        {
+            source.end = peek(-1).getEndLocation();
+            return std::make_unique<ReturnStatement>(mActiveScope, nullptr, std::move(source));
+        }
+
         auto returnValue = parseExpression();
 
         source.end = peek(-1).getEndLocation();

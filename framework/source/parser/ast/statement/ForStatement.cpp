@@ -4,6 +4,7 @@
 #include "parser/ast/statement/VariableDeclaration.h"
 
 #include <vipir/IR/BasicBlock.h>
+#include <vipir/IR/Function.h>
 #include <vipir/IR/Instruction/PhiInst.h>
 #include <vipir/IR/Instruction/AllocaInst.h>
 
@@ -73,25 +74,17 @@ namespace parser
 
             auto bodyBasicBlockValue = symbols[i]->getLatestValue(bodyBasicBlock);
             auto startBasicBlockValue = symbols[i]->getLatestValue(startBasicBlock);
-            if (bodyBasicBlockValue && bodyBasicBlockValue != startBasicBlockValue)
+            if (bodyBasicBlockValue && bodyBasicBlockValue != startBasicBlockValue && !dynamic_cast<vipir::PhiInst*>(bodyBasicBlockValue))
             {
-                if (!dynamic_cast<vipir::PhiInst*>(bodyBasicBlockValue))
-                {
-                    phis[i]->addIncoming(bodyBasicBlockValue, bodyBasicBlock);
-                }
-                else
-                {
-                    // Latest value needs to be updated
-                    auto it = std::find_if(symbols[i]->values.begin(), symbols[i]->values.end(), [bodyBasicBlockValue](const auto& value) {
-                        return value.second == bodyBasicBlockValue;
-                    });
-                    symbols[i]->values.erase(it);
-                    phis[i]->addIncoming(phis[i], bodyBasicBlock);
-                    //phis[i]->eraseFromParent();
-                }
+                phis[i]->addIncoming(bodyBasicBlockValue, bodyBasicBlock);
             }
             else
             {
+                auto it = std::find_if(symbols[i]->values.begin(), symbols[i]->values.end(), [bodyBasicBlockValue](const auto& value) {
+                    return value.second == bodyBasicBlockValue;
+                });
+                symbols[i]->values.erase(it);
+                builder.getInsertPoint()->getParent()->replaceAllUsesWith(phis[i], symbols[i]->getLatestValue(startBasicBlock));
                 phis[i]->eraseFromParent();
             }
         }

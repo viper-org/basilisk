@@ -282,6 +282,9 @@ namespace parser
             case lexer::TokenType::LeftParen:
                 return parseParenthesizedExpression();
 
+            case lexer::TokenType::StringLiteral:
+                return parseStringLiteral();
+
             default:
                 mDiag.reportCompilerError(
                     current().getStartLocation(),
@@ -604,5 +607,12 @@ namespace parser
         source.end = peek(-1).getEndLocation();
 
         return std::make_unique<CallExpression>(mActiveScope, std::move(callee), std::move(parameters), std::move(source));
+    }
+
+    StringLiteralPtr Parser::parseStringLiteral()
+    {
+        SourcePair source{current().getStartLocation(), current().getEndLocation()};
+        std::string text(consume().getText());
+        return std::make_unique<StringLiteral>(mActiveScope, std::move(text), std::move(source));
     }
 }

@@ -40,6 +40,7 @@ tokens {
 
     _identifier
     _integer_literal
+    _string_literal
 
     i8 Type
     i16 Type

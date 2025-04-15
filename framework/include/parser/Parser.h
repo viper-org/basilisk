@@ -19,6 +19,7 @@
 #include "parser/ast/expression/VariableExpression.h"
 #include "parser/ast/expression/BinaryExpression.h"
 #include "parser/ast/expression/CallExpression.h"
+#include "parser/ast/expression/StringLiteral.h"
 
 #include "diagnostic/Diagnostic.h"
 
@@ -71,6 +72,7 @@ namespace parser
         IntegerLiteralPtr parseIntegerLiteral();
         VariableExpressionPtr parseVariableExpression();
         CallExpressionPtr parseCallExpression(ASTNodePtr callee);
+        StringLiteralPtr parseStringLiteral();
     };
 }
 

@@ -30,6 +30,7 @@ set(SOURCES
     "source/parser/ast/expression/CallExpression.cpp"
     "source/parser/ast/expression/UnaryExpression.cpp"
     "source/parser/ast/expression/MemberAccess.cpp"
+    "source/parser/ast/expression/StringLiteral.cpp"
 
     "source/diagnostic/Diagnostic.cpp"
 
@@ -64,6 +65,7 @@ set(HEADERS
     "include/parser/ast/expression/CallExpression.h"
     "include/parser/ast/expression/UnaryExpression.h"
     "include/parser/ast/expression/MemberAccess.h"
+    "include/parser/ast/expression/StringLiteral.h"
 
     "include/diagnostic/Diagnostic.h"
 

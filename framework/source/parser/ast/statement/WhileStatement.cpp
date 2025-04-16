@@ -4,7 +4,9 @@
 #include "parser/ast/statement/VariableDeclaration.h"
 
 #include <vipir/IR/BasicBlock.h>
+#include <vipir/IR/Function.h>
 #include <vipir/IR/Instruction/PhiInst.h>
+#include <vipir/IR/Instruction/AllocaInst.h>
 
 #include <algorithm>
 
@@ -41,14 +43,17 @@ namespace parser
         vipir::Value* precondition = mCondition->codegen(builder, module, diag);
         builder.CreateCondBr(precondition, bodyBasicBlock, mergeBasicBlock);
 
-        startBasicBlock->loopEnd() = mergeBasicBlock;
         bodyBasicBlock->loopEnd() = mergeBasicBlock;
 
         builder.setInsertPoint(bodyBasicBlock);
         for (auto symbol : symbols)
         {
             auto startBasicBlockValue = symbol->getLatestValue(startBasicBlock);
-            if (!startBasicBlockValue) continue;
+            if (!startBasicBlockValue || dynamic_cast<vipir::AllocaInst*>(startBasicBlockValue))
+            {
+                phis.push_back(nullptr);
+                continue;
+            }
             auto phi = builder.CreatePhi(symbol->type->getVipirType());
             phi->addIncoming(startBasicBlockValue, startBasicBlock);
             phis.push_back(phi);
@@ -61,32 +66,28 @@ namespace parser
         
         for (int i = 0; i < phis.size(); ++i)
         {
+            if (!phis[i]) continue;
+
             auto bodyBasicBlockValue = symbols[i]->getLatestValue(bodyBasicBlock);
             auto startBasicBlockValue = symbols[i]->getLatestValue(startBasicBlock);
-            if (bodyBasicBlockValue && bodyBasicBlockValue != startBasicBlockValue)
+            if (bodyBasicBlockValue && bodyBasicBlockValue != startBasicBlockValue && !dynamic_cast<vipir::PhiInst*>(bodyBasicBlockValue))
             {
-                if (!dynamic_cast<vipir::PhiInst*>(bodyBasicBlockValue))
-                {
-                    phis[i]->addIncoming(bodyBasicBlockValue, bodyBasicBlock);
-                }
-                else
-                {
-                    // Latest value needs to be updated
-                    auto it = std::find_if(symbols[i]->values.begin(), symbols[i]->values.end(), [bodyBasicBlockValue](const auto& value) {
-                        return value.second == bodyBasicBlockValue;
-                    });
-                    symbols[i]->values.erase(it);
-                    phis[i]->eraseFromParent();
-                }
+                phis[i]->addIncoming(bodyBasicBlockValue, bodyBasicBlock);
+                symbols[i]->values.push_back(std::make_pair(mergeBasicBlock, phis[i]));
             }
             else
             {
+                auto it = std::find_if(symbols[i]->values.begin(), symbols[i]->values.end(), [bodyBasicBlockValue](const auto& value) {
+                    return value.second == bodyBasicBlockValue;
+                });
+                symbols[i]->values.erase(it);
+                builder.getInsertPoint()->getParent()->replaceAllUsesWith(phis[i], symbols[i]->getLatestValue(startBasicBlock));
                 phis[i]->eraseFromParent();
             }
         }
 
         builder.setInsertPoint(mergeBasicBlock);
-
+        return nullptr;
 
         for (auto symbol : symbols)
         {

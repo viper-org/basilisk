@@ -77,6 +77,7 @@ namespace parser
             if (bodyBasicBlockValue && bodyBasicBlockValue != startBasicBlockValue && !dynamic_cast<vipir::PhiInst*>(bodyBasicBlockValue))
             {
                 phis[i]->addIncoming(bodyBasicBlockValue, bodyBasicBlock);
+                symbols[i]->values.push_back(std::make_pair(mergeBasicBlock, phis[i]));
             }
             else
             {

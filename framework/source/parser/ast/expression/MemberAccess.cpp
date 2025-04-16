@@ -5,6 +5,7 @@
 #include "type/StructType.h"
 #include "type/PointerType.h"
 #include "type/FunctionType.h"
+#include "type/PendingType.h"
 
 #include <vipir/IR/Instruction/GEPInst.h>
 #include <vipir/IR/Instruction/LoadInst.h>
@@ -82,14 +83,21 @@ namespace parser
                 diag.reportCompilerError(
                     mSource.start,
                     mSource.end,
-                    std::format("{}'operator->'{} used on non-pointer-to-struct value",
-                        fmt::bold, fmt::defaults)
+                    std::format("{}'operator->'{} used on non-pointer-to-struct value with type '{}{}{}'",
+                        fmt::bold, fmt::defaults, fmt::bold, pointeeType->getName(), fmt::defaults)
                 );
                 exit = true;
                 mType = Type::Get("error-type");
                 return;
             }
-            mStructType = static_cast<StructType*>(pointeeType);
+            if (auto pending = dynamic_cast<PendingType*>(pointeeType))
+            {
+                mStructType = pending->get();
+            }
+            else
+            {
+                mStructType = static_cast<StructType*>(pointeeType);
+            }
         }
         else
         {
@@ -105,7 +113,14 @@ namespace parser
                 mType = Type::Get("error-type");
                 return;
             }
-            mStructType = static_cast<StructType*>(mStruct->getType());
+            if (auto pending = dynamic_cast<PendingType*>(mStruct->getType()))
+            {
+                mStructType = pending->get();
+            }
+            else
+            {
+                mStructType = static_cast<StructType*>(mStruct->getType());
+            }
         }
 
         auto structField = mStructType->getField(mId);

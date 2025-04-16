@@ -37,6 +37,8 @@ tokens {
     else
     while
     for
+    import
+    export
 
     _identifier
     _integer_literal

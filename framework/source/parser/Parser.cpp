@@ -9,20 +9,58 @@
 #include "type/StructType.h"
 #include "type/PointerType.h"
 #include "type/ArrayType.h"
+#include "type/PendingType.h"
+
+#include <algorithm>
 
 namespace parser
 {
-    Parser::Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag)
+    Parser::Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag, ImportManager& importManager, bool imported)
         : mTokens(tokens)
         , mPosition(0)
         , mDiag(diag)
+        , mImportManager(importManager)
+        , mImported(imported)
+        , mDoneImports(false)
         , mActiveScope(Scope::GetGlobalScope())
     {
+    }
+
+    std::vector<std::filesystem::path> Parser::findImports()
+    {
+        std::vector<std::filesystem::path> ret;
+
+        while (current().getTokenType() == lexer::TokenType::ImportKeyword ||
+              (current().getTokenType() == lexer::TokenType::ExportKeyword && peek(1).getTokenType() == lexer::TokenType::ImportKeyword))
+        {
+            if (current().getTokenType() == lexer::TokenType::ExportKeyword) consume();
+            consume();
+            std::filesystem::path path;
+            while (current().getTokenType() != lexer::TokenType::Semicolon)
+            {
+                expectToken(lexer::TokenType::Identifier);
+                path /= consume().getText();
+
+                if (current().getTokenType() != lexer::TokenType::Semicolon)
+                {
+                    expectToken(lexer::TokenType::Dot);
+                    consume();
+                }
+            }
+            consume();
+            ret.push_back(std::move(path));
+        }
+
+        return ret;
     }
 
     std::vector<ASTNodePtr> Parser::parse()
     {
         std::vector<ASTNodePtr> ast;
+        mInsertNodeFn = [&ast](ASTNodePtr& node) {
+            ast.push_back(std::move(node));
+        };
+
         while (mPosition < mTokens.size())
         {
             auto node = parseGlobal();
@@ -127,7 +165,19 @@ namespace parser
             consume();
             expectToken(lexer::TokenType::Identifier);
             std::string name(consume().getText());
-            type = StructType::Get(name);
+            if (auto structType = StructType::Get(name))
+            {
+                type = structType;
+            }
+            else if (auto structType = Type::Get(name))
+            {
+                type = structType;
+            }
+            else
+            {
+                SourcePair source{peek(-2).getStartLocation(), peek(-1).getEndLocation()};
+                type = PendingType::Create(std::move(source), std::move(name), {});
+            }
         }
         else
         {
@@ -162,15 +212,23 @@ namespace parser
     }
 
 
-    ASTNodePtr Parser::parseGlobal()
+    ASTNodePtr Parser::parseGlobal(bool exported)
     {
         switch (current().getTokenType())
         {
+            case lexer::TokenType::ExportKeyword:
+                consume();
+                return parseGlobal(true);
+
+            case lexer::TokenType::ImportKeyword:
+                parseImport();
+                return nullptr;
+
             case lexer::TokenType::FuncKeyword:
-                return parseFunction();
+                return parseFunction(exported);
 
             case lexer::TokenType::StructKeyword:
-                return parseStructDeclaration();
+                return parseStructDeclaration(exported);
 
             case lexer::TokenType::EndOfFile:
                 consume();
@@ -306,7 +364,7 @@ namespace parser
     }
 
 
-    FunctionPtr Parser::parseFunction()
+    FunctionPtr Parser::parseFunction(bool exported)
     {
         SourcePair source;
         source.start = current().getStartLocation();
@@ -353,7 +411,7 @@ namespace parser
         {
             consume();
             ScopePtr scope = std::make_unique<Scope>(mActiveScope);
-            return std::make_unique<Function>(std::move(name), functionType, std::move(arguments), std::move(scope), true, std::move(body), std::move(source));
+            return std::make_unique<Function>(exported, std::move(name), functionType, std::move(arguments), std::move(scope), true, std::move(body), std::move(source));
         }
 
         expectToken(lexer::TokenType::LeftBrace);
@@ -372,10 +430,17 @@ namespace parser
 
         mActiveScope = scope->parent;
 
-        return std::make_unique<Function>(std::move(name), functionType, std::move(arguments), std::move(scope), false, std::move(body), std::move(source));
+        bool external = false;
+        if (mImported)
+        {
+            external = true;
+            body.clear();
+        }
+
+        return std::make_unique<Function>(exported, std::move(name), functionType, std::move(arguments), std::move(scope), external, std::move(body), std::move(source));
     }
 
-    StructDeclarationPtr Parser::parseStructDeclaration()
+    StructDeclarationPtr Parser::parseStructDeclaration(bool exported)
     {
         SourcePair source;
         source.start = current().getStartLocation();
@@ -404,7 +469,98 @@ namespace parser
         consume();
         source.end = peek(-1).getEndLocation();
 
-        return std::make_unique<StructDeclaration>(mActiveScope, std::move(name), std::move(fields), std::move(source));
+        PendingType* pendingType = nullptr;
+        if (auto type = Type::Get(name))
+        {
+            pendingType = static_cast<PendingType*>(type);
+            auto& pendings = PendingType::GetPending();
+            std::erase(pendings, pendingType);
+        }
+
+        if (mImported)
+        {
+            auto structDef = std::make_unique<StructDeclaration>(mActiveScope, exported, true, name, std::move(fields), std::move(source));
+            mImportManager.addPendingType(std::move(name));
+            return structDef;
+        }
+
+        auto structDef = std::make_unique<StructDeclaration>(mActiveScope, exported, false, name, std::move(fields), std::move(source));
+        if (pendingType) pendingType->initComplete();
+        return structDef;
+    }
+
+    void Parser::parseImport()
+    {
+        consume(); // import
+
+        std::filesystem::path path;
+        while (current().getTokenType() != lexer::TokenType::Semicolon)
+        {
+            expectToken(lexer::TokenType::Identifier);
+            path /= consume().getText();
+
+            if (current().getTokenType() != lexer::TokenType::Semicolon)
+            {
+                expectToken(lexer::TokenType::Dot);
+                consume();
+            }
+        }
+        consume();
+        if (mImported || mDoneImports) return;
+
+        std::vector<Import> allImports;
+        mImportManager.collectAllImports(path, mTokens[0].getStartLocation().file, allImports);
+        for (auto it = allImports.begin(); it != allImports.end(); ++it)
+        {
+            auto& import = *it;
+
+            // Don't import the current file
+            if (import.from == mTokens[0].getStartLocation().file) continue;
+            // We only want to import each file once
+            auto lookIt = std::find_if(allImports.begin(), allImports.end(), [import](const auto& imp){
+                return imp.from == import.from;
+            });
+            if (lookIt != it) continue;
+
+            //ScopePtr scope = std::make_unique<Scope>(nullptr);
+
+            auto nodes = mImportManager.resolveImports(import.from, import.to, mActiveScope, true);
+            for (auto& node : nodes)
+            {
+                mInsertNodeFn(node);
+            }
+
+            auto exports = mImportManager.getExports();
+            std::vector<Export> invalid;
+            for (auto& exp : exports)
+            {
+                bool importedHere = mImportManager.wasExportedTo(std::string(mTokens[0].getStartLocation().file), allImports, exp);
+                if (!exp.symbol || !importedHere)
+                {
+                    invalid.push_back(exp);
+                }
+            }
+            for (auto& symbol : invalid)
+            {
+                if (symbol.symbol)
+                {
+                    symbol.symbol->removed = true;
+                }
+            }
+
+            //mActiveScope->children.push_back(scope.get());
+            for (auto& pendingType : mImportManager.getPendingTypeNames())
+            {
+                auto type = static_cast<PendingType*>(Type::Get(pendingType));
+                auto sym = mActiveScope->resolveSymbol(pendingType);
+                if (sym && !sym->removed) type->initComplete();
+                else type->initIncomplete();
+            }
+
+            //mImportManager.seizeScope(std::move(scope));
+            mImportManager.clearExports();
+        }
+        mDoneImports = true;
     }
 
 

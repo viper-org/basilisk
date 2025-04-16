@@ -25,12 +25,19 @@
 
 #include "lexer/Token.h"
 
+#include "import/ImportManager.h"
+
+#include <filesystem>
+#include <functional>
+
 namespace parser
 {
     class Parser
     {
     public:
-        Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag);
+        Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag, ImportManager& importManager, bool imported = false);
+
+        std::vector<std::filesystem::path> findImports();
 
         std::vector<ASTNodePtr> parse();
 
@@ -39,6 +46,11 @@ namespace parser
         unsigned int mPosition;
 
         diagnostic::Diagnostics& mDiag;
+
+        ImportManager& mImportManager;
+        bool mImported;
+        bool mDoneImports;
+        std::function<void(ASTNodePtr&)> mInsertNodeFn;
 
         Scope* mActiveScope;
 
@@ -54,13 +66,14 @@ namespace parser
 
         Type* parseType();
 
-        ASTNodePtr parseGlobal();
+        ASTNodePtr parseGlobal(bool exported = false);
         ASTNodePtr parseExpression(int precedence = 1);
         ASTNodePtr parsePrimary();
         ASTNodePtr parseParenthesizedExpression();
 
-        FunctionPtr parseFunction();
-        StructDeclarationPtr parseStructDeclaration();
+        FunctionPtr parseFunction(bool exported);
+        StructDeclarationPtr parseStructDeclaration(bool exported);
+        void parseImport();
 
         ReturnStatementPtr parseReturnStatement();
         VariableDeclarationPtr parseVariableDeclaration();

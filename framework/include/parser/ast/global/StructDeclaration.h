@@ -22,7 +22,7 @@ namespace parser
     class StructDeclaration : public ASTNode
     {
     public:
-        StructDeclaration(Scope* scope, std::string name, std::vector<StructField> fields, SourcePair source);
+        StructDeclaration(Scope* scope, bool exported, bool pending, std::string name, std::vector<StructField> fields, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
@@ -31,6 +31,8 @@ namespace parser
     private:
         std::string mName;
         std::vector<StructField> mFields;
+
+        Symbol* mSymbol;
     };
     using StructDeclarationPtr = std::unique_ptr<StructDeclaration>;
 }

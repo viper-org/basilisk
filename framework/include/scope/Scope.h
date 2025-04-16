@@ -25,6 +25,9 @@ struct Symbol
     Type* type;
     std::vector<std::pair<vipir::BasicBlock*, vipir::Value*> > values;
     std::vector<vipir::BasicBlock*> searched;
+    
+    bool exported { false };
+    bool removed { false };
 };
 using SymbolPtr = std::unique_ptr<Symbol>;
 

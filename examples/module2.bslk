@@ -1,0 +1,4 @@
+export struct string {
+    data: i8*;
+    size: i32;
+}

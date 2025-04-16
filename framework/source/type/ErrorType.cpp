@@ -2,14 +2,15 @@
 
 #include "type/ErrorType.h"
 
-ErrorType::ErrorType()
+ErrorType::ErrorType(int size)
     : Type("error-type")
+    , mSize(size)
 {
 }
 
 int ErrorType::getSize() const
 {
-    return 0;
+    return mSize;
 }
 
 Type::CastLevel ErrorType::castTo(Type* destType) const

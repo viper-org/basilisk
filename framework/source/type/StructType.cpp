@@ -13,7 +13,7 @@
 #include <vector>
 
 StructType::StructType(std::string name, std::vector<Field> fields)
-    : Type(name)
+    : Type("struct " + name)
     , mName(std::move(name))
     , mFields(std::move(fields))
 {

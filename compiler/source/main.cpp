@@ -27,8 +27,10 @@ int main(int argc, char** argv)
 
     auto options = Option::ParseOptions(argc, argv);
     auto inputFilePath = Option::GetInputFile(options);
+    std::filesystem::path fullInputFilePath = std::filesystem::current_path() / inputFilePath;
+    std::string fullInputPathName = fullInputFilePath.string();
 
-    std::ifstream inputFile(inputFilePath);
+    std::ifstream inputFile(fullInputPathName);
     std::stringstream buffer;
     buffer << inputFile.rdbuf();
     std::string text = std::move(buffer).str();
@@ -48,13 +50,16 @@ int main(int argc, char** argv)
     }
 
 
-    lexer::Lexer lexer(text, inputFilePath);
+    lexer::Lexer lexer(text, fullInputPathName);
     auto tokens = lexer.lex();
 
     Type::Init();
-    
-    parser::Parser parser(tokens, diag);
+
+    ImportManager importManager;
+    parser::Parser parser(tokens, diag, importManager);
     auto ast = parser.parse();
+
+    importManager.reportUnknownTypeErrors();
 
     vipir::Module module(inputFilePath);
     module.setABI<vipir::abi::SysV>();

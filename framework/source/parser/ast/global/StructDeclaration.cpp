@@ -3,6 +3,7 @@
 #include "parser/ast/global/StructDeclaration.h"
 
 #include "type/StructType.h"
+#include "type/PendingType.h"
 
 #include <vipir/IR/Function.h>
 #include <vipir/Type/FunctionType.h>
@@ -16,18 +17,37 @@ namespace parser
     }
     
     
-    StructDeclaration::StructDeclaration(Scope* scope, std::string name, std::vector<StructField> fields, SourcePair source)
+    StructDeclaration::StructDeclaration(Scope* scope, bool exported, bool pending, std::string name, std::vector<StructField> fields, SourcePair source)
         : ASTNode(scope, std::move(source))
         , mName(std::move(name))
         , mFields(std::move(fields))
     {
+        mScope->symbols.push_back(std::make_unique<Symbol>(mName, nullptr));
+        mSymbol = mScope->symbols.back().get();
+        mSymbol->exported = exported;
+
         std::vector<StructType::Field> structTypeFields;
         for (auto& field : mFields)
         {
             structTypeFields.push_back(StructType::Field{field.name, field.type});
         }
-        
-        mType = StructType::Create(mName, std::move(structTypeFields));
+
+        if (auto type = Type::Get(mName))
+        {
+            auto pending = dynamic_cast<PendingType*>(type);
+            pending->set(structTypeFields);
+        }
+        else
+        {
+            if (pending)
+            {
+                mType = PendingType::Create(mSource, mName, std::move(structTypeFields));
+            }
+            else
+            {
+                mType = StructType::Create(mName, std::move(structTypeFields));
+            }
+        }
     }
 
     vipir::Value* StructDeclaration::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)

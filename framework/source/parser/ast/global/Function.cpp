@@ -14,7 +14,7 @@ namespace parser
     }
     
 
-    Function::Function(std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source)
+    Function::Function(bool exported, std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source)
         : ASTNode(ownScope->parent, source, functionType)
         , mName(std::move(name))
         , mArguments(std::move(arguments))
@@ -25,6 +25,7 @@ namespace parser
         mOwnScope->currentReturnType = functionType->getReturnType();
         mScope->symbols.push_back(std::make_unique<Symbol>(mName, functionType));
         mSymbol = mScope->symbols.back().get();
+        mSymbol->exported = exported;
 
         for (auto& argument : mArguments)
         {

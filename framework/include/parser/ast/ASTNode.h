@@ -9,6 +9,8 @@
 
 #include "diagnostic//Diagnostic.h"
 
+#include "debug/SourcePair.h"
+
 #include <vipir/IR/IRBuilder.h>
 
 #include <cassert>
@@ -16,12 +18,6 @@
 
 namespace parser
 {
-    struct SourcePair
-    {
-        lexer::SourceLocation start;
-        lexer::SourceLocation end;
-    };
-
     class ASTNode
     {
     public:

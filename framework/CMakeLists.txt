@@ -36,6 +36,8 @@ set(SOURCES
 
     "source/scope/Scope.cpp"
 
+    "source/import/ImportManager.cpp"
+
     "source/type/Type.cpp"
     "source/type/IntegerType.cpp"
     "source/type/VoidType.cpp"
@@ -45,6 +47,7 @@ set(SOURCES
     "source/type/StructType.cpp"
     "source/type/FunctionType.cpp"
     "source/type/ErrorType.cpp"
+    "source/type/PendingType.cpp"
 )
 
 set(HEADERS
@@ -68,8 +71,11 @@ set(HEADERS
     "include/parser/ast/expression/StringLiteral.h"
 
     "include/diagnostic/Diagnostic.h"
+    "include/debug/SourcePair.h"
 
     "include/scope/Scope.h"
+
+    "include/import/ImportManager.h"
 
     "include/type/Type.h"
     "include/type/IntegerType.h"
@@ -80,6 +86,7 @@ set(HEADERS
     "include/type/StructType.h"
     "include/type/FunctionType.h"
     "include/type/ErrorType.h"
+    "include/type/PendingType.h"
 )
 
 source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})

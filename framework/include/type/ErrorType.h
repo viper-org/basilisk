@@ -8,11 +8,14 @@
 class ErrorType : public Type
 {
 public:
-    ErrorType();
+    ErrorType(int size = 0);
 
     virtual int getSize() const override;
     virtual vipir::Type* getVipirType() const override;
     virtual CastLevel castTo(Type* destType) const override;
+
+private:
+    int mSize;
 };
 
 #endif // BASILISK_FRAMEWORK_TYPE_ERROR_TYPE_H

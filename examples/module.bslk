@@ -1,0 +1,5 @@
+import module2;
+
+export func test() -> i32 {
+    return 5;
+}

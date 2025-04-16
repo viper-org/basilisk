@@ -1,9 +1,6 @@
-func putchar(c: i8) -> void;
+import module;
 
-struct string {
-    data: i8*;
-    size: i32;
-}
+func putchar(c: i8) -> void;
 
 func print(str: struct string*) -> void {
     for (let i = 0; i < str->size; i = i + 1)
@@ -20,5 +17,5 @@ func main() -> i32 {
     p->size = 13;
 
     print(&str);
-    return 0;
+    return test();
 }

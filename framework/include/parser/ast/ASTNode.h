@@ -5,13 +5,12 @@
 
 #include "scope/Scope.h"
 
-#include "lexer/Token.h"
-
 #include "diagnostic//Diagnostic.h"
 
 #include "debug/SourcePair.h"
 
 #include <vipir/IR/IRBuilder.h>
+#include <vipir/DI/DIBuilder.h>
 
 #include <cassert>
 #include <memory>
@@ -29,7 +28,13 @@ namespace parser
         Type* getType() { return mType; }
         SourcePair getSourcePair() { return mSource; }
 
-        virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) = 0;
+        virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) = 0;
+        vipir::Value* dcodegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
+        {
+            builder.CreateDebugInfo(mSource.start.line, mSource.start.col);
+            auto val = codegen(builder, diBuilder, module, diag);
+            return val;
+        }
 
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) = 0;
 

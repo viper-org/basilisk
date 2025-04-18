@@ -4,8 +4,6 @@
 
 #include <vipir/IR/Instruction/AllocaInst.h>
 
-#include <algorithm>
-
 namespace parser
 {
     VariableDeclaration::VariableDeclaration(Scope* scope, std::string name, Type* type, ASTNodePtr initValue, SourcePair source)
@@ -17,7 +15,7 @@ namespace parser
         mSymbol = mScope->symbols.back().get();
     }
 
-    vipir::Value* VariableDeclaration::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* VariableDeclaration::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         if (mType->isArrayType() || mType->isStructType())
         {
@@ -28,7 +26,7 @@ namespace parser
 
         if (mInitValue)
         {
-            vipir::Value* initValue = mInitValue->codegen(builder, module, diag);
+            vipir::Value* initValue = mInitValue->dcodegen(builder, diBuilder, module, diag);
             mSymbol->values.push_back(std::make_pair(builder.getInsertPoint(), initValue));
         }
 

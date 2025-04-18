@@ -14,7 +14,7 @@ namespace parser
     {
     }
 
-    vipir::Value* IntegerLiteral::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* IntegerLiteral::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         return vipir::ConstantInt::Get(module, mValue, mType->getVipirType());
     }

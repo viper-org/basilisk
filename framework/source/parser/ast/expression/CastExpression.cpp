@@ -17,9 +17,9 @@ namespace parser
     {
     }
 
-    vipir::Value* CastExpression::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* CastExpression::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        auto value = mValue->codegen(builder, module, diag);
+        auto value = mValue->dcodegen(builder, diBuilder, module, diag);
         if (mType->isIntegerType() && mValue->getType()->isIntegerType())
         {
             if (mType->getSize() < mValue->getType()->getSize())

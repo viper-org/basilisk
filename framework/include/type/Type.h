@@ -5,8 +5,9 @@
 
 #include <vipir/Type/Type.h>
 
-#include <memory>
+#include <vipir/DI/DIBuilder.h>
 
+#include <cassert>
 
 class Type
 {
@@ -22,6 +23,9 @@ public:
     Type(std::string name) : mName(std::move(name)) { }
     virtual ~Type() {}
 
+    void setDiType(vipir::DIType* diType) { assert(!mDiType); mDiType = diType; }
+    vipir::DIType* getDIType() const { return mDiType; }
+
     virtual int getSize() const = 0;
     virtual vipir::Type* getVipirType() const = 0;
     virtual CastLevel castTo(Type* destType) const = 0;
@@ -35,7 +39,7 @@ public:
     virtual bool isArrayType()    const { return false; }
     virtual bool isStructType()   const { return false; }
 
-    static void Init();
+    static void Init(vipir::DIBuilder* diBuilder);
     static bool Exists(const std::string& name);
     static Type* Get(const std::string& name);
 
@@ -43,6 +47,8 @@ public:
 
 protected:
     std::string mName;
+
+    vipir::DIType* mDiType { nullptr };
 };
 
 #endif // BASILISK_FRAMEWORK_TYPE_TYPE_H

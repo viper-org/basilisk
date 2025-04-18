@@ -15,7 +15,7 @@ namespace parser
     public:
         CastExpression(Scope* scope, ASTNodePtr value, Type* destType);
 
-        virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
+        virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
         virtual bool triviallyImplicitCast(diagnostic::Diagnostics& diag, Type* destType) override;

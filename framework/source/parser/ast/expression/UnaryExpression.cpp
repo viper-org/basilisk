@@ -36,9 +36,9 @@ namespace parser
         }
 	}
 
-    vipir::Value* UnaryExpression::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* UnaryExpression::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        vipir::Value* operand = mOperand->codegen(builder, module, diag);
+        vipir::Value* operand = mOperand->dcodegen(builder, diBuilder, module, diag);
 
         switch (mOperator) 
         {

@@ -16,7 +16,7 @@ namespace parser
     {
     }
 
-    vipir::Value* StringLiteral::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* StringLiteral::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         vipir::GlobalString* string = vipir::GlobalString::Create(module, std::move(mValue));
 

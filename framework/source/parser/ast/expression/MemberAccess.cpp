@@ -4,7 +4,6 @@
 
 #include "type/StructType.h"
 #include "type/PointerType.h"
-#include "type/FunctionType.h"
 #include "type/PendingType.h"
 
 #include <vipir/IR/Instruction/GEPInst.h>
@@ -14,8 +13,6 @@
 #include <vipir/Type/PointerType.h>
 
 #include <vipir/Module.h>
-
-#include <iostream>
 
 namespace parser
 {
@@ -27,16 +24,16 @@ namespace parser
     {
     }
 
-    vipir::Value* MemberAccess::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* MemberAccess::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         vipir::Value* struc;
         if (mPointer)
         {
-            struc = mStruct->codegen(builder, module, diag);
+            struc = mStruct->dcodegen(builder, diBuilder, module, diag);
         }
         else
         {
-            vipir::Value* structValue = mStruct->codegen(builder, module, diag);
+            vipir::Value* structValue = mStruct->dcodegen(builder, diBuilder, module, diag);
             struc = vipir::getPointerOperand(structValue);
 
             vipir::Instruction* instruction = static_cast<vipir::Instruction*>(structValue);

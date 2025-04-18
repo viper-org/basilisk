@@ -29,6 +29,9 @@ std::vector<Option> Option::ParseOptions(int argc, char **argv)
                 case 'O':
                     options.push_back({OptionType::OptimizationLevelSpec, arg.substr(2)});
                     break;
+
+                case 'g':
+                    options.push_back({ OptionType::DebugInfoEmission });
             }
         }
         else

@@ -36,6 +36,13 @@ int main(int argc, char** argv)
     std::string text = std::move(buffer).str();
     inputFile.close();
 
+    vipir::Module module(inputFilePath);
+    bool generateDebugInfo = false;
+    vipir::DIBuilder diBuilder(module);
+    diBuilder.setProducer("basilisk compiler");
+    diBuilder.setDirectory(fullInputFilePath.parent_path().string());
+    diBuilder.setFilename(fullInputFilePath.filename().string());
+
     diagnostic::Diagnostics diag;
     diag.setText(text);
     for (const auto& option : options)
@@ -47,13 +54,18 @@ int main(int argc, char** argv)
             else
                 diag.setWarning(true, option.value);
         }
+        else if (option.type == OptionType::DebugInfoEmission)
+        {
+            module.getPassManager().addPass(std::make_unique<vipir::DebugInfoEmissionPass>(&diBuilder));
+            generateDebugInfo = true;
+        }
     }
 
 
     lexer::Lexer lexer(text, fullInputPathName);
     auto tokens = lexer.lex();
 
-    Type::Init();
+    Type::Init(&diBuilder);
 
     ImportManager importManager;
     parser::Parser parser(tokens, diag, importManager);
@@ -61,7 +73,6 @@ int main(int argc, char** argv)
 
     importManager.reportUnknownTypeErrors();
 
-    vipir::Module module(inputFilePath);
     module.setABI<vipir::abi::SysV>();
     Option::ParseOptimizingFlags(options, module, diag);
     // Always do constant folding
@@ -79,7 +90,7 @@ int main(int argc, char** argv)
 
     for (auto& node : ast)
     {
-        node->codegen(builder, module, diag);
+        node->codegen(builder, diBuilder, module, diag);
     }
 
     std::ofstream outputFile(inputFilePath + ".o"s);

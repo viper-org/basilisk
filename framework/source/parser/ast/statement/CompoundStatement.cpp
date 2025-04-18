@@ -15,11 +15,11 @@ namespace parser
     {
     }
 
-    vipir::Value* CompoundStatement::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* CompoundStatement::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         for (auto& node : mBody)
         {
-            node->codegen(builder, module, diag);
+            node->dcodegen(builder, diBuilder, module, diag);
         }
 
         return nullptr;

@@ -14,14 +14,14 @@ namespace parser
     {
     }
 
-    vipir::Value* ReturnStatement::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* ReturnStatement::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         if (!mReturnValue)
         {
             return builder.CreateRet(nullptr);
         }
 
-        auto returnValue = mReturnValue->codegen(builder, module, diag);
+        auto returnValue = mReturnValue->dcodegen(builder, diBuilder, module, diag);
 
         return builder.CreateRet(returnValue);
     }

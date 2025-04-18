@@ -409,9 +409,10 @@ namespace parser
 
         if (current().getTokenType() == lexer::TokenType::Semicolon)
         {
+            SourcePair blockEnd {current().getStartLocation(), current().getEndLocation()};
             consume();
             ScopePtr scope = std::make_unique<Scope>(mActiveScope);
-            return std::make_unique<Function>(exported, std::move(name), functionType, std::move(arguments), std::move(scope), true, std::move(body), std::move(source));
+            return std::make_unique<Function>(exported, std::move(name), functionType, std::move(arguments), std::move(scope), true, std::move(body), std::move(source), std::move(blockEnd));
         }
 
         expectToken(lexer::TokenType::LeftBrace);
@@ -426,6 +427,7 @@ namespace parser
             expectToken(lexer::TokenType::Semicolon);
             consume();
         }
+        SourcePair blockEnd {current().getStartLocation(), current().getEndLocation()};
         consume();
 
         mActiveScope = scope->parent;
@@ -437,7 +439,17 @@ namespace parser
             body.clear();
         }
 
-        return std::make_unique<Function>(exported, std::move(name), functionType, std::move(arguments), std::move(scope), external, std::move(body), std::move(source));
+        return std::make_unique<Function>(
+            exported,
+            std::move(name),
+            functionType,
+            std::move(arguments),
+            std::move(scope),
+            external,
+            std::move(body),
+            std::move(source),
+            std::move(blockEnd)
+        );
     }
 
     StructDeclarationPtr Parser::parseStructDeclaration(bool exported)

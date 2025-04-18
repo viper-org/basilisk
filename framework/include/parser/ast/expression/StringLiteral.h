@@ -12,7 +12,7 @@ namespace parser
     public:
         StringLiteral(Scope* scope, std::string value, SourcePair source);
 
-        virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
+        virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
 

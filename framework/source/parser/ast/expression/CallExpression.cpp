@@ -5,7 +5,6 @@
 
 #include "type/FunctionType.h"
 
-#include <functional>
 #include <vipir/Module.h>
 
 #include <vipir/IR/Function.h>
@@ -13,8 +12,6 @@
 #include <vipir/IR/Instruction/LoadInst.h>
 #include <vipir/IR/Instruction/GEPInst.h>
 #include <vipir/IR/Instruction/AddrInst.h>
-
-#include <algorithm>
 
 namespace parser
 {
@@ -25,14 +22,14 @@ namespace parser
     {
     }
 
-    vipir::Value* CallExpression::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* CallExpression::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         vipir::Value* callee = mFunction->getLatestValue();
 
         std::vector<vipir::Value*> parameters;
         for (auto& parameter : mParameters)
         {
-            parameters.push_back(parameter->codegen(builder, module, diag));
+            parameters.push_back(parameter->codegen(builder, diBuilder, module, diag));
         }
 
         return builder.CreateCall(static_cast<vipir::Function*>(callee), std::move(parameters));

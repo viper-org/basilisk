@@ -16,9 +16,9 @@ namespace parser
     {
     }
 
-    vipir::Value* IfStatement::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* IfStatement::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        vipir::Value* condition = mCondition->codegen(builder, module, diag);
+        vipir::Value* condition = mCondition->dcodegen(builder, diBuilder, module, diag);
 
         vipir::BasicBlock* startBasicBlock = builder.getInsertPoint();
 
@@ -43,13 +43,13 @@ namespace parser
         }
 
         builder.setInsertPoint(trueBasicBlock);
-        mBody->codegen(builder, module, diag);
+        mBody->dcodegen(builder, diBuilder, module, diag);
         builder.CreateBr(mergeBasicBlock);
 
         if (mElseBody)
         {
             builder.setInsertPoint(falseBasicBlock);
-            mElseBody->codegen(builder, module, diag);
+            mElseBody->dcodegen(builder, diBuilder, module, diag);
             builder.CreateBr(mergeBasicBlock);
         }
 

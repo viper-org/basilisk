@@ -14,12 +14,13 @@ namespace parser
     }
     
 
-    Function::Function(bool exported, std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source)
+    Function::Function(bool exported, std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source, SourcePair blockEnd)
         : ASTNode(ownScope->parent, source, functionType)
         , mName(std::move(name))
         , mArguments(std::move(arguments))
         , mExternal(external)
         , mBody(std::move(body))
+        , mBlockEnd(std::move(blockEnd))
         , mOwnScope(std::move(ownScope))
     {
         mOwnScope->currentReturnType = functionType->getReturnType();
@@ -34,7 +35,7 @@ namespace parser
         }
     }
 
-    vipir::Value* Function::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* Function::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         vipir::FunctionType* functionType = dynamic_cast<vipir::FunctionType*>(mType->getVipirType());
 
@@ -49,11 +50,15 @@ namespace parser
 
         mSymbol->values.push_back(std::make_pair(nullptr, function));
 
+        diBuilder.setDebugType(function, static_cast<FunctionType*>(mType)->getReturnType()->getDIType());
+
         if (mExternal)
         {
             assert(mBody.empty());
             return function;
         }
+
+        diBuilder.setSourceInfo(function, mSource.start.line, mSource.start.col, mBlockEnd.start.line, mBlockEnd.start.col);
 
         vipir::BasicBlock* entryBB = vipir::BasicBlock::Create("", function);
         builder.setInsertPoint(entryBB);
@@ -67,7 +72,7 @@ namespace parser
 
         for (auto& node : mBody)
         {
-            node->codegen(builder, module, diag);
+            node->dcodegen(builder, diBuilder, module, diag);
         }
 
         return function;

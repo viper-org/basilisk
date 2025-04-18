@@ -17,7 +17,7 @@ namespace parser
     {
     }
 
-    vipir::Value* VariableExpression::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* VariableExpression::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         Symbol* symbol = mScope->resolveSymbol(mName);
         

@@ -70,12 +70,12 @@ namespace parser
 		}
 	}
 
-    vipir::Value* BinaryExpression::codegen(vipir::IRBuilder& builder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    vipir::Value* BinaryExpression::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        vipir::Value* left = mLeft->codegen(builder, module, diag);
-        vipir::Value* right = mRight->codegen(builder, module, diag);
+        vipir::Value* left = mLeft->dcodegen(builder, diBuilder, module, diag);
+        vipir::Value* right = mRight->dcodegen(builder, diBuilder, module, diag);
 
-        switch (mOperator) 
+        switch (mOperator)
         {
             case Operator::Add:
                 if (mLeft->getType()->isPointerType())
@@ -136,11 +136,12 @@ namespace parser
                         auto instruction = static_cast<vipir::Instruction*>(left);
                         instruction->eraseFromParent();
                         
-                        builder.CreateStore(symbol->getLatestValue(), right);
+                        return builder.CreateStore(symbol->getLatestValue(), right);
                     }
                     else
                     {
                         symbol->values.push_back(std::make_pair(builder.getInsertPoint(), right));
+                        return right;
                     }
                 }
                 else if (auto load = dynamic_cast<vipir::LoadInst*>(left))
@@ -149,9 +150,8 @@ namespace parser
                     auto instruction = static_cast<vipir::Instruction*>(left);
                     instruction->eraseFromParent();
 
-                    builder.CreateStore(pointerOperand, right);
+                    return builder.CreateStore(pointerOperand, right);
                 }
-                return nullptr;
             }
 
             case Operator::Index:

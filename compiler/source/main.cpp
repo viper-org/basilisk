@@ -72,6 +72,8 @@ int main(int argc, char** argv)
     auto ast = parser.parse();
 
     importManager.reportUnknownTypeErrors();
+    
+    Type::FinalizeDITypes();
 
     module.setABI<vipir::abi::SysV>();
     Option::ParseOptimizingFlags(options, module, diag);

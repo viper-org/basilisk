@@ -48,6 +48,7 @@ void PendingType::initComplete()
 {
     mImpl = StructType::Create(mName, mFields, mSource.start.line, mSource.start.col);
     std::erase(pendings, this);
+    mDiType = mImpl->getDIType();
 }
 
 void PendingType::initIncomplete()
@@ -55,6 +56,7 @@ void PendingType::initIncomplete()
     incompletes.push_back(std::make_unique<ErrorType>(getSize()));
     mImpl = incompletes.back().get();
     std::erase(pendings, this);
+    mDiType = mImpl->getDIType();
 }
 
 void PendingType::set(std::vector<StructType::Field> fields)

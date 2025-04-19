@@ -42,6 +42,7 @@ public:
     static void Init(vipir::DIBuilder* diBuilder);
     static bool Exists(const std::string& name);
     static Type* Get(const std::string& name);
+    static void FinalizeDITypes();
 
     virtual std::string_view getName() { return mName; }
 

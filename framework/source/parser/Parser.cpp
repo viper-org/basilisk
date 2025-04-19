@@ -165,11 +165,11 @@ namespace parser
             consume();
             expectToken(lexer::TokenType::Identifier);
             std::string name(consume().getText());
-            if (auto structType = StructType::Get(name))
+            if (auto structType = Type::Get(name))
             {
                 type = structType;
             }
-            else if (auto structType = Type::Get(name))
+            else if (auto structType = StructType::Get(name))
             {
                 type = structType;
             }

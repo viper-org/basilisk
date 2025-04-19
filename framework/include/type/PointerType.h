@@ -19,6 +19,7 @@ public:
     bool isPointerType() const override;
 
     static PointerType* Get(Type* pointeeType);
+    static void SetDITypes();
 
 private:
     Type* mPointeeType;

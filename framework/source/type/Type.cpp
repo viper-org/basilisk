@@ -4,7 +4,10 @@
 #include "type/IntegerType.h"
 #include "type/VoidType.h"
 #include "type/BooleanType.h"
+#include "type/PointerType.h"
+#include "type/StructType.h"
 #include "type/ErrorType.h"
+#include "type/PendingType.h"
 
 #include <dwarf.h>
 #include <unordered_map>
@@ -62,4 +65,17 @@ Type* Type::Get(const std::string& name)
     if (type != types.end()) return type->second.get();
 
     return nullptr;
+}
+
+void Type::FinalizeDITypes()
+{
+    for (auto& [_, type] : types)
+    {
+        if (auto pending = dynamic_cast<PendingType*>(type.get()))
+        {
+            pending->mDiType = pending->get()->mDiType;
+        }
+    }
+    PointerType::SetDITypes();
+    StructType::SetDITypes();
 }

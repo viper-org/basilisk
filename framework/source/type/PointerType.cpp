@@ -9,7 +9,6 @@ PointerType::PointerType(Type* pointeeType)
     : Type(std::format("{}*", pointeeType->getName()))
     , mPointeeType(pointeeType)
 {
-    mDiType = Type::GetDIBuilder()->createPointerType(mPointeeType->getDIType());
 }
 
 Type* PointerType::getPointeeType() const
@@ -52,10 +51,11 @@ bool PointerType::isPointerType() const
     return true;
 }
 
+// Maybe replace this with a hashmap?
+static std::vector<std::unique_ptr<PointerType> > pointerTypes;
+
 PointerType* PointerType::Get(Type* pointeeType)
 {
-    // Maybe replace this with a hashmap?
-    static std::vector<std::unique_ptr<PointerType> > pointerTypes;
     auto it = std::find_if(pointerTypes.begin(), pointerTypes.end(), [pointeeType](const auto& type){
         return type->getPointeeType() == pointeeType;
     });
@@ -67,4 +67,12 @@ PointerType* PointerType::Get(Type* pointeeType)
 
     pointerTypes.push_back(std::make_unique<PointerType>(pointeeType));
     return pointerTypes.back().get();
+}
+
+void PointerType::SetDITypes()
+{
+    for (auto& type : pointerTypes)
+    {
+        type->mDiType = Type::GetDIBuilder()->createPointerType(type->mPointeeType->getDIType());
+    }
 }

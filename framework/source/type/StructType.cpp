@@ -12,10 +12,12 @@
 #include <algorithm>
 #include <vector>
 
-StructType::StructType(std::string name, std::vector<Field> fields)
+StructType::StructType(std::string name, std::vector<Field> fields, int line, int col)
     : Type("struct " + name)
     , mName(std::move(name))
     , mFields(std::move(fields))
+    , mLine(line)
+    , mCol(col)
 {
 }
 
@@ -114,14 +116,21 @@ StructType* StructType::Create(std::string name, std::vector<StructType::Field> 
         return it->get();
     }
 
-    structTypes.push_back(std::make_unique<StructType>(name, fields));
+    structTypes.push_back(std::make_unique<StructType>(name, fields, line, col));
     auto* type = structTypes.back().get();
-
-    type->mDiType = Type::GetDIBuilder()->createStructureType(name, static_cast<vipir::StructType*>(type->getVipirType()), line, col);
-    for (auto& field : fields)
-    {
-        auto diStructType = static_cast<vipir::DIStructureType*>(type->mDiType);
-        diStructType->addMember(field.name, field.type->getDIType(), field.line, field.col);
-    }
+    type->mDiType = Type::GetDIBuilder()->createStructureType(type->mName, static_cast<vipir::StructType*>(type->getVipirType()), type->mLine, type->mCol);
+    
     return type;
+}
+
+void StructType::SetDITypes()
+{
+    for (auto& type : structTypes)
+    {
+        for (auto& field : type->mFields)
+        {
+            auto diStructType = static_cast<vipir::DIStructureType*>(type->mDiType);
+            diStructType->addMember(field.name, field.type->getDIType(), field.line, field.col);
+        }
+    }
 }

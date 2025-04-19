@@ -17,7 +17,7 @@ public:
         int col;
     };
 
-    StructType(std::string name, std::vector<Field> fields);
+    StructType(std::string name, std::vector<Field> fields, int line, int col);
 
     std::string_view getName() const;
     std::vector<Field>& getFields();
@@ -33,10 +33,14 @@ public:
 
     static StructType* Get(std::string name);
     static StructType* Create(std::string name, std::vector<Field> fields, int line, int col);
+    static void SetDITypes();
 
 private:
     std::string mName;
     std::vector<Field> mFields;
+
+    int mLine;
+    int mCol;
 };
 
 #endif // BASILISK_FRAMEWORK_TYPE_STRUCT_TYPE_H

@@ -17,7 +17,7 @@ namespace parser
 
     vipir::Value* VariableDeclaration::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        mSymbol->diVariable = diBuilder.createDebugVariable(mName, builder.getInsertPoint()->getParent(), mType->getDIType(), mSource.start.line, mSource.start.col);
+        mSymbol->diVariable = diBuilder.createLocalVariable(mName, builder.getInsertPoint()->getParent(), mType->getDIType(), mSource.start.line, mSource.start.col);
         if (mType->isArrayType() || mType->isStructType())
         {
             auto alloca = builder.CreateAlloca(mType->getVipirType());

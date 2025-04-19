@@ -33,12 +33,13 @@ void Type::Init(vipir::DIBuilder* diBuilder)
     types["error-type"] = std::make_unique<ErrorType>();
 
 
-    types["i8"]->setDiType(diBuilder->createDebugType("i8", types["i8"]->getVipirType(), DW_ATE_signed_char));
-    types["i16"]->setDiType(diBuilder->createDebugType("i16", types["i16"]->getVipirType(), DW_ATE_signed));
-    types["i32"]->setDiType(diBuilder->createDebugType("i32", types["i32"]->getVipirType(), DW_ATE_signed));
-    types["i64"]->setDiType(diBuilder->createDebugType("i64", types["i64"]->getVipirType(), DW_ATE_signed));
-    types["bool"]->setDiType(diBuilder->createDebugType("bool", types["bool"]->getVipirType(), DW_ATE_boolean));
-    types["void"]->setDiType(diBuilder->createDebugType("void", types["void"]->getVipirType(), DW_ATE_void));
+    types["i8"]->setDiType(diBuilder->createBasicType("i8", types["i8"]->getVipirType(), DW_ATE_signed_char));
+    types["i16"]->setDiType(diBuilder->createBasicType("i16", types["i16"]->getVipirType(), DW_ATE_signed));
+    types["i32"]->setDiType(diBuilder->createBasicType("i32", types["i32"]->getVipirType(), DW_ATE_signed));
+    types["i64"]->setDiType(diBuilder->createBasicType("i64", types["i64"]->getVipirType(), DW_ATE_signed));
+    types["bool"]->setDiType(diBuilder->createBasicType("bool", types["bool"]->getVipirType(), DW_ATE_boolean));
+    types["void"]->setDiType(diBuilder->createBasicType("void", types["void"]->getVipirType(), DW_ATE_void));
+    // TODO: Pointer type stuff
 }
 
 bool Type::Exists(const std::string& name)

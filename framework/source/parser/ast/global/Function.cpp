@@ -66,8 +66,12 @@ namespace parser
         unsigned int index = 0;
         for (auto& argument : mArguments)
         {
+            auto diVariable = diBuilder.createParameterVariable(argument.name, function, argument.type->getDIType());
+            argument.symbol->diVariable = diVariable;
+
             auto arg = function->getArgument(index++);
-            argument.symbol->values.push_back({entryBB, arg, nullptr, nullptr});
+            auto q1 = builder.CreateQueryAddress();
+            argument.symbol->values.push_back({entryBB, arg, q1, nullptr});
         }
 
         for (auto& node : mBody)

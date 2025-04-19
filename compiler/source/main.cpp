@@ -101,7 +101,14 @@ int main(int argc, char** argv)
             {
                 for (auto& value : symbol->values)
                 {
-                    symbol->diVariable->addValue(value.value, value.start, value.end);
+                    if (value.pointer)
+                    {
+                        symbol->diVariable->addPointer(value.pointer, value.start, value.end);
+                    }
+                    else
+                    {
+                        symbol->diVariable->addValue(value.value, value.start, value.end);
+                    }
                 }
             }
         }

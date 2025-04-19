@@ -14,6 +14,7 @@
 #include <vipir/IR/Instruction/AllocaInst.h>
 #include <vipir/IR/Instruction/LoadInst.h>
 #include <vipir/IR/Instruction/GEPInst.h>
+#include <vipir/IR/Instruction/AddrInst.h>
 
 namespace parser
 {
@@ -142,7 +143,15 @@ namespace parser
                     {
                         auto q2 = builder.CreateQueryAddress();
                         symbol->getLatestValue()->end = q2;
-                        symbol->values.push_back({builder.getInsertPoint(), right, q2, nullptr});
+                        vipir::DIVariable* pointer = nullptr;
+                        if (auto addr = dynamic_cast<vipir::AddrInst*>(right))
+                        {
+                            if (addr->getDebugVariable())
+                            {
+                                pointer = addr->getDebugVariable();
+                            }
+                        }
+                        symbol->values.push_back({builder.getInsertPoint(), right, q2, nullptr, pointer});
                         return right;
                     }
                 }

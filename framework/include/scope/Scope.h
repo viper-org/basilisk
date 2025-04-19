@@ -22,6 +22,12 @@ struct SymbolValue
     vipir::Value* value;
     vipir::QueryAddress* start;
     vipir::QueryAddress* end;
+
+    /*
+     * Only used in cases such as these:
+     *  y = &x;
+     */
+    vipir::DIVariable* pointer;
 };
 
 struct Symbol

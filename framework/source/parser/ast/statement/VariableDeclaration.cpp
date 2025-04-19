@@ -3,6 +3,7 @@
 #include "parser/ast/statement/VariableDeclaration.h"
 
 #include <vipir/IR/Instruction/AllocaInst.h>
+#include <vipir/IR/Instruction/AddrInst.h>
 
 namespace parser
 {
@@ -31,7 +32,15 @@ namespace parser
         {
             auto q1 = builder.CreateQueryAddress();
             vipir::Value* initValue = mInitValue->dcodegen(builder, diBuilder, module, diag);
-            mSymbol->values.push_back({builder.getInsertPoint(), initValue, q1, nullptr});
+            vipir::DIVariable* pointer = nullptr;
+            if (auto addr = dynamic_cast<vipir::AddrInst*>(initValue))
+            {
+                if (addr->getDebugVariable())
+                {
+                    pointer = addr->getDebugVariable();
+                }
+            }
+            mSymbol->values.push_back({builder.getInsertPoint(), initValue, q1, nullptr, pointer});
         }
 
 

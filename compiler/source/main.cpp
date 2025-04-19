@@ -92,6 +92,25 @@ int main(int argc, char** argv)
     {
         node->codegen(builder, diBuilder, module, diag);
     }
+    
+    std::function<void(Scope*)> checkOne;
+    checkOne = [&checkOne](Scope* scope) {
+        for (auto& symbol : scope->symbols)
+        {
+            if (symbol->diVariable)
+            {
+                for (auto& value : symbol->values)
+                {
+                    symbol->diVariable->addValue(value.value, value.start, value.end);
+                }
+            }
+        }
+        for (auto child : scope->children)
+        {
+            checkOne(child);
+        }
+    };
+    checkOne(Scope::GetGlobalScope());
 
     std::ofstream outputFile(inputFilePath + ".o"s);
     std::ofstream IROutputFile(inputFilePath + ".vipir"s);

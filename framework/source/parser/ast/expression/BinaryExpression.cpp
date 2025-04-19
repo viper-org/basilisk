@@ -131,16 +131,18 @@ namespace parser
                 if (auto variableExpression = dynamic_cast<VariableExpression*>(mLeft.get()))
                 {
                     auto symbol = mScope->resolveSymbol(variableExpression->getName());
-                    if (dynamic_cast<vipir::AllocaInst*>(symbol->getLatestValue()))
+                    if (dynamic_cast<vipir::AllocaInst*>(symbol->getLatestValue()->value))
                     {
                         auto instruction = static_cast<vipir::Instruction*>(left);
                         instruction->eraseFromParent();
                         
-                        return builder.CreateStore(symbol->getLatestValue(), right);
+                        return builder.CreateStore(symbol->getLatestValue()->value, right);
                     }
                     else
                     {
-                        symbol->values.push_back(std::make_pair(builder.getInsertPoint(), right));
+                        auto q2 = builder.CreateQueryAddress();
+                        symbol->getLatestValue()->end = q2;
+                        symbol->values.push_back({builder.getInsertPoint(), right, q2, nullptr});
                         return right;
                     }
                 }

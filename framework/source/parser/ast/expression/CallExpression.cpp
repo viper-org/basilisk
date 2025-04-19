@@ -24,12 +24,12 @@ namespace parser
 
     vipir::Value* CallExpression::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        vipir::Value* callee = mFunction->getLatestValue();
+        vipir::Value* callee = mFunction->getLatestValue()->value;
 
         std::vector<vipir::Value*> parameters;
         for (auto& parameter : mParameters)
         {
-            parameters.push_back(parameter->codegen(builder, diBuilder, module, diag));
+            parameters.push_back(parameter->dcodegen(builder, diBuilder, module, diag));
         }
 
         return builder.CreateCall(static_cast<vipir::Function*>(callee), std::move(parameters));

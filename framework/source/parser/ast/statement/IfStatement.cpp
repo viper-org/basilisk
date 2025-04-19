@@ -75,10 +75,12 @@ namespace parser
                 if (trueBasicBlockValue && trueBasicBlockValue != startBasicBlockValue)
                 {
                     auto phi = builder.CreatePhi(symbol->type->getVipirType());
-                    phi->addIncoming(trueBasicBlockValue, trueBasicBlock);
-                    phi->addIncoming(startBasicBlockValue, startBasicBlock);
+                    phi->addIncoming(trueBasicBlockValue->value, trueBasicBlock);
+                    phi->addIncoming(startBasicBlockValue->value, startBasicBlock);
 
-                    symbol->values.push_back(std::make_pair(mergeBasicBlock, phi));
+                    auto q2 = builder.CreateQueryAddress();
+                    symbol->getLatestValue()->end = q2;
+                    symbol->values.push_back({mergeBasicBlock, phi, q2, nullptr});
                 }
             }
         }
@@ -100,10 +102,12 @@ namespace parser
                     }
 
                     auto phi = builder.CreatePhi(symbol->type->getVipirType());
-                    phi->addIncoming(trueBasicBlockValue, trueBasicBlock);
-                    phi->addIncoming(falseBasicBlockValue, falseBasicBlock);
+                    phi->addIncoming(trueBasicBlockValue->value, trueBasicBlock);
+                    phi->addIncoming(falseBasicBlockValue->value, falseBasicBlock);
 
-                    symbol->values.push_back(std::make_pair(mergeBasicBlock, phi));
+                    auto q2 = builder.CreateQueryAddress();
+                    symbol->getLatestValue()->end = q2;
+                    symbol->values.push_back({mergeBasicBlock, phi, q2, nullptr});
                 }
             }
         }

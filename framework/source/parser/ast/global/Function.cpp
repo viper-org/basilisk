@@ -48,7 +48,7 @@ namespace parser
 
         vipir::Function* function = vipir::Function::Create(functionType, module, mName, false);
 
-        mSymbol->values.push_back(std::make_pair(nullptr, function));
+        mSymbol->values.push_back({nullptr, function, nullptr, nullptr});
 
         diBuilder.setDebugType(function, static_cast<FunctionType*>(mType)->getReturnType()->getDIType());
 
@@ -67,7 +67,7 @@ namespace parser
         for (auto& argument : mArguments)
         {
             auto arg = function->getArgument(index++);
-            argument.symbol->values.push_back(std::make_pair(entryBB, arg));
+            argument.symbol->values.push_back({entryBB, arg, nullptr, nullptr});
         }
 
         for (auto& node : mBody)

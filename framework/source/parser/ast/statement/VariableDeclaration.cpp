@@ -17,18 +17,23 @@ namespace parser
 
     vipir::Value* VariableDeclaration::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
+        mSymbol->diVariable = diBuilder.createDebugVariable(mName, builder.getInsertPoint()->getParent(), mType->getDIType(), mSource.start.line, mSource.start.col);
         if (mType->isArrayType() || mType->isStructType())
         {
             auto alloca = builder.CreateAlloca(mType->getVipirType());
-            mSymbol->values.push_back(std::make_pair(builder.getInsertPoint(), alloca));
+            //mSymbol->values.push_back(std::make_pair(builder.getInsertPoint(), alloca));
+            mSymbol->values.push_back({builder.getInsertPoint(), alloca, nullptr, nullptr});
             // TODO: Check initValue here
         }
+        
 
         if (mInitValue)
         {
+            auto q1 = builder.CreateQueryAddress();
             vipir::Value* initValue = mInitValue->dcodegen(builder, diBuilder, module, diag);
-            mSymbol->values.push_back(std::make_pair(builder.getInsertPoint(), initValue));
+            mSymbol->values.push_back({builder.getInsertPoint(), initValue, q1, nullptr});
         }
+
 
         return nullptr;
     }

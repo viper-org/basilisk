@@ -23,11 +23,11 @@ namespace parser
         
         auto latestValue = symbol->getLatestValue(builder.getInsertPoint());
 
-        if (dynamic_cast<vipir::AllocaInst*>(latestValue))
+        if (dynamic_cast<vipir::AllocaInst*>(latestValue->value))
         {
-            return builder.CreateLoad(latestValue);
+            return builder.CreateLoad(latestValue->value);
         }
-        return latestValue;
+        return latestValue->value;
     }
 
     void VariableExpression::typeCheck(diagnostic::Diagnostics& diag, bool& exit)

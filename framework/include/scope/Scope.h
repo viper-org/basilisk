@@ -7,6 +7,7 @@
 
 #include <vipir/IR/Value.h>
 #include <vipir/IR/BasicBlock.h>
+#include <vipir/DI/DIVariable.h>
 
 #include <memory>
 #include <string>
@@ -15,15 +16,24 @@
 struct Scope;
 struct Symbol;
 
+struct SymbolValue
+{
+    vipir::BasicBlock* bb;
+    vipir::Value* value;
+    vipir::QueryAddress* start;
+    vipir::QueryAddress* end;
+};
+
 struct Symbol
 {
     Symbol(std::string name, Type* type);
 
-    vipir::Value* getLatestValue(vipir::BasicBlock* basicBlock = nullptr);
+    SymbolValue* getLatestValue(vipir::BasicBlock* basicBlock = nullptr);
 
     std::string name;
     Type* type;
-    std::vector<std::pair<vipir::BasicBlock*, vipir::Value*> > values;
+    std::vector<SymbolValue> values;
+    vipir::DIVariable* diVariable { nullptr };
     std::vector<vipir::BasicBlock*> searched;
     
     bool exported { false };

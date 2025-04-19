@@ -29,7 +29,8 @@ namespace parser
         std::vector<StructType::Field> structTypeFields;
         for (auto& field : mFields)
         {
-            structTypeFields.push_back(StructType::Field{field.name, field.type});
+            // TODO: Line and column numbers for fields
+            structTypeFields.push_back(StructType::Field{field.name, field.type, 0, 0});
         }
 
         if (auto type = Type::Get(mName))
@@ -45,7 +46,7 @@ namespace parser
             }
             else
             {
-                mType = StructType::Create(mName, std::move(structTypeFields));
+                mType = StructType::Create(mName, std::move(structTypeFields), mSource.start.line, mSource.start.col);
             }
         }
     }

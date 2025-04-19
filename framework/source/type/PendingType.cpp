@@ -8,6 +8,7 @@ static std::vector<std::unique_ptr<ErrorType> > incompletes;
 
 PendingType::PendingType(SourcePair source, std::string name, std::vector<StructType::Field> fields)
     : Type("struct " + name)
+    , mName(std::move(name))
     , mSource(source)
     , mFields(std::move(fields))
 {
@@ -45,7 +46,7 @@ bool PendingType::isStructType() const
 
 void PendingType::initComplete()
 {
-    mImpl = StructType::Create(mName, mFields);
+    mImpl = StructType::Create(mName, mFields, mSource.start.line, mSource.start.col);
     std::erase(pendings, this);
 }
 

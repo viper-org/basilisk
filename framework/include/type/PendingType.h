@@ -31,6 +31,7 @@ public:
     static std::vector<PendingType*>& GetPending();
 
 private:
+    std::string mName;
     SourcePair mSource;
     Type* mImpl;
     std::vector<StructType::Field> mFields;

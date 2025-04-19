@@ -16,6 +16,12 @@ void AddType(std::string name, std::unique_ptr<Type> type)
     types[name] = std::move(type);
 }
 
+vipir::DIBuilder* builder;
+vipir::DIBuilder* Type::GetDIBuilder()
+{
+    return builder;
+}
+
 void Type::Init(vipir::DIBuilder* diBuilder)
 {
     types["i8"]  = std::make_unique<IntegerType>(8, true);
@@ -40,6 +46,8 @@ void Type::Init(vipir::DIBuilder* diBuilder)
     types["bool"]->setDiType(diBuilder->createBasicType("bool", types["bool"]->getVipirType(), DW_ATE_boolean));
     types["void"]->setDiType(diBuilder->createBasicType("void", types["void"]->getVipirType(), DW_ATE_void));
     // TODO: Pointer type stuff
+
+    builder = diBuilder;
 }
 
 bool Type::Exists(const std::string& name)

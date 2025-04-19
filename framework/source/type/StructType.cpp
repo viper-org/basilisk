@@ -7,9 +7,9 @@
 #include <vipir/Type/StructType.h>
 #include <vipir/Type/PointerType.h>
 
+#include <vipir/DI/DIType.h>
+
 #include <algorithm>
-#include <map>
-#include <sstream>
 #include <vector>
 
 StructType::StructType(std::string name, std::vector<Field> fields)
@@ -65,7 +65,7 @@ int StructType::getSize() const
 vipir::Type* StructType::getVipirType() const
 {
     std::vector<vipir::Type*> fieldTypes;
-    for (auto [_, field] : mFields)
+    for (auto [_, field, _1, _2] : mFields)
     {
         if (field->isPointerType())
         {
@@ -103,7 +103,7 @@ StructType* StructType::Get(std::string name)
     return it->get();
 }
 
-StructType* StructType::Create(std::string name, std::vector<StructType::Field> fields)
+StructType* StructType::Create(std::string name, std::vector<StructType::Field> fields, int line, int col)
 {
     auto it = std::find_if(structTypes.begin(), structTypes.end(), [&name](const auto& type){
         return type->mName == name;
@@ -114,6 +114,14 @@ StructType* StructType::Create(std::string name, std::vector<StructType::Field> 
         return it->get();
     }
 
-    structTypes.push_back(std::make_unique<StructType>(name, std::move(fields)));
-    return structTypes.back().get();
+    structTypes.push_back(std::make_unique<StructType>(name, fields));
+    auto* type = structTypes.back().get();
+
+    type->mDiType = Type::GetDIBuilder()->createStructureType(name, static_cast<vipir::StructType*>(type->getVipirType()), line, col);
+    for (auto& field : fields)
+    {
+        auto diStructType = static_cast<vipir::DIStructureType*>(type->mDiType);
+        diStructType->addMember(field.name, field.type->getDIType(), field.line, field.col);
+    }
+    return type;
 }

@@ -12,6 +12,9 @@ public:
     {
         std::string name;
         Type* type;
+
+        int line;
+        int col;
     };
 
     StructType(std::string name, std::vector<Field> fields);
@@ -29,7 +32,7 @@ public:
     bool isStructType() const override;
 
     static StructType* Get(std::string name);
-    static StructType* Create(std::string name, std::vector<Field> fields);
+    static StructType* Create(std::string name, std::vector<Field> fields, int line, int col);
 
 private:
     std::string mName;

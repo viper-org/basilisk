@@ -9,6 +9,7 @@ PointerType::PointerType(Type* pointeeType)
     : Type(std::format("{}*", pointeeType->getName()))
     , mPointeeType(pointeeType)
 {
+    mDiType = Type::GetDIBuilder()->createPointerType(mPointeeType->getDIType());
 }
 
 Type* PointerType::getPointeeType() const

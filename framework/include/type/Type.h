@@ -49,6 +49,8 @@ protected:
     std::string mName;
 
     vipir::DIType* mDiType { nullptr };
+
+    static vipir::DIBuilder* GetDIBuilder();
 };
 
 #endif // BASILISK_FRAMEWORK_TYPE_TYPE_H

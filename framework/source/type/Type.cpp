@@ -46,9 +46,15 @@ void Type::Init(vipir::DIBuilder* diBuilder)
     types["i16"]->setDiType(diBuilder->createBasicType("i16", types["i16"]->getVipirType(), DW_ATE_signed));
     types["i32"]->setDiType(diBuilder->createBasicType("i32", types["i32"]->getVipirType(), DW_ATE_signed));
     types["i64"]->setDiType(diBuilder->createBasicType("i64", types["i64"]->getVipirType(), DW_ATE_signed));
+
+    types["u8"]->setDiType(diBuilder->createBasicType("u8", types["u8"]->getVipirType(), DW_ATE_unsigned_char));
+    types["u16"]->setDiType(diBuilder->createBasicType("u16", types["u16"]->getVipirType(), DW_ATE_unsigned));
+    types["u32"]->setDiType(diBuilder->createBasicType("u32", types["u32"]->getVipirType(), DW_ATE_unsigned));
+    types["u64"]->setDiType(diBuilder->createBasicType("u64", types["u64"]->getVipirType(), DW_ATE_unsigned));
+
     types["bool"]->setDiType(diBuilder->createBasicType("bool", types["bool"]->getVipirType(), DW_ATE_boolean));
+
     types["void"]->setDiType(diBuilder->createBasicType("void", types["void"]->getVipirType(), DW_ATE_void));
-    // TODO: Pointer type stuff
 
     builder = diBuilder;
 }

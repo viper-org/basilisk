@@ -2,8 +2,11 @@
 
 #include "parser/ast/expression/CastExpression.h"
 
+#include "type/IntegerType.h"
+
 #include <vipir/IR/Instruction/TruncInst.h>
 #include <vipir/IR/Instruction/SExtInst.h>
+#include <vipir/IR/Instruction/ZExtInst.h>
 #include <vipir/IR/Instruction/BinaryInst.h>
 #include <vipir/IR/Constant/ConstantInt.h>
 
@@ -22,13 +25,59 @@ namespace parser
         auto value = mValue->dcodegen(builder, diBuilder, module, diag);
         if (mType->isIntegerType() && mValue->getType()->isIntegerType())
         {
-            if (mType->getSize() < mValue->getType()->getSize())
+            auto intA = static_cast<IntegerType*>(mType);
+            auto intB = static_cast<IntegerType*>(mValue->getType());
+            if (intA->isSigned() && intB->isSigned())
             {
-                return builder.CreateTrunc(value, mType->getVipirType());
+                if (mType->getSize() < mValue->getType()->getSize())
+                {
+                    return builder.CreateTrunc(value, mType->getVipirType());
+                }
+                else
+                {
+                    return builder.CreateSExt(value, mType->getVipirType());
+                }
             }
-            else
+            else if (!intA->isSigned() && !intB->isSigned())
             {
-                return builder.CreateSExt(value, mType->getVipirType());
+                if (mType->getSize() < mValue->getType()->getSize())
+                {
+                    return builder.CreateTrunc(value, mType->getVipirType());
+                }
+                else
+                {
+                    return builder.CreateZExt(value, mType->getVipirType());
+                }
+            }
+            else if (intA->isSigned() && !intB->isSigned())
+            {
+                if (mType->getSize() < mValue->getType()->getSize())
+                {
+                    return builder.CreateTrunc(value, mType->getVipirType());
+                }
+                else if (mType->getSize() > mValue->getType()->getSize())
+                {
+                    return builder.CreateSExt(value, mType->getVipirType());
+                }
+                else
+                {
+                    return value; // Implementation type is the same
+                }
+            }
+            else if (!intA->isSigned() && intB->isSigned())
+            {
+                if (mType->getSize() < mValue->getType()->getSize())
+                {
+                    return builder.CreateTrunc(value, mType->getVipirType());
+                }
+                else if (mType->getSize() > mValue->getType()->getSize())
+                {
+                    return builder.CreateZExt(value, mType->getVipirType());
+                }
+                else
+                {
+                    return value; // Implementation type is the same
+                }
             }
         }
         else if (mType->isBooleanType() && mValue->getType()->isIntegerType())
@@ -38,7 +87,15 @@ namespace parser
         }
         else if (mType->isIntegerType() && mValue->getType()->isBooleanType())
         {
-            return builder.CreateSExt(value, mType->getVipirType());
+            auto intTy = static_cast<IntegerType*>(mType);
+            if (intTy->isSigned())
+            {
+                return builder.CreateSExt(value, mType->getVipirType());
+            }
+            else
+            {
+                return builder.CreateZExt(value, mType->getVipirType());
+            }
         }
         return nullptr; // Should be unreachable
     }

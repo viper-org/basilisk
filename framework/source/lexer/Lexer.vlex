@@ -48,6 +48,12 @@ tokens {
     i16 Type
     i32 Type
     i64 Type
+    
+    u8 Type
+    u16 Type
+    u32 Type
+    u64 Type
+    
     void Type
     bool Type
 }

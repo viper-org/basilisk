@@ -36,6 +36,8 @@ int main(int argc, char** argv)
     std::string text = std::move(buffer).str();
     inputFile.close();
 
+    std::string outputFilePath = inputFilePath + ".o"s;
+
     vipir::Module module(inputFilePath);
     bool generateDebugInfo = false;
     vipir::DIBuilder diBuilder(module);
@@ -58,6 +60,10 @@ int main(int argc, char** argv)
         {
             module.getPassManager().addPass(std::make_unique<vipir::DebugInfoEmissionPass>(&diBuilder));
             generateDebugInfo = true;
+        }
+        else if (option.type == OptionType::OutputFile)
+        {
+            outputFilePath = option.value;
         }
     }
 
@@ -121,9 +127,9 @@ int main(int argc, char** argv)
     };
     checkOne(Scope::GetGlobalScope());
 
-    std::ofstream outputFile(inputFilePath + ".o"s);
-    std::ofstream IROutputFile(inputFilePath + ".vipir"s);
-    module.print(IROutputFile);
+    std::ofstream outputFile(outputFilePath);
+    //std::ofstream IROutputFile(inputFilePath + ".vipir"s);
+    //module.print(IROutputFile);
     module.setOutputFormat(vipir::OutputFormat::ELF);
     module.emit(outputFile);
 

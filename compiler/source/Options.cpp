@@ -32,6 +32,23 @@ std::vector<Option> Option::ParseOptions(int argc, char **argv)
 
                 case 'g':
                     options.push_back({ OptionType::DebugInfoEmission });
+                    break;
+
+                case 'o':
+                    if (arg.substr(2).empty())
+                    {
+                        ++i;
+                        if (i >= argc)
+                        {
+                            // TODO: Diagnostics error
+                        }
+                        options.push_back({OptionType::OutputFile, argv[i]});
+                    }
+                    else
+                    {
+                        options.push_back({ OptionType::OutputFile, arg.substr(2) });
+                    }
+                    break;
             }
         }
         else

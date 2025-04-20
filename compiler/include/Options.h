@@ -16,7 +16,8 @@ enum class OptionType
     FlagSpec,
     OptimizationLevelSpec,
     InputFile,
-    DebugInfoEmission
+    DebugInfoEmission,
+    OutputFile
 };
 
 struct Option

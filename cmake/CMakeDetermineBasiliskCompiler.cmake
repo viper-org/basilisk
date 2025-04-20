@@ -7,6 +7,9 @@ message(STATUS ${CMAKE_Basilisk_COMPILER})
 
 mark_as_advanced(CMAKE_Basilisk_COMPILER)
 
+set(CMAKE_AR "ar")
+set(CMAKE_RANLIB "ranlib")
+
 set(CMAKE_Basilisk_SOURCE_FILE_EXTENSIONS bslk;)
 
 SET(CMAKE_Basilisk_OUTPUT_EXTENSION .o)

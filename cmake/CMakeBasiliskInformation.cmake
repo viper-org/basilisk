@@ -1,12 +1,32 @@
-set( CMAKE_Basilisk_COMPILE_OBJECT
-    "<CMAKE_Basilisk_COMPILER> <FLAGS> -o <OBJECT> <SOURCE>"
-)
+if(NOT DEFINED CMAKE_Basilisk_COMPILE_OBJECT)
+    set(CMAKE_Basilisk_COMPILE_OBJECT
+        "<CMAKE_Basilisk_COMPILER> <FLAGS> -o <OBJECT> <SOURCE>"
+    )
+endif()
 
-set( CMAKE_Basilisk_LINK_EXECUTABLE 
-    "gcc -o <TARGET> <OBJECTS>"
-)
+if(NOT DEFINED CMAKE_Basilisk_LINK_EXECUTABLE)
+    set(CMAKE_Basilisk_LINK_EXECUTABLE 
+        "gcc -o <TARGET> <OBJECTS>"
+    )
+endif()
 
-# TODO: Static and shared libraries
+if(NOT DEFINED CMAKE_Basilisk_ARCHIVE_CREATE)
+    set(CMAKE_Basilisk_ARCHIVE_CREATE 
+        "<CMAKE_AR> rc <TARGET> <OBJECTS>"
+    )
+endif()
+if(NOT DEFINED CMAKE_Basilisk_ARCHIVE_APPEND)
+    set(CMAKE_Basilisk_ARCHIVE_APPEND 
+        "<CMAKE_AR> r <TARGET> <OBJECTS>"
+    )
+endif()
+if(NOT DEFINED CMAKE_Basilisk_ARCHIVE_FINISH)
+    set(CMAKE_Basilisk_ARCHIVE_FINISH 
+        "<CMAKE_RANLIB> <TARGET>"
+    )
+endif()
+
+# TODO: Shared libraries
 
 set(CMAKE_Basilisk_FLAGS_DEBUG 
     "-g -O0"

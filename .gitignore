@@ -2,7 +2,6 @@ _deps/
 CMakeFiles/
 .cache/
 
-*.cmake
 Makefile
 *.json
 *.a
@@ -10,4 +9,6 @@ Makefile
 *.so
 
 CMakeCache.txt
+install_manifest.txt
+cmake_install.cmake
 basilisk

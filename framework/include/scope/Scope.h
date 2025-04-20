@@ -56,9 +56,11 @@ struct Scope
     Symbol* getSymbol(unsigned long id);
     Symbol* resolveSymbol(std::string name);
 
+    Type* getCurrentReturnType();
+
     Scope* parent;
 
-    Type* currentReturnType;
+    Type* currentReturnType{ nullptr };
 
     std::vector<SymbolPtr> symbols;
 

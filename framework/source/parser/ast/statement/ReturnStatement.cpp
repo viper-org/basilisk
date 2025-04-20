@@ -33,7 +33,7 @@ namespace parser
             mReturnValue->typeCheck(diag, exit);
         }
 
-        auto returnType = mScope->currentReturnType;
+        auto returnType = mScope->getCurrentReturnType();
         if (returnType->isVoidType())
         {
             if (mReturnValue != nullptr)

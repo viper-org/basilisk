@@ -69,3 +69,15 @@ Symbol* Scope::resolveSymbol(std::string name)
 
     return nullptr;
 }
+
+Type* Scope::getCurrentReturnType()
+{
+    Scope* current = this;
+    while (current)
+    {
+        if (current->currentReturnType) return current->currentReturnType;
+        current = current->parent;
+    }
+
+    return nullptr;
+}

@@ -74,11 +74,11 @@ namespace parser
         {
             if (!phis[i]) continue;
 
-            auto bodyBasicBlockValue = symbols[i]->getLatestValue(bodyBasicBlock);
+            auto bodyBasicBlockValue = symbols[i]->getLatestValue();
             auto startBasicBlockValue = symbols[i]->getLatestValue(startBasicBlock);
             if (bodyBasicBlockValue && bodyBasicBlockValue != startBasicBlockValue && !dynamic_cast<vipir::PhiInst*>(bodyBasicBlockValue->value))
             {
-                phis[i]->addIncoming(bodyBasicBlockValue->value, bodyBasicBlock);
+                phis[i]->addIncoming(bodyBasicBlockValue->value, bodyBasicBlockValue->bb);
                 auto q2 = builder.CreateQueryAddress();
                 bodyBasicBlockValue->end = q2;
                 symbols[i]->values.push_back({mergeBasicBlock, phis[i], q2, nullptr});

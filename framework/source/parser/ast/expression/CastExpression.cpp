@@ -14,8 +14,8 @@
 
 namespace parser
 {
-    CastExpression::CastExpression(Scope* scope, ASTNodePtr value, Type* destType)
-        : ASTNode(scope, {}, destType)
+    CastExpression::CastExpression(Scope* scope, ASTNodePtr value, Type* destType, SourcePair source)
+        : ASTNode(scope, std::move(source), destType)
         , mValue(std::move(value))
     {
     }

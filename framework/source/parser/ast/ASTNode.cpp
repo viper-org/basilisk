@@ -32,10 +32,11 @@ namespace parser
 
     ASTNodePtr ASTNode::Cast(ASTNodePtr& node, Type* destType)
     {
+        auto source = node->mSource;
         if (node->mType == destType)
         {
             return std::move(node);
         }
-        return std::make_unique<CastExpression>(node->mScope, std::move(node), destType);
+        return std::make_unique<CastExpression>(node->mScope, std::move(node), destType, std::move(source));
     }
 }

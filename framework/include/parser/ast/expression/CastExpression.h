@@ -5,7 +5,6 @@
 
 #include "parser/ast/ASTNode.h"
 
-#include <cstdint>
 #include <memory>
 
 namespace parser
@@ -13,7 +12,7 @@ namespace parser
     class CastExpression : public ASTNode
     {
     public:
-        CastExpression(Scope* scope, ASTNodePtr value, Type* destType);
+        CastExpression(Scope* scope, ASTNodePtr value, Type* destType, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 

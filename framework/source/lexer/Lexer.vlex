@@ -31,14 +31,18 @@ tokens {
     func
     struct
 
+    import
+    export
+
     return
     let
     if
     else
     while
     for
-    import
-    export
+
+    true
+    false
 
     _identifier
     _integer_literal

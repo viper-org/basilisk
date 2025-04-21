@@ -343,6 +343,10 @@ namespace parser
             case lexer::TokenType::StringLiteral:
                 return parseStringLiteral();
 
+            case lexer::TokenType::TrueKeyword:
+            case lexer::TokenType::FalseKeyword:
+                return parseBooleanLiteral();
+
             default:
                 mDiag.reportCompilerError(
                     current().getStartLocation(),
@@ -788,5 +792,13 @@ namespace parser
         SourcePair source{current().getStartLocation(), current().getEndLocation()};
         std::string text(consume().getText());
         return std::make_unique<StringLiteral>(mActiveScope, std::move(text), std::move(source));
+    }
+
+    BooleanLiteralPtr Parser::parseBooleanLiteral()
+    {
+        SourcePair source{ current().getStartLocation(), current().getEndLocation() };
+        bool value = consume().getTokenType() == lexer::TokenType::TrueKeyword;
+
+        return std::make_unique<BooleanLiteral>(mActiveScope, value, std::move(source));
     }
 }

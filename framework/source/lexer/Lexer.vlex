@@ -43,6 +43,7 @@ tokens {
 
     true
     false
+    nullptr
 
     _identifier
     _integer_literal

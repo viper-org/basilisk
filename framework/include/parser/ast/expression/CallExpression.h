@@ -5,7 +5,6 @@
 
 #include "parser/ast/ASTNode.h"
 
-#include <cstdint>
 #include <memory>
 
 namespace parser

@@ -20,6 +20,7 @@
 #include "parser/ast/expression/CallExpression.h"
 #include "parser/ast/expression/StringLiteral.h"
 #include "parser/ast/expression/BooleanLiteral.h"
+#include "parser/ast/expression/NullptrLiteral.h"
 
 #include "diagnostic/Diagnostic.h"
 
@@ -87,6 +88,7 @@ namespace parser
         CallExpressionPtr parseCallExpression(ASTNodePtr callee);
         StringLiteralPtr parseStringLiteral();
         BooleanLiteralPtr parseBooleanLiteral();
+        NullptrLiteralPtr parseNullptrLiteral();
     };
 }
 

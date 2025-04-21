@@ -32,6 +32,7 @@ set(SOURCES
     "source/parser/ast/expression/MemberAccess.cpp"
     "source/parser/ast/expression/StringLiteral.cpp"
     "source/parser/ast/expression/BooleanLiteral.cpp"
+    "source/parser/ast/expression/NullptrLiteral.cpp"
 
     "source/diagnostic/Diagnostic.cpp"
 
@@ -71,6 +72,7 @@ set(HEADERS
     "include/parser/ast/expression/MemberAccess.h"
     "include/parser/ast/expression/StringLiteral.h"
     "include/parser/ast/expression/BooleanLiteral.h"
+    "include/parser/ast/expression/NullptrLiteral.h"
 
     "include/diagnostic/Diagnostic.h"
     "include/debug/SourcePair.h"

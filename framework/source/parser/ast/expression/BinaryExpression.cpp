@@ -137,6 +137,15 @@ namespace parser
                         auto instruction = static_cast<vipir::Instruction*>(left);
                         instruction->eraseFromParent();
                         
+                        builder.CreateStore(symbol->getLatestValue()->value, right);
+
+                        return right;
+                    }
+                    else if (dynamic_cast<vipir::GlobalVar*>(symbol->getLatestValue()->value))
+                    {
+                        auto instruction = static_cast<vipir::Instruction*>(left);
+                        instruction->eraseFromParent();
+                        
                         return builder.CreateStore(symbol->getLatestValue()->value, right);
                     }
                     else

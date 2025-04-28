@@ -229,6 +229,9 @@ namespace parser
 
             case lexer::TokenType::StructKeyword:
                 return parseStructDeclaration(exported);
+            
+            case lexer::TokenType::GlobalKeyword:
+                return parseGlobalVariableDeclaration(exported);
 
             case lexer::TokenType::EndOfFile:
                 consume();
@@ -512,6 +515,59 @@ namespace parser
         auto structDef = std::make_unique<StructDeclaration>(mActiveScope, exported, false, name, std::move(fields), std::move(source));
         if (pendingType) pendingType->initComplete();
         return structDef;
+    }
+
+    GlobalVariableDeclarationPtr Parser::parseGlobalVariableDeclaration(bool exported)
+    {
+        SourcePair source;
+        source.start = current().getStartLocation();
+        consume(); // global
+
+        expectToken(lexer::TokenType::Identifier);
+        std::string name(consume().getText());
+
+        if (current().getTokenType() != lexer::TokenType::Colon)
+        {
+            if (current().getTokenType() != lexer::TokenType::Equal)
+            {
+                source.end = peek(-1).getEndLocation();
+                mDiag.reportCompilerError(
+                    source.start,
+                    source.end,
+                    std::format("untyped declaration of '{}{}{}' has no initializer",
+                        fmt::bold, name, fmt::defaults
+                    )
+                );
+                std::exit(1);
+            }
+            consume(); // =
+            ASTNodePtr initialValue = parseExpression();
+            source.end = peek(-1).getEndLocation();
+
+            expectToken(lexer::TokenType::Semicolon);
+            consume();
+
+            return std::make_unique<GlobalVariableDeclaration>(mActiveScope, std::move(name), nullptr, std::move(initialValue), exported, std::move(source));
+        }
+
+        expectToken(lexer::TokenType::Colon);
+        consume();
+
+        auto type = parseType();
+
+        ASTNodePtr initialValue = nullptr;
+        if (current().getTokenType() == lexer::TokenType::Equal)
+        {
+            consume();
+            initialValue = parseExpression();
+        }
+
+        source.end = peek(-1).getEndLocation();
+
+        expectToken(lexer::TokenType::Semicolon);
+        consume();
+
+        return std::make_unique<GlobalVariableDeclaration>(mActiveScope, std::move(name), type, std::move(initialValue), exported, std::move(source));
     }
 
     void Parser::parseImport()

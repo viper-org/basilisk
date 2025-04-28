@@ -32,9 +32,8 @@ namespace parser
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) = 0;
         vipir::Value* dcodegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
         {
-            if (mSource.start.line == 0)
-                std::cout << mSource.start.line << "\n";
-            builder.CreateDebugInfo(mSource.start.line, mSource.start.col);
+            if (mScope->parent) // Don't emit debug info for global scope
+                builder.CreateDebugInfo(mSource.start.line, mSource.start.col);
             auto val = codegen(builder, diBuilder, module, diag);
             return val;
         }

@@ -36,6 +36,8 @@ tokens {
 
     return
     let
+    global
+    
     if
     else
     while

@@ -3,6 +3,7 @@
 #include "parser/ast/expression/VariableExpression.h"
 
 #include <vipir/IR/Function.h>
+#include <vipir/IR/GlobalVar.h>
 #include <vipir/IR/Instruction/LoadInst.h>
 #include <vipir/IR/Instruction/AllocaInst.h>
 #include <vipir/IR/Instruction/GEPInst.h>
@@ -22,8 +23,18 @@ namespace parser
         Symbol* symbol = mScope->resolveSymbol(mName);
         
         auto latestValue = symbol->getLatestValue(builder.getInsertPoint());
+        if (!latestValue)
+        {
+            if (symbol->values.size() == 1)
+            {
+                if (dynamic_cast<vipir::GlobalVar*>(symbol->values[0].value))
+                {
+                    return builder.CreateLoad(symbol->values[0].value);
+                }
+            }
+        }
 
-        if (dynamic_cast<vipir::AllocaInst*>(latestValue->value))
+        if (dynamic_cast<vipir::AllocaInst*>(latestValue->value) || dynamic_cast<vipir::GlobalVar*>(latestValue->value))
         {
             return builder.CreateLoad(latestValue->value);
         }

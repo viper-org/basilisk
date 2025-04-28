@@ -7,6 +7,7 @@
 
 #include "parser/ast/global/Function.h"
 #include "parser/ast/global/StructDeclaration.h"
+#include "parser/ast/global/GlobalVariableDeclaration.h"
 
 #include "parser/ast/statement/ReturnStatement.h"
 #include "parser/ast/statement/VariableDeclaration.h"
@@ -76,6 +77,7 @@ namespace parser
 
         FunctionPtr parseFunction(bool exported);
         StructDeclarationPtr parseStructDeclaration(bool exported);
+        GlobalVariableDeclarationPtr parseGlobalVariableDeclaration(bool exported);
         void parseImport();
 
         ReturnStatementPtr parseReturnStatement();

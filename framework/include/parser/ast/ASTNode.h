@@ -13,7 +13,6 @@
 #include <vipir/DI/DIBuilder.h>
 
 #include <cassert>
-#include <iostream>
 #include <memory>
 
 namespace parser

@@ -3,6 +3,7 @@
 #include "parser/ast/statement/ForStatement.h"
 #include "parser/ast/statement/VariableDeclaration.h"
 
+#include <iostream>
 #include <vipir/IR/BasicBlock.h>
 #include <vipir/IR/Function.h>
 #include <vipir/IR/Instruction/PhiInst.h>
@@ -72,11 +73,15 @@ namespace parser
         mBody->dcodegen(builder, diBuilder, module, diag);
         if (!builder.getInsertPoint()->hasTerminator())
             builder.CreateBr(itBasicBlock);
-        
-        builder.setInsertPoint(itBasicBlock);
-        mIt->dcodegen(builder, diBuilder, module, diag);
-        vipir::Value* condition = mCondition->dcodegen(builder, diBuilder, module, diag);
-        builder.CreateCondBr(condition, bodyBasicBlock, mergeBasicBlock);
+
+        // Only codegen the iterator BB if the body branches to it
+        if (builder.getInsertPoint()->successors().back() == itBasicBlock)
+        {
+            builder.setInsertPoint(itBasicBlock);
+            mIt->dcodegen(builder, diBuilder, module, diag);
+            vipir::Value* condition = mCondition->dcodegen(builder, diBuilder, module, diag);
+            builder.CreateCondBr(condition, bodyBasicBlock, mergeBasicBlock);
+        }
         
         for (int i = 0; i < phis.size(); ++i)
         {

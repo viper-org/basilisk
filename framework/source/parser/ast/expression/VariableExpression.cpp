@@ -21,7 +21,22 @@ namespace parser
     vipir::Value* VariableExpression::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         Symbol* symbol = mScope->resolveSymbol(mName);
-        
+
+        if (symbol->constant)
+        {
+            if (symbol->values.size() != 1)
+            {
+                diag.reportCompilerError(
+                    mSource.start,
+                    mSource.end,
+                    "just assert"
+                );
+                std::exit(1);
+            }
+
+            return symbol->values[0].value;
+        }
+
         auto latestValue = symbol->getLatestValue(builder.getInsertPoint());
         if (!latestValue)
         {

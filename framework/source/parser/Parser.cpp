@@ -231,7 +231,9 @@ namespace parser
                 return parseStructDeclaration(exported);
             
             case lexer::TokenType::GlobalKeyword:
-                return parseGlobalVariableDeclaration(exported, true);
+                return parseGlobalVariableDeclaration(exported, false, true);
+            case lexer::TokenType::ConstKeyword:
+                return parseGlobalVariableDeclaration(exported, true, true);
 
             case lexer::TokenType::EndOfFile:
                 consume();
@@ -321,7 +323,9 @@ namespace parser
             case lexer::TokenType::LetKeyword:
                 return parseVariableDeclaration();
             case lexer::TokenType::GlobalKeyword:
-                return parseGlobalVariableDeclaration(false, false);
+                return parseGlobalVariableDeclaration(false, false, false);
+            case lexer::TokenType::ConstKeyword:
+                return parseGlobalVariableDeclaration(false, true, false);
 
             case lexer::TokenType::IfKeyword:
                 return parseIfStatement();
@@ -522,7 +526,7 @@ namespace parser
         return structDef;
     }
 
-    GlobalVariableDeclarationPtr Parser::parseGlobalVariableDeclaration(bool exported, bool globalScope)
+    GlobalVariableDeclarationPtr Parser::parseGlobalVariableDeclaration(bool exported, bool constant, bool globalScope)
     {
         SourcePair source;
         source.start = current().getStartLocation();
@@ -555,7 +559,7 @@ namespace parser
                 consume();
             }
 
-            return std::make_unique<GlobalVariableDeclaration>(mActiveScope, std::move(name), nullptr, std::move(initialValue), exported, std::move(source));
+            return std::make_unique<GlobalVariableDeclaration>(mActiveScope, std::move(name), nullptr, std::move(initialValue), exported, constant, std::move(source));
         }
 
         expectToken(lexer::TokenType::Colon);
@@ -578,7 +582,7 @@ namespace parser
             consume();
         }
 
-        return std::make_unique<GlobalVariableDeclaration>(mActiveScope, std::move(name), type, std::move(initialValue), exported, std::move(source));
+        return std::make_unique<GlobalVariableDeclaration>(mActiveScope, std::move(name), type, std::move(initialValue), exported, constant, std::move(source));
     }
 
     void Parser::parseImport()

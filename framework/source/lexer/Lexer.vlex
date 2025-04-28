@@ -37,6 +37,7 @@ tokens {
     return
     let
     global
+    const
     
     if
     else

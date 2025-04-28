@@ -231,7 +231,7 @@ namespace parser
                 return parseStructDeclaration(exported);
             
             case lexer::TokenType::GlobalKeyword:
-                return parseGlobalVariableDeclaration(exported);
+                return parseGlobalVariableDeclaration(exported, true);
 
             case lexer::TokenType::EndOfFile:
                 consume();
@@ -320,6 +320,8 @@ namespace parser
 
             case lexer::TokenType::LetKeyword:
                 return parseVariableDeclaration();
+            case lexer::TokenType::GlobalKeyword:
+                return parseGlobalVariableDeclaration(false, false);
 
             case lexer::TokenType::IfKeyword:
                 return parseIfStatement();
@@ -517,7 +519,7 @@ namespace parser
         return structDef;
     }
 
-    GlobalVariableDeclarationPtr Parser::parseGlobalVariableDeclaration(bool exported)
+    GlobalVariableDeclarationPtr Parser::parseGlobalVariableDeclaration(bool exported, bool globalScope)
     {
         SourcePair source;
         source.start = current().getStartLocation();
@@ -543,9 +545,12 @@ namespace parser
             consume(); // =
             ASTNodePtr initialValue = parseExpression();
             source.end = peek(-1).getEndLocation();
-
-            expectToken(lexer::TokenType::Semicolon);
-            consume();
+            
+            if (globalScope)
+            {
+                expectToken(lexer::TokenType::Semicolon);
+                consume();
+            }
 
             return std::make_unique<GlobalVariableDeclaration>(mActiveScope, std::move(name), nullptr, std::move(initialValue), exported, std::move(source));
         }
@@ -564,8 +569,11 @@ namespace parser
 
         source.end = peek(-1).getEndLocation();
 
-        expectToken(lexer::TokenType::Semicolon);
-        consume();
+        if (globalScope)
+        {
+            expectToken(lexer::TokenType::Semicolon);
+            consume();
+        }
 
         return std::make_unique<GlobalVariableDeclaration>(mActiveScope, std::move(name), type, std::move(initialValue), exported, std::move(source));
     }

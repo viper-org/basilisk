@@ -329,6 +329,12 @@ namespace parser
 
             case lexer::TokenType::ForKeyword:
                 return parseForStatement();
+
+            case lexer::TokenType::ContinueKeyword:
+                return parseContinueStatement();
+
+            case lexer::TokenType::BreakKeyword:
+                return parseBreakStatement();
             
 
             case lexer::TokenType::IntegerLiteral:
@@ -750,6 +756,22 @@ namespace parser
         auto body = parseExpression();
 
         return std::make_unique<ForStatement>(std::move(init), std::move(condition), std::move(it), std::move(body), mActiveScope, std::move(source));
+    }
+
+    ContinueStatementPtr Parser::parseContinueStatement()
+    {
+        SourcePair source { current().getStartLocation(), current().getEndLocation() };
+        consume();
+
+        return std::make_unique<ContinueStatement>(mActiveScope, std::move(source));
+    }
+
+    BreakStatementPtr Parser::parseBreakStatement()
+    {
+        SourcePair source { current().getStartLocation(), current().getEndLocation() };
+        consume();
+
+        return std::make_unique<BreakStatement>(mActiveScope, std::move(source));
     }
 
 

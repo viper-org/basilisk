@@ -40,6 +40,8 @@ tokens {
     else
     while
     for
+    break
+    continue
 
     true
     false

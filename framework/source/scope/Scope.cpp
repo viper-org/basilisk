@@ -41,6 +41,19 @@ SymbolValue* Symbol::getLatestValue(vipir::BasicBlock* basicBlock)
     return nullptr;
 }
 
+SymbolValue* Symbol::getLatestValueX(vipir::BasicBlock* basicBlock)
+{
+    auto it = std::find_if(values.rbegin(), values.rend(), [basicBlock](const auto& value) {
+        return value.bb == basicBlock;
+    });
+    if (it != values.rend())
+    {
+        return &*it;
+    }
+
+    return nullptr;
+}
+
 
 Scope::Scope(Scope* parent)
     : parent(parent)
@@ -76,6 +89,30 @@ Type* Scope::getCurrentReturnType()
     while (current)
     {
         if (current->currentReturnType) return current->currentReturnType;
+        current = current->parent;
+    }
+
+    return nullptr;
+}
+
+vipir::BasicBlock* Scope::getContinueTo()
+{
+    Scope* current = this;
+    while (current)
+    {
+        if (current->continueTo) return current->continueTo;
+        current = current->parent;
+    }
+
+    return nullptr;
+}
+
+vipir::BasicBlock* Scope::getBreakTo()
+{
+    Scope* current = this;
+    while (current)
+    {
+        if (current->breakTo) return current->breakTo;
         current = current->parent;
     }
 

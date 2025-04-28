@@ -3,9 +3,13 @@ func prints(value: i8*) -> void;
 
 func main(argc: i32, argv: i8**) -> i32 {
     for (let x = 1; x < argc; x = x + 1) {
+        if (x == 2) {
+            x = 3;
+            break;
+        }
         print(x);
     }
     prints(*argv);
 
-    return 0;
+    return x;
 }

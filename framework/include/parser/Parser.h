@@ -14,6 +14,8 @@
 #include "parser/ast/statement/CompoundStatement.h"
 #include "parser/ast/statement/WhileStatement.h"
 #include "parser/ast/statement/ForStatement.h"
+#include "parser/ast/statement/ContinueStatement.h"
+#include "parser/ast/statement/BreakStatement.h"
 
 #include "parser/ast/expression/IntegerLiteral.h"
 #include "parser/ast/expression/VariableExpression.h"
@@ -82,6 +84,8 @@ namespace parser
         CompoundStatementPtr parseCompoundStatement();
         WhileStatementPtr parseWhileStatement();
         ForStatementPtr parseForStatement();
+        ContinueStatementPtr parseContinueStatement();
+        BreakStatementPtr parseBreakStatement();
 
         IntegerLiteralPtr parseIntegerLiteral();
         VariableExpressionPtr parseVariableExpression();

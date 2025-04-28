@@ -35,6 +35,8 @@ struct Symbol
     Symbol(std::string name, Type* type);
 
     SymbolValue* getLatestValue(vipir::BasicBlock* basicBlock = nullptr);
+    // Only checks the specific basicblock provided
+    SymbolValue* getLatestValueX(vipir::BasicBlock* basicBlock);
 
     std::string name;
     Type* type;
@@ -57,10 +59,14 @@ struct Scope
     Symbol* resolveSymbol(std::string name);
 
     Type* getCurrentReturnType();
+    vipir::BasicBlock* getContinueTo();
+    vipir::BasicBlock* getBreakTo();
 
     Scope* parent;
 
     Type* currentReturnType{ nullptr };
+    vipir::BasicBlock* continueTo{ nullptr };
+    vipir::BasicBlock* breakTo{ nullptr };
 
     std::vector<SymbolPtr> symbols;
 

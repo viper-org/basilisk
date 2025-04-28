@@ -10,6 +10,7 @@
 #include <vipir/Module.h>
 #include <vipir/ABI/SysV.h>
 #include <vipir/Pass/DefaultPass.h>
+#include <vipir/Pass/IRInfoPass.h>
 
 #include <fstream>
 #include <iostream>
@@ -128,8 +129,8 @@ int main(int argc, char** argv)
     checkOne(Scope::GetGlobalScope());
 
     std::ofstream outputFile(outputFilePath);
-    //std::ofstream IROutputFile(inputFilePath + ".vipir"s);
-    //module.print(IROutputFile);
+    std::ofstream IROutputFile(inputFilePath + ".vipir"s);
+    module.print(IROutputFile);
     module.setOutputFormat(vipir::OutputFormat::ELF);
     module.emit(outputFile);
 

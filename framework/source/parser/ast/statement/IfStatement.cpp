@@ -44,13 +44,15 @@ namespace parser
 
         builder.setInsertPoint(trueBasicBlock);
         mBody->dcodegen(builder, diBuilder, module, diag);
-        builder.CreateBr(mergeBasicBlock);
+        if (!builder.getInsertPoint()->hasTerminator())
+            builder.CreateBr(mergeBasicBlock);
 
         if (mElseBody)
         {
             builder.setInsertPoint(falseBasicBlock);
             mElseBody->dcodegen(builder, diBuilder, module, diag);
-            builder.CreateBr(mergeBasicBlock);
+            if (!builder.getInsertPoint()->hasTerminator())
+                builder.CreateBr(mergeBasicBlock);
         }
 
         builder.setInsertPoint(mergeBasicBlock);

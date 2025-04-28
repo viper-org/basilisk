@@ -45,6 +45,8 @@ tokens {
     break
     continue
 
+    sizeof
+
     true
     false
     nullptr

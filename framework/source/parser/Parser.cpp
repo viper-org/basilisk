@@ -360,6 +360,9 @@ namespace parser
 
             case lexer::TokenType::NullptrKeyword:
                 return parseNullptrLiteral();
+            
+            case lexer::TokenType::SizeofKeyword:
+                return parseSizeofExpression();
 
             default:
                 mDiag.reportCompilerError(
@@ -896,5 +899,31 @@ namespace parser
         SourcePair source{ current().getStartLocation(), current().getEndLocation() };
         consume(); // nullptr
         return std::make_unique<NullptrLiteral>(mActiveScope, std::move(source));
+    }
+
+    SizeofExpressionPtr Parser::parseSizeofExpression()
+    {
+        SourcePair source{ current().getStartLocation(), current().getEndLocation() };
+        consume(); // sizeof
+
+        expectToken(lexer::TokenType::LeftParen);
+        consume();
+        
+        if (current().getTokenType() == lexer::TokenType::StructKeyword || current().getTokenType() == lexer::TokenType::Type)
+        {
+            auto type = parseType();
+
+            expectToken(lexer::TokenType::RightParen);
+            source.end = consume().getEndLocation();
+
+            return std::make_unique<SizeofExpression>(mActiveScope, type, std::move(source));
+        }
+        
+        auto operand = parseExpression();
+
+        expectToken(lexer::TokenType::RightParen);
+        source.end = consume().getEndLocation();
+
+        return std::make_unique<SizeofExpression>(mActiveScope, std::move(operand), std::move(source));
     }
 }

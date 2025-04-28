@@ -1,0 +1,20 @@
+func print(val: i32) -> void;
+
+func main() -> i32 {
+    global g_i32: i32 = 0;
+    global g_i8: i8 = 0;
+    global g_i16: i16 = 0;
+    global g_i64: i64 = 0;
+
+    print(sizeof(g_i32));
+    print(sizeof(g_i8));
+    print(sizeof(g_i16));
+    print(sizeof(g_i64));
+
+    print(sizeof(i32));
+    print(sizeof(i8));
+    print(sizeof(i16));
+    print(sizeof(i64));
+
+    return 0;
+}

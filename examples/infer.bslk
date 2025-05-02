@@ -2,8 +2,12 @@ func main() {
     return 1;
 }
 
-func test() {
+func abc() -> void {
     return;
+}
+
+func test() -> void {
+    return abc();
 }
 
 func test2() {

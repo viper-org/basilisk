@@ -44,7 +44,7 @@ namespace parser
         auto returnType = mScope->getCurrentReturnType();
         if (returnType->isVoidType())
         {
-            if (mReturnValue != nullptr)
+            if (mReturnValue != nullptr && !mReturnValue->getType()->isVoidType())
             {
                 diag.reportCompilerError(
                     mReturnValue->getSourcePair().start,

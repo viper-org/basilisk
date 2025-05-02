@@ -69,9 +69,14 @@ Scope::Scope(Scope* parent)
     if (parent) parent->children.push_back(this);
 }
 
+static Scope globalScope(nullptr);
+void Scope::ResetGlobalScope()
+{
+    globalScope = Scope(nullptr);
+}
+
 Scope* Scope::GetGlobalScope()
 {
-    static Scope globalScope(nullptr);
     return &globalScope;
 }
 

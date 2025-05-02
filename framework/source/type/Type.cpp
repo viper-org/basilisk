@@ -5,7 +5,9 @@
 #include "type/VoidType.h"
 #include "type/BooleanType.h"
 #include "type/PointerType.h"
+#include "type/ArrayType.h"
 #include "type/StructType.h"
+#include "type/FunctionType.h"
 #include "type/ErrorType.h"
 #include "type/PendingType.h"
 
@@ -84,4 +86,14 @@ void Type::FinalizeDITypes()
     }
     PointerType::SetDITypes();
     StructType::SetDITypes();
+}
+
+void Type::Reset()
+{
+    types.clear();
+    builder = nullptr;
+    PointerType::Reset();
+    StructType::Reset();
+    FunctionType::Reset();
+    ArrayType::Reset();
 }

@@ -34,6 +34,7 @@ public:
     static StructType* Get(std::string name);
     static StructType* Create(std::string name, std::vector<Field> fields, int line, int col);
     static void SetDITypes();
+    static void Reset();
 
 private:
     std::string mName;

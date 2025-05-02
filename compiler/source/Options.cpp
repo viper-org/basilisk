@@ -8,13 +8,31 @@
 #include <algorithm>
 #include <array>
 
+static std::string GetParameter(std::string arg, int& i, char** argv, int length)
+{
+    if (arg.substr(length).empty())
+    {
+        ++i;
+        // TODO: Check if i >= argc
+        return argv[i];
+    }
+    return arg.substr(length);
+}
+
 std::vector<Option> Option::ParseOptions(int argc, char **argv)
 {
     std::vector<Option> options;
     for (int i = 1; i < argc; ++i)
     {
         std::string arg = argv[i];
-        if (arg.starts_with('-'))
+        if (arg.starts_with("--"))
+        {
+            if (arg[2] == 'c')
+            {
+                options.push_back({ OptionType::DriverMode, GetParameter(arg, i, argv, 3) });
+            }
+        }
+        else if (arg.starts_with('-'))
         {
             switch (arg[1])
             {
@@ -35,19 +53,7 @@ std::vector<Option> Option::ParseOptions(int argc, char **argv)
                     break;
 
                 case 'o':
-                    if (arg.substr(2).empty())
-                    {
-                        ++i;
-                        if (i >= argc)
-                        {
-                            // TODO: Diagnostics error
-                        }
-                        options.push_back({OptionType::OutputFile, argv[i]});
-                    }
-                    else
-                    {
-                        options.push_back({ OptionType::OutputFile, arg.substr(2) });
-                    }
+                    options.push_back({ OptionType::OutputFile, GetParameter(arg, i, argv, 2) });
                     break;
             }
         }
@@ -66,6 +72,28 @@ std::string Option::GetInputFile(const std::vector<Option>& options)
     });
     if (it != options.end()) return it->value;
     return "";
+}
+
+std::string Option::GetOutputFile(const std::vector<Option>& options)
+{
+    auto it = std::find_if(options.begin(), options.end(), [](const auto& option){
+        return option.type == OptionType::OutputFile;
+    });
+    if (it != options.end()) return it->value;
+    return "";
+}
+
+std::vector<std::string> Option::GetInputFiles(const std::vector<Option>& options)
+{
+    std::vector<std::string> inputFiles;
+    for (const auto& option : options)
+    {
+        if (option.type == OptionType::InputFile)
+        {
+            inputFiles.push_back(option.value);
+        }
+    }
+    return inputFiles;
 }
 
 struct FlagPass

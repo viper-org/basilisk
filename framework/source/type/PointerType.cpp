@@ -76,3 +76,8 @@ void PointerType::SetDITypes()
         type->mDiType = Type::GetDIBuilder()->createPointerType(type->mPointeeType->getDIType());
     }
 }
+
+void PointerType::Reset()
+{
+    pointerTypes.clear();
+}

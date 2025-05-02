@@ -17,6 +17,7 @@ enum class OptionType
     OptimizationLevelSpec,
     InputFile,
     DebugInfoEmission,
+    DriverMode,
     OutputFile
 };
 
@@ -27,6 +28,9 @@ struct Option
 
     static std::vector<Option> ParseOptions(int argc, char** argv);
     static std::string GetInputFile(const std::vector<Option>& options);
+    static std::string GetOutputFile(const std::vector<Option>& options);
+
+    static std::vector<std::string> GetInputFiles(const std::vector<Option>& options);
 
     static void ParseOptimizingFlags(const std::vector<Option>& options, vipir::Module& module, diagnostic::Diagnostics& diag);
 };

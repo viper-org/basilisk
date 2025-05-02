@@ -20,6 +20,7 @@ public:
     bool isArrayType() const override;
 
     static ArrayType* Get(Type* elementType, unsigned int length);
+    static void Reset();
 
 private:
     Type* mElementType;

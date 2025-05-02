@@ -61,9 +61,10 @@ bool FunctionType::isFunctionType() const
     return true;
 }
 
+static std::vector<std::unique_ptr<FunctionType> > functionTypes;
+
 FunctionType* FunctionType::Create(Type* returnType, std::vector<Type*> argumentTypes)
 {
-    static std::vector<std::unique_ptr<FunctionType> > functionTypes;
     auto it = std::find_if(functionTypes.begin(), functionTypes.end(), [returnType, &argumentTypes](const auto& type){
         return type->getReturnType() == returnType && type->getArgumentTypes() == argumentTypes;
     });
@@ -75,4 +76,9 @@ FunctionType* FunctionType::Create(Type* returnType, std::vector<Type*> argument
 
     functionTypes.push_back(std::make_unique<FunctionType>(returnType, std::move(argumentTypes)));
     return functionTypes.back().get();
+}
+
+void FunctionType::Reset()
+{
+    functionTypes.clear();
 }

@@ -20,6 +20,7 @@ public:
     bool isFunctionType() const override;
 
     static FunctionType* Create(Type* returnType, std::vector<Type*> argumentTypes);
+    static void Reset();
 
 private:
     std::vector<Type*> mArgumentTypes;

@@ -20,6 +20,7 @@ public:
 
     static PointerType* Get(Type* pointeeType);
     static void SetDITypes();
+    static void Reset();
 
 private:
     Type* mPointeeType;

@@ -134,3 +134,8 @@ void StructType::SetDITypes()
         }
     }
 }
+
+void StructType::Reset()
+{
+    structTypes.clear();
+}

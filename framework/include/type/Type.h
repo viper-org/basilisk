@@ -43,6 +43,7 @@ public:
     static bool Exists(const std::string& name);
     static Type* Get(const std::string& name);
     static void FinalizeDITypes();
+    static void Reset();
 
     virtual std::string_view getName() { return mName; }
 

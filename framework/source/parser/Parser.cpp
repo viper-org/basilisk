@@ -820,9 +820,18 @@ namespace parser
         expectToken(lexer::TokenType::RightParen);
         source.end = consume().getEndLocation();
 
+        std::string label;
+        if (current().getTokenType() == lexer::TokenType::Asperand)
+        {
+            consume();
+            expectToken(lexer::TokenType::Identifier);
+            label = consume().getText();
+            source.end = peek(-1).getEndLocation();
+        }
+
         auto body = parseExpression();
 
-        return std::make_unique<ForStatement>(std::move(init), std::move(condition), std::move(it), std::move(body), mActiveScope, std::move(source));
+        return std::make_unique<ForStatement>(std::move(init), std::move(condition), std::move(it), std::move(body), mActiveScope, std::move(label), std::move(source));
     }
 
     ContinueStatementPtr Parser::parseContinueStatement()
@@ -830,7 +839,16 @@ namespace parser
         SourcePair source { current().getStartLocation(), current().getEndLocation() };
         consume();
 
-        return std::make_unique<ContinueStatement>(mActiveScope, std::move(source));
+        std::string label;
+        if (current().getTokenType() == lexer::TokenType::Asperand)
+        {
+            consume();
+            expectToken(lexer::TokenType::Identifier);
+            label = consume().getText();
+            source.end = peek(-1).getEndLocation();
+        }
+
+        return std::make_unique<ContinueStatement>(mActiveScope, label, std::move(source));
     }
 
     BreakStatementPtr Parser::parseBreakStatement()
@@ -838,7 +856,16 @@ namespace parser
         SourcePair source { current().getStartLocation(), current().getEndLocation() };
         consume();
 
-        return std::make_unique<BreakStatement>(mActiveScope, std::move(source));
+        std::string label;
+        if (current().getTokenType() == lexer::TokenType::Asperand)
+        {
+            consume();
+            expectToken(lexer::TokenType::Identifier);
+            label = consume().getText();
+            source.end = peek(-1).getEndLocation();
+        }
+
+        return std::make_unique<BreakStatement>(mActiveScope, label, std::move(source));
     }
 
 

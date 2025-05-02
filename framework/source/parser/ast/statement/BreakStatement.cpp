@@ -8,14 +8,15 @@
 
 namespace parser
 {
-    BreakStatement::BreakStatement(Scope* scope, SourcePair source)
+    BreakStatement::BreakStatement(Scope* scope, std::string label, SourcePair source)
         : ASTNode(scope, source)
+        , mLabel(std::move(label))
     {
     }
 
     vipir::Value* BreakStatement::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        auto bb = mScope->getBreakTo();
+        auto bb = mScope->getBreakTo(mLabel);
         if (!bb)
         {
             diag.reportCompilerError(

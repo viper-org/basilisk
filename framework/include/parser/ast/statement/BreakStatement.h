@@ -12,11 +12,14 @@ namespace parser
     class BreakStatement : public ASTNode
     {
     public:
-        BreakStatement(Scope* scope, SourcePair source);
+        BreakStatement(Scope* scope, std::string label, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
+
+    private:
+        std::string mLabel;
     };
     using BreakStatementPtr = std::unique_ptr<BreakStatement>;
 }

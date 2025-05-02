@@ -88,6 +88,8 @@ int main(int argc, char** argv)
     if (module.getPassManager().findPass(vipir::PassType::ConstantFolding) == -1)
         module.getPassManager().insertBefore(vipir::PassType::LIREmission, std::make_unique<vipir::ConstantFoldingPass>());
 
+    //module.getPassManager().insertBefore(vipir::PassType::LIREmission, std::make_unique<vipir::CFGEmissionPass>());
+
     vipir::IRBuilder builder;
     
     bool exit = false;
@@ -131,6 +133,7 @@ int main(int argc, char** argv)
     std::ofstream outputFile(outputFilePath);
     std::ofstream IROutputFile(inputFilePath + ".vipir"s);
     module.print(IROutputFile);
+    IROutputFile.close();
     module.setOutputFormat(vipir::OutputFormat::ELF);
     module.emit(outputFile);
 

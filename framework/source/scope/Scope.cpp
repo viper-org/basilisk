@@ -51,6 +51,14 @@ SymbolValue* Symbol::getLatestValueX(vipir::BasicBlock* basicBlock)
         return &*it;
     }
 
+    if (basicBlock->predecessors().size() == 1)
+    {
+        if (auto value = getLatestValueX(basicBlock->predecessors()[0]))
+        {
+            return value;
+        }
+    }
+
     return nullptr;
 }
 
@@ -95,24 +103,36 @@ Type* Scope::getCurrentReturnType()
     return nullptr;
 }
 
-vipir::BasicBlock* Scope::getContinueTo()
+vipir::BasicBlock* Scope::getContinueTo(std::string label)
 {
     Scope* current = this;
     while (current)
     {
-        if (current->continueTo) return current->continueTo;
+        if (current->loopContext.continueTo)
+        {
+            if (label.empty() || current->loopContext.label == label)
+            {
+                return current->loopContext.continueTo;
+            }
+        }
         current = current->parent;
     }
 
     return nullptr;
 }
 
-vipir::BasicBlock* Scope::getBreakTo()
+vipir::BasicBlock* Scope::getBreakTo(std::string label)
 {
     Scope* current = this;
     while (current)
     {
-        if (current->breakTo) return current->breakTo;
+        if (current->loopContext.breakTo)
+        {
+            if (label.empty() || current->loopContext.label == label)
+            {
+                return current->loopContext.breakTo;
+            }
+        }
         current = current->parent;
     }
 

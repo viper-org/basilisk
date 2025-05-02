@@ -12,11 +12,14 @@ namespace parser
     class ContinueStatement : public ASTNode
     {
     public:
-        ContinueStatement(Scope* scope, SourcePair source);
+        ContinueStatement(Scope* scope, std::string label, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
+
+    private:
+        std::string mLabel;
     };
     using ContinueStatementPtr = std::unique_ptr<ContinueStatement>;
 }

@@ -3,7 +3,6 @@
 #include "parser/ast/statement/ForStatement.h"
 #include "parser/ast/statement/VariableDeclaration.h"
 
-#include <iostream>
 #include <vipir/IR/BasicBlock.h>
 #include <vipir/IR/Function.h>
 #include <vipir/IR/Instruction/PhiInst.h>
@@ -13,12 +12,13 @@
 
 namespace parser
 {
-    ForStatement::ForStatement(ASTNodePtr init, ASTNodePtr condition, ASTNodePtr it, ASTNodePtr body, Scope* scope, SourcePair source)
+    ForStatement::ForStatement(ASTNodePtr init, ASTNodePtr condition, ASTNodePtr it, ASTNodePtr body, Scope* scope, std::string label, SourcePair source)
         : ASTNode(scope, source)
         , mInit(std::move(init))
         , mCondition(std::move(condition))
         , mIt(std::move(it))
         , mBody(std::move(body))
+        , mLabel(std::move(label))
     {
     }
 
@@ -30,9 +30,8 @@ namespace parser
         vipir::BasicBlock* bodyBasicBlock = vipir::BasicBlock::Create("", builder.getInsertPoint()->getParent());
         vipir::BasicBlock* itBasicBlock = vipir::BasicBlock::Create("", builder.getInsertPoint()->getParent());
         vipir::BasicBlock* mergeBasicBlock = vipir::BasicBlock::Create("", builder.getInsertPoint()->getParent());
-
-        mScope->continueTo = itBasicBlock;
-        mScope->breakTo = mergeBasicBlock;
+        
+        mScope->loopContext = LoopContext(itBasicBlock, mergeBasicBlock, mLabel);
 
         // Build a list of all symbols that could have been modified
         std::vector<Symbol*> symbols;
@@ -50,6 +49,7 @@ namespace parser
         mInit->dcodegen(builder, diBuilder, module, diag);
         vipir::Value* precondition = mCondition->dcodegen(builder, diBuilder, module, diag);
         builder.CreateCondBr(precondition, bodyBasicBlock, mergeBasicBlock);
+        
         bodyBasicBlock->loopEnd() = mergeBasicBlock;
         itBasicBlock->loopEnd() = mergeBasicBlock;
 
@@ -73,6 +73,7 @@ namespace parser
         mBody->dcodegen(builder, diBuilder, module, diag);
         if (!builder.getInsertPoint()->hasTerminator())
             builder.CreateBr(itBasicBlock);
+        builder.getInsertPoint()->loopEnd() = mergeBasicBlock;
 
         // Only codegen the iterator BB if the body branches to it
         if (builder.getInsertPoint()->successors().back() == itBasicBlock)
@@ -100,6 +101,9 @@ namespace parser
             }
             if (incoming == 1)
             {
+                std::erase_if(symbols[i]->values, [phi = phis[i]](auto v){
+                    return v.value == phi;
+                });
                 builder.getInsertPoint()->getParent()->replaceAllUsesWith(phis[i], startBasicBlockValue->value);
                 phis[i]->eraseFromParent();
             }
@@ -107,7 +111,7 @@ namespace parser
             {
                 auto q2 = builder.CreateQueryAddress();
                 symbols[i]->values.back().end = q2;
-                symbols[i]->values.push_back({mergeBasicBlock, phis[i], q2, nullptr});
+                //symbols[i]->values.push_back({mergeBasicBlock, phis[i], q2, nullptr});
             }
         }
         
@@ -120,13 +124,11 @@ namespace parser
                 continue;
             }
 
-            std::vector<SymbolValue*> values;
+            std::vector<std::pair<SymbolValue*, vipir::BasicBlock*> > values;
             for (auto pred : mergeBasicBlock->predecessors())
             {
-                if (pred == startBasicBlock) continue;
-
                 auto value = symbol->getLatestValueX(pred);
-                if (value) values.push_back(value);
+                if (value) values.push_back({value, pred});
             }
 
             if (values.size() > 1)
@@ -134,7 +136,7 @@ namespace parser
                 auto phi = builder.CreatePhi(symbol->type->getVipirType());
                 for (auto value : values)
                 {
-                    phi->addIncoming(value->value, value->bb);
+                    phi->addIncoming(value.first->value, value.second);
                 }
 
                 auto q2 = builder.CreateQueryAddress();

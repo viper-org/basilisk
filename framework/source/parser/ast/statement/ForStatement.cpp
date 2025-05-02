@@ -148,6 +148,11 @@ namespace parser
         return nullptr;
     }
 
+    std::vector<ASTNode*> ForStatement::getChildren()
+    {
+        return { mInit.get(), mCondition.get(), mIt.get(), mBody.get() };
+    }
+
     void ForStatement::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         mInit->typeCheck(diag, exit);

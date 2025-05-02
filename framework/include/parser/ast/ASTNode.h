@@ -37,6 +37,8 @@ namespace parser
             return val;
         }
 
+        virtual std::vector<ASTNode*> getChildren() { return {}; }
+
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) = 0;
 
         virtual bool triviallyImplicitCast(diagnostic::Diagnostics& diag, Type* destType) { return false; }

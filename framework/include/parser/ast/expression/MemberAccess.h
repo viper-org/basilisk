@@ -18,6 +18,8 @@ namespace parser
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
+        virtual std::vector<ASTNode*> getChildren() override;
+
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
 
     private:

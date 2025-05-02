@@ -81,6 +81,11 @@ namespace parser
         return nullptr; // Unreachable
     }
 
+    std::vector<ASTNode*> UnaryExpression::getChildren()
+    {
+        return {mOperand.get()};
+    }
+
     void UnaryExpression::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         mOperand->typeCheck(diag, exit);

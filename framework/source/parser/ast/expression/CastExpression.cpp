@@ -99,6 +99,11 @@ namespace parser
         }
         return nullptr; // Should be unreachable
     }
+
+    std::vector<ASTNode*> CastExpression::getChildren()
+    {
+        return {mValue.get()};
+    }
     
     void CastExpression::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {

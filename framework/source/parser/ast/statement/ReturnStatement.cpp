@@ -26,6 +26,14 @@ namespace parser
         return builder.CreateRet(returnValue);
     }
 
+    std::vector<ASTNode*> ReturnStatement::getChildren()
+    {
+        if (mReturnValue)
+            return {mReturnValue.get()};
+
+        return {};
+    }
+
     void ReturnStatement::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         if (mReturnValue)

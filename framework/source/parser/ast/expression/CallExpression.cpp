@@ -35,6 +35,17 @@ namespace parser
         return builder.CreateCall(static_cast<vipir::Function*>(callee), std::move(parameters));
     }
 
+    std::vector<ASTNode*> CallExpression::getChildren()
+    {
+        std::vector<ASTNode*> children;
+        children.push_back(mCallee.get());
+        for (auto& parameter : mParameters)
+        {
+            children.push_back(parameter.get());
+        }
+        return children;
+    }
+
     void CallExpression::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         mCallee->typeCheck(diag, exit);

@@ -117,6 +117,14 @@ namespace parser
         return nullptr;
     }
 
+    std::vector<ASTNode*> IfStatement::getChildren()
+    {
+        std::vector<ASTNode*> children {mCondition.get(), mBody.get()};
+        if (mElseBody)
+            children.push_back(mElseBody.get());
+        return children;
+    }
+
     void IfStatement::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         mCondition->typeCheck(diag, exit);

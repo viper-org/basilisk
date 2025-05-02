@@ -25,6 +25,16 @@ namespace parser
         return nullptr;
     }
 
+    std::vector<ASTNode*> CompoundStatement::getChildren()
+    {
+        std::vector<ASTNode*> children;
+        for (auto& node : mBody)
+        {
+            children.push_back(node.get());
+        }
+        return children;
+    }
+
     void CompoundStatement::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         for (auto& node : mBody)

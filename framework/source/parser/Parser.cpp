@@ -421,10 +421,13 @@ namespace parser
         }
         consume();
 
-        expectToken(lexer::TokenType::RightArrow);
-        consume();
+        Type* returnType = Type::Get("error-type"); // Use error-type as a placeholder
+        if (current().getTokenType() == lexer::TokenType::RightArrow)
+        {
+            consume();
+            returnType = parseType();
+        }
 
-        auto returnType = parseType();
         auto functionType = FunctionType::Create(returnType, std::move(argumentTypes));
         std::vector<ASTNodePtr> body;
 

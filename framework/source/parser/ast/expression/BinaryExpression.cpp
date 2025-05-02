@@ -200,6 +200,11 @@ namespace parser
         return nullptr; // Unreachable
     }
 
+    std::vector<ASTNode*> BinaryExpression::getChildren()
+    {
+        return {mLeft.get(), mRight.get()};
+    }
+
     void BinaryExpression::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         mLeft->typeCheck(diag, exit);

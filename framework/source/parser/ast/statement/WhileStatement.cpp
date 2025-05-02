@@ -94,6 +94,11 @@ namespace parser
         return nullptr;
     }
 
+    std::vector<ASTNode*> WhileStatement::getChildren()
+    {
+        return {mCondition.get(), mBody.get()};
+    }
+
     void WhileStatement::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         mCondition->typeCheck(diag, exit);

@@ -47,6 +47,14 @@ namespace parser
         return nullptr;
     }
 
+    std::vector<ASTNode*> VariableDeclaration::getChildren()
+    {
+        if (mInitValue)
+            return {mInitValue.get()};
+
+        return {};
+    }
+
     void VariableDeclaration::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         if (!mType)

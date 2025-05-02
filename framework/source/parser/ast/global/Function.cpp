@@ -2,6 +2,9 @@
 
 #include "parser/ast/global/Function.h"
 
+#include "parser/ast/statement/ReturnStatement.h"
+
+#include <functional>
 #include <vipir/Type/FunctionType.h>
 #include <vipir/IR/Function.h>
 
@@ -82,8 +85,74 @@ namespace parser
         return function;
     }
 
+    std::vector<ASTNode*> Function::getChildren()
+    {
+        std::vector<ASTNode*> children;
+        for (auto& node : mBody)
+        {
+            children.push_back(node.get());
+        }
+        return children;
+    }
+
     void Function::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
+        if (static_cast<FunctionType*>(mType)->getReturnType() == Type::Get("error-type"))
+        {
+            std::function<ReturnStatement*(ASTNode*)> process;
+            process = [&process](ASTNode* node) -> ReturnStatement* {
+                if (auto ret = dynamic_cast<ReturnStatement*>(node))
+                {
+                    return ret;
+                }
+                for (auto child : node->getChildren())
+                {
+                    if (auto ret = process(child))
+                    {
+                        return ret;
+                    }
+                }
+                return nullptr;
+            };
+            std::vector<Type*> parameterTypes;
+            Type* returnType = nullptr;
+            for (auto& argument : mArguments)
+            {
+                parameterTypes.push_back(argument.type);
+            }
+            for (auto& node : mBody)
+            {
+                if (auto ret = process(node.get()))
+                {
+                    if (ret->getChildren().empty())
+                    {
+                        returnType = Type::Get("void");
+                    }
+                    else
+                    {
+                        returnType = ret->getChildren()[0]->getType();
+                    }
+                    break;
+                }
+            }
+            if (!returnType)
+            {
+                diag.reportCompilerError(
+                    mSource.start,
+                    mSource.end,
+                    std::format("could not deduce return type")
+                );
+                exit = true;
+            }
+            else
+            {
+                auto functionType = FunctionType::Create(returnType, std::move(parameterTypes));
+                mType = functionType;
+                mSymbol->type = functionType;
+                mOwnScope->currentReturnType = returnType;
+            }
+        }
+
         for (auto& node : mBody)
         {
             node->typeCheck(diag, exit);

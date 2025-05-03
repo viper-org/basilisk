@@ -3,14 +3,18 @@ cmake_minimum_required(VERSION 3.8)
 set(SOURCES
     "source/main.cpp"
     "source/Options.cpp"
+
     "source/Compiler.cpp"
     "source/Linker.cpp"
+    "source/Builder.cpp"
 )
 
 set(HEADERS
     "include/Options.h"
+
     "include/Compiler.h"
     "include/Linker.h"
+    "include/Builder.h"
 )
 
 source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})

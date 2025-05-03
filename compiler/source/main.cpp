@@ -4,6 +4,7 @@
 
 #include "Linker.h"
 #include "Compiler.h"
+#include "Builder.h"
 
 #include <iostream>
 
@@ -45,6 +46,11 @@ int main(int argc, char** argv)
     {
         Linker linker(options, diag);
         linker.linkExecutable();
+    }
+    else if (driverMode == "build")
+    {
+        Builder builder(options, diag);
+        builder.build();
     }
     else
     {

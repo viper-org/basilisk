@@ -43,6 +43,10 @@ void Compiler::compile()
         std::filesystem::path fullInputFilePath = std::filesystem::current_path() / inputFilePath;
         std::string fullInputPathName = fullInputFilePath.string();
         std::string outputFilePath = inputFilePath + ".o";
+        if (!Option::GetOutputFile(mOptions).empty())
+        {
+            outputFilePath = Option::GetOutputFile(mOptions);
+        }
 
         std::ifstream inputFile(fullInputPathName);
         std::stringstream buffer;

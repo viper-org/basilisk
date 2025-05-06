@@ -12,7 +12,7 @@ namespace parser
     class GlobalVariableDeclaration : public ASTNode
     {
     public:
-        GlobalVariableDeclaration(Scope* scope, std::string name, Type* type, ASTNodePtr initValue, bool exported, SourcePair source);
+        GlobalVariableDeclaration(Scope* scope, std::string name, Type* type, ASTNodePtr initValue, bool exported, bool constant, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 

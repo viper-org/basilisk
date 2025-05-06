@@ -1,0 +1,12 @@
+func print(value: i32) -> void;
+
+const x: i32 = 69;
+
+func main() -> i32 {
+    print(x);
+    print(x * 2);
+
+    x = 111;
+
+    return 0;
+}

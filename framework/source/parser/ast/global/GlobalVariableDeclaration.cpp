@@ -9,7 +9,7 @@
 
 namespace parser
 {
-    GlobalVariableDeclaration::GlobalVariableDeclaration(Scope* scope, std::string name, Type* type, ASTNodePtr initValue, bool exported, SourcePair source)
+    GlobalVariableDeclaration::GlobalVariableDeclaration(Scope* scope, std::string name, Type* type, ASTNodePtr initValue, bool exported, bool constant, SourcePair source)
         : ASTNode(scope, source, type)
         , mName(std::move(name))
         , mInitValue(std::move(initValue))
@@ -17,19 +17,37 @@ namespace parser
         mScope->symbols.push_back(std::make_unique<Symbol>(mName, type));
         mSymbol = mScope->symbols.back().get();
         mSymbol->exported = exported;
+        mSymbol->constant = constant;
     }
 
     vipir::Value* GlobalVariableDeclaration::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        // TODO: Add debug info for global variables
-        vipir::GlobalVar* globalVar = module.createGlobalVar(mType->getVipirType());
+        if (mSymbol->constant)
+        {
+            if (!mInitValue)
+            {
+                diag.reportCompilerError(
+                        mSource.start,
+                        mSource.end,
+                        "constant declaration has no initial value"
+                );
+                std::exit(1);
+            }
 
-        if (mInitValue)
-            globalVar->setInitialValue(mInitValue->dcodegen(builder, diBuilder, module, diag));
+            mSymbol->values.push_back({nullptr, mInitValue->dcodegen(builder, diBuilder, module, diag), nullptr, nullptr});
+        }
         else
-            globalVar->setInitialValue(nullptr);
+        {
+            // TODO: Add debug info for global variables
+            vipir::GlobalVar* globalVar = module.createGlobalVar(mType->getVipirType());
 
-        mSymbol->values.push_back({nullptr, globalVar, nullptr, nullptr});
+            if (mInitValue)
+                globalVar->setInitialValue(mInitValue->dcodegen(builder, diBuilder, module, diag));
+            else
+                globalVar->setInitialValue(nullptr);
+
+            mSymbol->values.push_back({nullptr, globalVar, nullptr, nullptr});
+        }
 
         return nullptr;
     }

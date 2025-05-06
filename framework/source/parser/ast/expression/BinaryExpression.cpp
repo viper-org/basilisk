@@ -132,6 +132,16 @@ namespace parser
                 if (auto variableExpression = dynamic_cast<VariableExpression*>(mLeft.get()))
                 {
                     auto symbol = mScope->resolveSymbol(variableExpression->getName());
+
+                    if (symbol->constant) {
+                        diag.reportCompilerError(
+                            mSource.start,
+                            mSource.end,
+                            "attempted to mutate the value of a constant"
+                        );
+                        std::exit(1);
+                    }
+
                     if (dynamic_cast<vipir::AllocaInst*>(symbol->getLatestValue()->value))
                     {
                         auto instruction = static_cast<vipir::Instruction*>(left);

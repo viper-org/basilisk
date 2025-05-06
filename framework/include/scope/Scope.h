@@ -46,6 +46,7 @@ struct Symbol
     
     bool exported { false };
     bool removed { false };
+    bool constant { false };
 };
 using SymbolPtr = std::unique_ptr<Symbol>;
 

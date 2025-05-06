@@ -1,6 +1,8 @@
 module test;
+import io;
 
 func main() -> i32 {
+    let x: struct b;
     puts("Hello, world!");
     return answer();
 }

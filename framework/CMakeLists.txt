@@ -18,6 +18,7 @@ set(SOURCES
     "source/parser/ast/global/Function.cpp"
     "source/parser/ast/global/StructDeclaration.cpp"
     "source/parser/ast/global/GlobalVariableDeclaration.cpp"
+    "source/parser/ast/global/ImportStatement.cpp"
     "source/parser/ast/statement/ReturnStatement.cpp"
     "source/parser/ast/statement/VariableDeclaration.cpp"
     "source/parser/ast/statement/IfStatement.cpp"
@@ -42,8 +43,6 @@ set(SOURCES
 
     "source/scope/Scope.cpp"
 
-    "source/import/ImportManager.cpp"
-
     "source/type/Type.cpp"
     "source/type/IntegerType.cpp"
     "source/type/VoidType.cpp"
@@ -62,6 +61,7 @@ set(HEADERS
     "include/parser/ast/global/Function.h"
     "include/parser/ast/global/StructDeclaration.h"
     "include/parser/ast/global/GlobalVariableDeclaration.h"
+    "include/parser/ast/global/ImportStatement.h"
     "include/parser/ast/statement/ReturnStatement.h"
     "include/parser/ast/statement/VariableDeclaration.h"
     "include/parser/ast/statement/IfStatement.h"
@@ -86,8 +86,6 @@ set(HEADERS
     "include/debug/SourcePair.h"
 
     "include/scope/Scope.h"
-
-    "include/import/ImportManager.h"
 
     "include/type/Type.h"
     "include/type/IntegerType.h"

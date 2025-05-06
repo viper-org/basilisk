@@ -165,35 +165,43 @@ void Builder::parseModule(std::filesystem::path inputFilePath)
 
 void Builder::parseOne(std::filesystem::path inputFilePath)
 {
-    ImportManager importManager;
-
     mCUs[inputFilePath].globalScope = std::make_unique<Scope>(nullptr);
     auto tokens = mCUs[inputFilePath].tokens;
 
-    parser::Parser parser(tokens, mDiag, importManager, mCUs[inputFilePath].globalScope.get(), false);
+    parser::Parser parser(tokens, mDiag, mCUs[inputFilePath].globalScope.get(), false);
 
     auto ast = parser.parse();
     mCUs[inputFilePath].ast = std::move(ast);
-    importManager.reportUnknownTypeErrors();
+    //importManager.reportUnknownTypeErrors();
 }
 
 void Builder::doImports(std::filesystem::path inputFilePath)
 {
     auto& ast = mCUs[inputFilePath].ast;
 
-    // TODO: Get imports other than current module
-
-    for (auto& file : mModules[mCUs[inputFilePath].moduleName])
+    std::vector<std::string> modules{mCUs[inputFilePath].moduleName};
+    for (auto& node : ast)
     {
-        if (file != inputFilePath)
+        if (auto import = dynamic_cast<parser::ImportStatement*>(node.get()))
         {
-            auto& ast = mCUs[file].ast;
+            modules.push_back(import->getModule()[0]);
+        }
+    }
 
-            for (auto& node : ast)
+    for (auto& module : modules)
+    {
+        for (auto& file : mModules[module])
+        {
+            if (file != inputFilePath)
             {
-                if (auto cloned = node->cloneExternal(mCUs[inputFilePath].globalScope.get()))
+                auto& ast = mCUs[file].ast;
+
+                for (auto& node : ast)
                 {
-                    mCUs[inputFilePath].ast.insert(mCUs[inputFilePath].ast.begin(), std::move(cloned));
+                    if (auto cloned = node->cloneExternal(mCUs[inputFilePath].globalScope.get()))
+                    {
+                        mCUs[inputFilePath].ast.insert(mCUs[inputFilePath].ast.begin(), std::move(cloned));
+                    }
                 }
             }
         }

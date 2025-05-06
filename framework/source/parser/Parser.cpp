@@ -11,47 +11,16 @@
 #include "type/ArrayType.h"
 #include "type/PendingType.h"
 
-#include <algorithm>
-
 namespace parser
 {
-    Parser::Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag, ImportManager& importManager, Scope* globalScope, bool imported)
+    Parser::Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag, Scope* globalScope, bool imported)
         : mTokens(tokens)
         , mPosition(0)
         , mDiag(diag)
-        , mImportManager(importManager)
         , mImported(imported)
         , mDoneImports(false)
         , mActiveScope(globalScope)
     {
-    }
-
-    std::vector<std::filesystem::path> Parser::findImports()
-    {
-        std::vector<std::filesystem::path> ret;
-
-        while (current().getTokenType() == lexer::TokenType::ImportKeyword ||
-              (current().getTokenType() == lexer::TokenType::ExportKeyword && peek(1).getTokenType() == lexer::TokenType::ImportKeyword))
-        {
-            if (current().getTokenType() == lexer::TokenType::ExportKeyword) consume();
-            consume();
-            std::filesystem::path path;
-            while (current().getTokenType() != lexer::TokenType::Semicolon)
-            {
-                expectToken(lexer::TokenType::Identifier);
-                path /= consume().getText();
-
-                if (current().getTokenType() != lexer::TokenType::Semicolon)
-                {
-                    expectToken(lexer::TokenType::Dot);
-                    consume();
-                }
-            }
-            consume();
-            ret.push_back(std::move(path));
-        }
-
-        return ret;
     }
 
     std::vector<ASTNodePtr> Parser::parse()
@@ -221,8 +190,7 @@ namespace parser
                 return parseGlobal(true);
 
             case lexer::TokenType::ImportKeyword:
-                parseImport();
-                return nullptr;
+                return parseImport();
 
             case lexer::TokenType::FuncKeyword:
                 return parseFunction(exported);
@@ -524,7 +492,7 @@ namespace parser
         if (mImported)
         {
             auto structDef = std::make_unique<StructDeclaration>(mActiveScope, exported, true, name, std::move(fields), std::move(source));
-            mImportManager.addPendingType(std::move(name));
+            //mImportManager.addPendingType(std::move(name));
             return structDef;
         }
 
@@ -592,78 +560,28 @@ namespace parser
         return std::make_unique<GlobalVariableDeclaration>(mActiveScope, std::move(name), type, std::move(initialValue), exported, std::move(source));
     }
 
-    void Parser::parseImport()
+    ImportStatementPtr Parser::parseImport()
     {
+        SourcePair source;
+        source.start = current().getStartLocation();
         consume(); // import
 
-        std::filesystem::path path;
+        std::vector<std::string> module;
         while (current().getTokenType() != lexer::TokenType::Semicolon)
         {
             expectToken(lexer::TokenType::Identifier);
-            path /= consume().getText();
+            module.emplace_back(consume().getText());
 
             if (current().getTokenType() != lexer::TokenType::Semicolon)
             {
-                expectToken(lexer::TokenType::Dot);
+                expectToken(lexer::TokenType::Colon);
                 consume();
             }
         }
+        source.end = peek(-1).getEndLocation();
         consume();
-        if (mImported || mDoneImports) return;
 
-        std::vector<Import> allImports;
-        mImportManager.collectAllImports(path, mTokens[0].getStartLocation().file, allImports);
-        for (auto it = allImports.begin(); it != allImports.end(); ++it)
-        {
-            auto& import = *it;
-
-            // Don't import the current file
-            if (import.from == mTokens[0].getStartLocation().file) continue;
-            // We only want to import each file once
-            auto lookIt = std::find_if(allImports.begin(), allImports.end(), [import](const auto& imp){
-                return imp.from == import.from;
-            });
-            if (lookIt != it) continue;
-
-            //ScopePtr scope = std::make_unique<Scope>(nullptr);
-
-            auto nodes = mImportManager.resolveImports(import.from, import.to, mActiveScope, true);
-            for (auto& node : nodes)
-            {
-                mInsertNodeFn(node);
-            }
-
-            auto exports = mImportManager.getExports();
-            std::vector<Export> invalid;
-            for (auto& exp : exports)
-            {
-                bool importedHere = mImportManager.wasExportedTo(std::string(mTokens[0].getStartLocation().file), allImports, exp);
-                if (!exp.symbol || !importedHere)
-                {
-                    invalid.push_back(exp);
-                }
-            }
-            for (auto& symbol : invalid)
-            {
-                if (symbol.symbol)
-                {
-                    symbol.symbol->removed = true;
-                }
-            }
-
-            //mActiveScope->children.push_back(scope.get());
-            for (auto& pendingType : mImportManager.getPendingTypeNames())
-            {
-                auto type = static_cast<PendingType*>(Type::Get(pendingType));
-                auto sym = mActiveScope->resolveSymbol(pendingType);
-                if (sym && !sym->removed) type->initComplete();
-                else type->initIncomplete();
-            }
-
-            //mImportManager.seizeScope(std::move(scope));
-            mImportManager.clearExports();
-        }
-        mDoneImports = true;
+        return std::make_unique<ImportStatement>(mActiveScope, std::move(module), std::move(source));
     }
 
 

@@ -1,3 +1,7 @@
-module test;
+module io;
+
+struct b {
+    a: i32;
+}
 
 func puts(s: i8*) -> i32;

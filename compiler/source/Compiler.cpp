@@ -7,8 +7,6 @@
 #include "lexer/Lexer.h"
 #include "lexer/Token.h"
 
-#include "import/ImportManager.h"
-
 #include "parser/Parser.h"
 
 #include "type/Type.h"
@@ -69,12 +67,10 @@ void Compiler::compile()
 
         Type::Init(&diBuilder);
 
-        ImportManager importManager;
         auto scope = std::make_unique<Scope>(nullptr);
-        parser::Parser parser(tokens, mDiag, importManager, scope.get());
+        parser::Parser parser(tokens, mDiag, scope.get());
         auto ast = parser.parse();
 
-        importManager.reportUnknownTypeErrors();
         Type::FinalizeDITypes();
 
         module.setABI<vipir::abi::SysV>();

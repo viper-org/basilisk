@@ -69,19 +69,9 @@ Scope::Scope(Scope* parent)
     if (parent) parent->children.push_back(this);
 }
 
-static Scope globalScope(nullptr);
-void Scope::ResetGlobalScope()
-{
-    globalScope = Scope(nullptr);
-}
-
-Scope* Scope::GetGlobalScope()
-{
-    return &globalScope;
-}
-
 Symbol* Scope::resolveSymbol(std::string name)
 {
+    Scope* prev = nullptr;
     Scope* current = this;
     while (current)
     {
@@ -90,6 +80,8 @@ Symbol* Scope::resolveSymbol(std::string name)
         });
 
         if (it != current->symbols.end()) return it->get();
+
+        prev = current;
         current = current->parent;
     }
 

@@ -56,7 +56,7 @@ void Compiler::compile()
 
         vipir::Module module(inputFilePath);
 
-        vipir::DIBuilder diBuilder(module);
+        vipir::DIBuilder diBuilder;
         diBuilder.setProducer("basilisk");
         diBuilder.setDirectory(fullInputFilePath.parent_path().string());
         diBuilder.setFilename(fullInputFilePath.filename().string());
@@ -70,7 +70,8 @@ void Compiler::compile()
         Type::Init(&diBuilder);
 
         ImportManager importManager;
-        parser::Parser parser(tokens, mDiag, importManager);
+        auto scope = std::make_unique<Scope>(nullptr);
+        parser::Parser parser(tokens, mDiag, importManager, scope.get());
         auto ast = parser.parse();
 
         importManager.reportUnknownTypeErrors();
@@ -120,13 +121,12 @@ void Compiler::compile()
                 checkOne(child);
             }
         };
-        checkOne(Scope::GetGlobalScope());
+        checkOne(scope.get());
 
         std::ofstream outputFile(outputFilePath);
         module.setOutputFormat(vipir::OutputFormat::ELF);
         module.emit(outputFile);
 
         Type::Reset();
-        Scope::ResetGlobalScope();
     }
 }

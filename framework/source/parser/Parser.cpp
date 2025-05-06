@@ -15,14 +15,14 @@
 
 namespace parser
 {
-    Parser::Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag, ImportManager& importManager, bool imported)
+    Parser::Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag, ImportManager& importManager, Scope* globalScope, bool imported)
         : mTokens(tokens)
         , mPosition(0)
         , mDiag(diag)
         , mImportManager(importManager)
         , mImported(imported)
         , mDoneImports(false)
-        , mActiveScope(Scope::GetGlobalScope())
+        , mActiveScope(globalScope)
     {
     }
 
@@ -232,6 +232,14 @@ namespace parser
             
             case lexer::TokenType::GlobalKeyword:
                 return parseGlobalVariableDeclaration(exported, true);
+
+            case lexer::TokenType::ModuleKeyword:
+                consume();
+                expectToken(lexer::TokenType::Identifier);
+                consume();
+                expectToken(lexer::TokenType::Semicolon);
+                consume();
+                return nullptr;
 
             case lexer::TokenType::EndOfFile:
                 consume();

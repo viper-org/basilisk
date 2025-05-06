@@ -44,6 +44,8 @@ namespace parser
         virtual bool triviallyImplicitCast(diagnostic::Diagnostics& diag, Type* destType) { return false; }
         bool canImplicitCast(diagnostic::Diagnostics& diag, Type* destType);
 
+        virtual ASTNodePtr cloneExternal(Scope* in) { return nullptr; }
+
         static ASTNodePtr Cast(ASTNodePtr& node, Type* destType);
         
     protected:

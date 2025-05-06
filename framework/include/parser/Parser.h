@@ -40,7 +40,7 @@ namespace parser
     class Parser
     {
     public:
-        Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag, ImportManager& importManager, bool imported = false);
+        Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag, ImportManager& importManager, Scope* globalScope, bool imported = false);
 
         std::vector<std::filesystem::path> findImports();
 

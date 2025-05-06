@@ -1,3 +1,6 @@
-func main() {
-    return 0;
+module test;
+
+func main() -> i32 {
+    puts("Hello, world!");
+    return answer();
 }

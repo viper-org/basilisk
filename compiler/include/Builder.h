@@ -7,7 +7,25 @@
 
 #include "diagnostic/Diagnostic.h"
 
+#include "lexer/Token.h"
+
+#include "parser/ast/ASTNode.h"
+
 #include <filesystem>
+
+struct CompileUnit
+{
+    std::filesystem::path path;
+    std::string text;
+
+    std::vector<lexer::Token> tokens;
+    std::string moduleName;
+    std::vector<parser::ASTNodePtr> ast;
+
+    ScopePtr globalScope;
+
+    vipir::Module module{"error"};
+};
 
 class Builder
 {
@@ -21,10 +39,21 @@ private:
 
     diagnostic::Diagnostics& mDiag;
 
+    vipir::DIBuilder mDiBuilder;
+    
+    std::unordered_map<std::filesystem::path, std::vector<lexer::Token> > mTokens;
+    std::unordered_map<std::string, std::vector<std::filesystem::path> > mModules;
+    std::unordered_map<std::filesystem::path, CompileUnit> mCUs;
     std::vector<std::filesystem::path> mObjects;
 
     void compileObjects(std::filesystem::path projectDir);
     void linkExecutable(std::filesystem::path projectDir);
+
+    void lexOne(std::filesystem::path inputFilePath);
+    void parseModule(std::filesystem::path inputFilePath);
+    void parseOne(std::filesystem::path inputFilePath);
+    void doImports(std::filesystem::path inputFilePath);
+    void compileObject(std::filesystem::path inputFilePath, std::filesystem::path outputFilePath);
 };
 
 #endif // BASILISK_COMPILER_BUILDER_H

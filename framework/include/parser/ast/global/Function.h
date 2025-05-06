@@ -33,6 +33,8 @@ namespace parser
 
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
 
+        virtual ASTNodePtr cloneExternal(Scope* in) override;
+
     private:
         std::string mName;
         std::vector<FunctionArgument> mArguments;

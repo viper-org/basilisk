@@ -70,9 +70,6 @@ struct Scope
 {
     Scope(Scope* parent);
 
-    static void ResetGlobalScope();
-    static Scope* GetGlobalScope();
-
     Symbol* getSymbol(unsigned long id);
     Symbol* resolveSymbol(std::string name);
 

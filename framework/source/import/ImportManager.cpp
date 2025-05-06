@@ -101,7 +101,7 @@ void ImportManager::collectAllImports(std::filesystem::path path, std::filesyste
     lexer::Lexer lexer(text, foundPath);
     auto tokens = lexer.lex();
 
-    parser::Parser parser(tokens, importerDiag, *this);
+    parser::Parser parser(tokens, importerDiag, *this, nullptr);
     for (auto& import : parser.findImports())
     {
         collectAllImports(import, foundPath, imports);
@@ -129,7 +129,7 @@ std::vector<parser::ASTNodePtr> ImportManager::resolveImports(std::filesystem::p
     lexer::Lexer lexer(text, mImportedFiles.back());
     auto tokens = lexer.lex();
 
-    parser::Parser parser(tokens, importerDiag, *this, true);
+    parser::Parser parser(tokens, importerDiag, *this, scope, true);
     auto ast = parser.parse();
 
     // Add an export if this was an export import

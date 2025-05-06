@@ -32,7 +32,8 @@ tokens {
 
     func
     struct
-
+    
+    module
     import
     export
 

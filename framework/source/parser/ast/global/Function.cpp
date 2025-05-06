@@ -158,4 +158,11 @@ namespace parser
             node->typeCheck(diag, exit);
         }
     }
+
+    ASTNodePtr Function::cloneExternal(Scope* in)
+    {
+        auto ownScope = std::make_unique<Scope>(in);
+        auto functionType = static_cast<FunctionType*>(mType);
+        return std::make_unique<Function>(false, mName, functionType, mArguments, std::move(ownScope), true, std::vector<ASTNodePtr>(), mSource, mBlockEnd);
+    }
 }

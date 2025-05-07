@@ -5,6 +5,7 @@
 #include "type/VoidType.h"
 #include "type/BooleanType.h"
 #include "type/PointerType.h"
+#include "type/SliceType.h"
 #include "type/ArrayType.h"
 #include "type/StructType.h"
 #include "type/FunctionType.h"
@@ -85,6 +86,7 @@ void Type::FinalizeDITypes()
         }
     }
     PointerType::SetDITypes();
+    SliceType::SetDITypes();
     StructType::SetDITypes();
 }
 

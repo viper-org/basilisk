@@ -36,6 +36,7 @@ public:
     virtual bool isFunctionType() const { return false; }
     virtual bool isBooleanType()  const { return false; }
     virtual bool isPointerType()  const { return false; }
+    virtual bool isSliceType()    const { return false; }
     virtual bool isArrayType()    const { return false; }
     virtual bool isStructType()   const { return false; }
 

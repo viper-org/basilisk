@@ -8,6 +8,7 @@
 
 #include "type/StructType.h"
 #include "type/PointerType.h"
+#include "type/SliceType.h"
 #include "type/ArrayType.h"
 #include "type/PendingType.h"
 
@@ -165,15 +166,22 @@ namespace parser
             else // [
             {
                 consume();
+                if (current().getTokenType() == lexer::TokenType::RightBracket)
+                {
+                    consume();
+                    type = SliceType::Get(type);
+                }
+                else
+                {
+                    expectToken(lexer::TokenType::IntegerLiteral);
+                    std::string text(consume().getText());
+                    auto value = std::stoull(text, nullptr, 0);
 
-                expectToken(lexer::TokenType::IntegerLiteral);
-                std::string text(consume().getText());
-                auto value = std::stoull(text, nullptr, 0);
+                    expectToken(lexer::TokenType::RightBracket);
+                    consume();
 
-                expectToken(lexer::TokenType::RightBracket);
-                consume();
-
-                type = ArrayType::Get(type, value);
+                    type = ArrayType::Get(type, value);
+                }
             }
         }
 

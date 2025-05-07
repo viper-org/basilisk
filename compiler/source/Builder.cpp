@@ -165,6 +165,8 @@ void Builder::parseModule(std::filesystem::path inputFilePath)
 
 void Builder::parseOne(std::filesystem::path inputFilePath)
 {
+    mDiag.setText(mCUs[inputFilePath].text);
+
     mCUs[inputFilePath].globalScope = std::make_unique<Scope>(nullptr);
     auto tokens = mCUs[inputFilePath].tokens;
 

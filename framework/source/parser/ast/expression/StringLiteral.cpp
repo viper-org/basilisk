@@ -2,7 +2,10 @@
 
 #include "parser/ast/expression/StringLiteral.h"
 
-#include "type/PointerType.h"
+#include "type/SliceType.h"
+
+#include <vipir/IR/Constant/ConstantInt.h>
+#include <vipir/IR/Constant/ConstantStruct.h>
 
 #include <vipir/IR/GlobalString.h>
 
@@ -11,16 +14,18 @@
 namespace parser
 {
     StringLiteral::StringLiteral(Scope* scope, std::string value, SourcePair source)
-        : ASTNode(scope, source, PointerType::Get(Type::Get("i8")))
+        : ASTNode(scope, source, SliceType::Get(Type::Get("i8")))
         , mValue(std::move(value))
     {
     }
 
     vipir::Value* StringLiteral::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        vipir::GlobalString* string = vipir::GlobalString::Create(module, std::move(mValue));
+        vipir::GlobalString* string = vipir::GlobalString::Create(module, mValue);
 
-        return builder.CreateAddrOf(string);
+        auto addr = builder.CreateAddrOf(string);
+        auto len = vipir::ConstantInt::Get(module, mValue.size(), vipir::Type::GetIntegerType(64));
+        return builder.CreateConstantStruct(mType->getVipirType(), { addr, len });
     }
     
     void StringLiteral::typeCheck(diagnostic::Diagnostics&, bool&)

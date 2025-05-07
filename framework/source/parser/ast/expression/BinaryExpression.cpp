@@ -6,6 +6,8 @@
 #include "type/IntegerType.h"
 #include "type/ArrayType.h"
 #include "type/PointerType.h"
+#include "type/SliceType.h"
+#include "vipir/IR/Argument.h"
 
 #include <vipir/Module.h>
 
@@ -187,8 +189,27 @@ namespace parser
                         auto pointerOperand = vipir::getPointerOperand(load);
                         auto instruction = static_cast<vipir::Instruction*>(left);
                         instruction->eraseFromParent();
-
+                        
+                        if (mLeft->getType()->isSliceType())
+                        {
+                            auto fieldGep = builder.CreateStructGEP(pointerOperand, 0);
+                            auto field = builder.CreateLoad(fieldGep);
+                            auto sliceGep = builder.CreateGEP(field, right);
+                            return builder.CreateLoad(sliceGep);
+                        }
                         auto gep = builder.CreateGEP(pointerOperand, right);
+                        return builder.CreateLoad(gep);
+                    }
+                    else if (auto arg = dynamic_cast<vipir::Argument*>(left))
+                    {
+                        if (mLeft->getType()->isSliceType())
+                        {
+                            auto fieldGep = builder.CreateStructGEP(arg, 0);
+                            auto field = builder.CreateLoad(fieldGep);
+                            auto sliceGep = builder.CreateGEP(field, right);
+                            return builder.CreateLoad(sliceGep);
+                        }
+                        auto gep = builder.CreateGEP(arg, right);
                         return builder.CreateLoad(gep);
                     }
                 }
@@ -339,7 +360,7 @@ namespace parser
                 break;
             
             case Operator::Index:
-                if (!mLeft->getType()->isArrayType() && !mLeft->getType()->isPointerType())
+                if (!mLeft->getType()->isArrayType() && !mLeft->getType()->isPointerType() && !mLeft->getType()->isSliceType())
                 {
                     diag.reportCompilerError(
                         mSource.start,
@@ -372,9 +393,13 @@ namespace parser
                 {
                     mType = static_cast<ArrayType*>(mLeft->getType())->getElementType();
                 }
-                else
+                else if (mLeft->getType()->isPointerType())
                 {
                     mType = static_cast<PointerType*>(mLeft->getType())->getPointeeType();
+                }
+                else if (mLeft->getType()->isSliceType())
+                {
+                    mType = static_cast<SliceType*>(mLeft->getType())->getPointeeType();
                 }
                 break;
 

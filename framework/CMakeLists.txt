@@ -48,6 +48,7 @@ set(SOURCES
     "source/type/VoidType.cpp"
     "source/type/BooleanType.cpp"
     "source/type/PointerType.cpp"
+    "source/type/SliceType.cpp"
     "source/type/ArrayType.cpp"
     "source/type/StructType.cpp"
     "source/type/FunctionType.cpp"
@@ -92,6 +93,7 @@ set(HEADERS
     "include/type/VoidType.h"
     "include/type/BooleanType.h"
     "include/type/PointerType.h"
+    "include/type/SliceType.h"
     "include/type/ArrayType.h"
     "include/type/StructType.h"
     "include/type/FunctionType.h"
@@ -109,3 +111,6 @@ target_compile_features(basilisk-framework-basilisk-framework PUBLIC cxx_std_20)
 target_link_libraries(basilisk-framework-basilisk-framework vipir)
 
 vlex_generate(basilisk-framework-basilisk-framework source/lexer/Lexer.vlex source/lexer include/lexer)
+
+add_compile_options("-fsanitize=address,undefined")
+add_link_options("-fsanitize=address,undefined")

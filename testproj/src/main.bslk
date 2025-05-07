@@ -1,8 +1,12 @@
 module test;
 import io;
 
+func x(z: i8[]) -> i8 {
+    return z[2];
+}
+
 func main() -> i32 {
-    let x: struct b;
-    puts("Hello, world!");
+    let h: struct b;
+    let h1: i8[] = "hello";
     return answer();
 }

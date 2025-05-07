@@ -4,9 +4,12 @@
 
 #include "parser/ast/statement/ReturnStatement.h"
 
-#include <functional>
-#include <vipir/Type/FunctionType.h>
 #include <vipir/IR/Function.h>
+#include <vipir/IR/Instruction/AllocaInst.h>
+
+#include <vipir/Type/FunctionType.h>
+
+#include <functional>
 
 namespace parser
 {
@@ -73,8 +76,17 @@ namespace parser
             argument.symbol->diVariable = diVariable;
 
             auto arg = function->getArgument(index++);
-            auto q1 = builder.CreateQueryAddress();
-            argument.symbol->values.push_back({entryBB, arg, q1, nullptr});
+            if(false)//if (argument.type->isArrayType() || argument.type->isStructType() || argument.type->isSliceType())
+            {
+                auto alloca = builder.CreateAlloca(argument.type->getVipirType());
+                builder.CreateStore(alloca, arg);
+                argument.symbol->values.push_back({entryBB, alloca, nullptr, nullptr});
+            }
+            else
+            {
+                auto q1 = builder.CreateQueryAddress();
+                argument.symbol->values.push_back({entryBB, arg, q1, nullptr});
+            }
         }
 
         for (auto& node : mBody)

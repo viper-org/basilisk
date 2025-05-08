@@ -36,6 +36,11 @@ namespace parser
                 auto lengthGep = builder.CreateStructGEP(pointerOperand, 1);
                 return builder.CreateLoad(lengthGep);
             }
+            else if (auto arg = dynamic_cast<vipir::Argument*>(slice))
+            {
+                auto lengthGep = builder.CreateStructGEP(arg, 1);
+                return builder.CreateLoad(lengthGep);
+            }
             return nullptr; // Should be unreachable
         }
         else if (mOperand->getType()->isArrayType())

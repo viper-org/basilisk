@@ -57,7 +57,9 @@ namespace parser
         for (auto symbol : symbols)
         {
             auto startBasicBlockValue = symbol->getLatestValue(startBasicBlock);
-            if (!startBasicBlockValue || dynamic_cast<vipir::AllocaInst*>(startBasicBlockValue->value))
+            if (!startBasicBlockValue || dynamic_cast<vipir::AllocaInst*>(startBasicBlockValue->value)
+             || startBasicBlockValue->value->getType()->isStructType()
+             || startBasicBlockValue->value->getType()->isArrayType())
             {
                 phis.push_back(nullptr);
                 continue;

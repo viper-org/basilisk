@@ -3,5 +3,11 @@ module io;
 struct b {
     a: i32;
 }
+func putchar(c: i8) -> void;
 
-func puts(s: i8*) -> i32;
+func print(s: i8[]) -> void {
+    for (let i = 0; i < len(s); i = i + 1) {
+        putchar(s[i]);
+    }
+    return;
+}

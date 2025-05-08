@@ -26,6 +26,7 @@
 #include "parser/ast/expression/BooleanLiteral.h"
 #include "parser/ast/expression/NullptrLiteral.h"
 #include "parser/ast/expression/SizeofExpression.h"
+#include "parser/ast/expression/LenExpression.h"
 
 #include "diagnostic/Diagnostic.h"
 
@@ -92,6 +93,7 @@ namespace parser
         BooleanLiteralPtr parseBooleanLiteral();
         NullptrLiteralPtr parseNullptrLiteral();
         SizeofExpressionPtr parseSizeofExpression();
+        LenExpressionPtr parseLenExpression();
     };
 }
 

@@ -49,6 +49,7 @@ tokens {
     continue
 
     sizeof
+    len
 
     true
     false

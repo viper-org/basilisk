@@ -348,6 +348,9 @@ namespace parser
             case lexer::TokenType::SizeofKeyword:
                 return parseSizeofExpression();
 
+            case lexer::TokenType::LenKeyword:
+                return parseLenExpression();
+
             default:
                 mDiag.reportCompilerError(
                     current().getStartLocation(),
@@ -889,5 +892,21 @@ namespace parser
         source.end = consume().getEndLocation();
 
         return std::make_unique<SizeofExpression>(mActiveScope, std::move(operand), std::move(source));
+    }
+
+    LenExpressionPtr Parser::parseLenExpression()
+    {
+        SourcePair source{ current().getStartLocation(), current().getEndLocation() };
+        consume(); // len
+
+        expectToken(lexer::TokenType::LeftParen);
+        consume();
+
+        auto operand = parseExpression();
+
+        expectToken(lexer::TokenType::RightParen);
+        source.end = consume().getEndLocation();
+
+        return std::make_unique<LenExpression>(mActiveScope, std::move(operand), std::move(source));
     }
 }

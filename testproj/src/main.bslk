@@ -1,9 +1,13 @@
 module test;
 import io;
 
+func test(x: i8[]*) -> void {
+    printn(*x);
+}
+
 func main() -> i32 {
-    let h: struct b;
-    let h1: i8[] = "hello\n";
-    print(h1);
-    return len(h1);
+    let x = "hello";
+    let p = &x;
+    test(&x);
+    return len(*p);
 }

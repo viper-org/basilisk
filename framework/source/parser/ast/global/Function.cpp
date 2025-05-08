@@ -5,7 +5,10 @@
 #include "parser/ast/statement/ReturnStatement.h"
 
 #include <vipir/IR/Function.h>
+
 #include <vipir/IR/Instruction/AllocaInst.h>
+
+#include <vipir/IR/Constant/ConstantInt.h>
 
 #include <vipir/Type/FunctionType.h>
 
@@ -92,6 +95,18 @@ namespace parser
         for (auto& node : mBody)
         {
             node->dcodegen(builder, diBuilder, module, diag);
+        }
+        if (!builder.getInsertPoint()->hasTerminator())
+        {
+            auto retType = static_cast<FunctionType*>(mType)->getReturnType();
+            if (retType->isVoidType())
+            {
+                builder.CreateRet(nullptr);
+            }
+            else if (retType->isIntegerType())
+            {
+                builder.CreateRet(vipir::ConstantInt::Get(module, 0, retType->getVipirType()));
+            }
         }
 
         return function;

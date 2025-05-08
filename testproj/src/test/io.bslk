@@ -11,3 +11,11 @@ func print(s: i8[]) -> void {
     }
     return;
 }
+
+func printn(s: i8[]) -> void {
+    for (let i = 0; i < len(s); i = i + 1) {
+        putchar(s[i]);
+    }
+    putchar(10);
+    return;
+}

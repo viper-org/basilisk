@@ -5,14 +5,14 @@ struct b {
 }
 func putchar(c: i8) -> void;
 
-func print(s: i8[]) -> void {
+func print(s: str) -> void {
     for (let i = 0; i < len(s); i = i + 1) {
         putchar(s[i]);
     }
     return;
 }
 
-func printn(s: i8[]) -> void {
+func printn(s: str) -> void {
     for (let i = 0; i < len(s); i = i + 1) {
         putchar(s[i]);
     }

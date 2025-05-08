@@ -41,6 +41,7 @@ public:
     virtual bool isStructType()   const { return false; }
 
     static void Init(vipir::DIBuilder* diBuilder);
+    static void AddAlias(std::string name, Type* type);
     static bool Exists(const std::string& name);
     static Type* Get(const std::string& name);
     static void FinalizeDITypes();

@@ -71,4 +71,6 @@ tokens {
     
     void Type
     bool Type
+
+    str Type
 }

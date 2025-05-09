@@ -15,6 +15,8 @@
 #include <cassert>
 #include <memory>
 
+using namespace basilisk;
+
 namespace parser
 {
     class ASTNode

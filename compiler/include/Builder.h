@@ -11,6 +11,8 @@
 
 #include "parser/ast/ASTNode.h"
 
+#include "vtoml/Value.h"
+
 #include <filesystem>
 
 struct CompileUnit
@@ -36,6 +38,7 @@ public:
 
 private:
     std::vector<Option> mOptions;
+    std::unordered_map<std::string, toml::ValuePtr> mConfig;
 
     diagnostic::Diagnostics& mDiag;
 
@@ -46,8 +49,11 @@ private:
     std::unordered_map<std::filesystem::path, CompileUnit> mCUs;
     std::vector<std::filesystem::path> mObjects;
 
+    void parseConfig(std::filesystem::path configFilePath);
+
     void compileObjects(std::filesystem::path projectDir);
     void linkExecutable(std::filesystem::path projectDir);
+    void linkStaticLibrary(std::filesystem::path projectDir);
 
     void lexOne(std::filesystem::path inputFilePath);
     void parseModule(std::filesystem::path inputFilePath);

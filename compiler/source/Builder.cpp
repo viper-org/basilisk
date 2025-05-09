@@ -8,6 +8,7 @@
 #include "parser/Parser.h"
 
 #include "type/Type.h"
+#include "vtoml/parser/Parser.h"
 
 #include <vipir/ABI/SysV.h>
 #include <vipir/Pass/DefaultPass.h>
@@ -52,6 +53,7 @@ void Builder::build()
         mDiag.fatalError(std::format("'{}{}{}' is not a valid basilisk project", fmt::bold, projectDir.string(), fmt::defaults));
         std::exit(1);
     }
+    parseConfig(projectDir / "basilisk.toml");
 
     std::ifstream configFile(config);
     std::stringstream buffer;
@@ -59,13 +61,27 @@ void Builder::build()
     std::string configText = std::move(buffer).str();
     configFile.close();
 
-    // TODO: Add module scanning
-
     compileObjects(projectDir);
-    // TODO: Read bsproj file to determine build type
-    linkExecutable(projectDir);
+    if (mConfig["target"]->toString() == "exe")
+    {
+        linkExecutable(projectDir);
+    }
+    else if (mConfig["target"]->toString() == "lib")
+    {
+        linkStaticLibrary(projectDir);
+    }
+    else
+    {
+        mDiag.fatalError(std::format("unknown target '{}'", mConfig["target"]->toString()));
+        std::exit(1);
+    }
 }
 
+
+void Builder::parseConfig(std::filesystem::path configFilePath)
+{
+    mConfig = toml::ParseFile(configFilePath);
+}
 
 void Builder::compileObjects(std::filesystem::path projectDir)
 {
@@ -107,7 +123,7 @@ void Builder::compileObjects(std::filesystem::path projectDir)
 
 void Builder::linkExecutable(std::filesystem::path projectDir)
 {
-    auto outputFile = projectDir / "a.out";
+    auto outputFile = projectDir / mConfig["name"]->toString();
 
     std::vector<Option> linkOptions;
     for (auto objectFile : mObjects)
@@ -117,6 +133,21 @@ void Builder::linkExecutable(std::filesystem::path projectDir)
     linkOptions.push_back({OptionType::OutputFile, outputFile});
     Linker linker(linkOptions, mDiag);
     linker.linkExecutable();
+}
+
+void Builder::linkStaticLibrary(std::filesystem::path projectDir)
+{
+    auto outputFile = projectDir / ("lib" + mConfig["name"]->toString());
+    outputFile.replace_extension(".a");
+
+    std::vector<Option> linkOptions;
+    for (auto objectFile : mObjects)
+    {
+        linkOptions.push_back({OptionType::InputFile, objectFile.string()});
+    }
+    linkOptions.push_back({OptionType::OutputFile, outputFile});
+    Linker linker(linkOptions, mDiag);
+    linker.linkLibrary();
 }
 
 

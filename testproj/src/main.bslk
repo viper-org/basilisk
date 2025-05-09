@@ -8,6 +8,7 @@ func test(x: str*) -> void {
 func main() -> i32 {
     let x: str = "hello";
     let p = &x;
+    x = "world";
     test(&x);
     return len(*p);
 }

@@ -6,10 +6,11 @@
 #include <string>
 #include <vector>
 
-namespace lexer
+namespace basilisk::lexer
 {
     class SourceLocation;
 }
+using namespace basilisk;
 
 namespace fmt
 {

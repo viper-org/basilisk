@@ -47,6 +47,31 @@ std::string IntegerType::getImplicitCastWarning(Type* destType) const
         fmt::bold, destType->getName(), fmt::defaults);
 }
 
+std::string IntegerType::getSymbolID() const
+{
+    if (mSigned)
+    {
+        switch (mBits)
+        {
+            case 8: return "c";
+            case 16: return "s";
+            case 32: return "i";
+            case 64: return "l";
+        }
+    }
+    else
+    {
+        switch (mBits)
+        {
+            case 8: return "b";
+            case 16: return "w";
+            case 32: return "d";
+            case 64: return "q";
+        }
+    }
+    return ""; // unreachable
+}
+
 bool IntegerType::isIntegerType() const
 {
     return true;

@@ -192,4 +192,9 @@ namespace parser
         auto functionType = static_cast<FunctionType*>(mType);
         return std::make_unique<Function>(false, mName, functionType, mArguments, std::move(ownScope), true, std::vector<ASTNodePtr>(), mSource, mBlockEnd);
     }
+
+    std::string Function::getName() const
+    {
+        return mName;
+    }
 }

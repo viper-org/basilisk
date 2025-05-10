@@ -46,6 +46,11 @@ Type::CastLevel PointerType::castTo(Type* destType) const
     return Type::CastLevel::Disallowed;
 }
 
+std::string PointerType::getSymbolID() const
+{
+    return "P" + mPointeeType->getSymbolID();
+}
+
 bool PointerType::isPointerType() const
 {
     return true;

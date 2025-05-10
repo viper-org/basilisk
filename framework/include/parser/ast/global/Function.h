@@ -35,6 +35,8 @@ namespace parser
 
         virtual ASTNodePtr cloneExternal(Scope* in) override;
 
+        std::string getName() const;
+
     private:
         std::string mName;
         std::vector<FunctionArgument> mArguments;

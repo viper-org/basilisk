@@ -8,7 +8,11 @@
 #include "parser/Parser.h"
 
 #include "type/Type.h"
-#include "vtoml/parser/Parser.h"
+#include "type/PointerType.h"
+#include "type/SliceType.h"
+#include "type/StructType.h"
+
+#include <vtoml/parser/Parser.h>
 
 #include <vipir/ABI/SysV.h>
 #include <vipir/Pass/DefaultPass.h>
@@ -16,6 +20,53 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
+
+void BSLib::write(std::uint8_t data, std::uint64_t offset, bool overwrite)
+{
+    write(reinterpret_cast<const char*>(&data), sizeof(data), offset, overwrite);
+}
+
+void BSLib::write(std::uint16_t data, std::uint64_t offset, bool overwrite)
+{
+    write(reinterpret_cast<const char*>(&data), sizeof(data), offset, overwrite);
+}
+
+void BSLib::write(std::uint32_t data, std::uint64_t offset, bool overwrite)
+{
+    write(reinterpret_cast<const char*>(&data), sizeof(data), offset, overwrite);
+}
+
+void BSLib::write(std::uint64_t data, std::uint64_t offset, bool overwrite)
+{
+    write(reinterpret_cast<const char*>(&data), sizeof(data), offset, overwrite);
+}
+
+void BSLib::write(std::string_view data)
+{
+    write(data.data(), data.size(), -1, false);
+}
+
+void BSLib::write(const char* data, size_t size, std::uint64_t offset, bool overwrite)
+{
+    for (; size; --size) {
+        if (offset != -1)
+        {
+            if (overwrite)
+                mBuffer[offset] = *data++;
+            else
+                mBuffer.insert(mBuffer.begin() + offset, *data++);
+            ++offset;
+        }
+        else
+            mBuffer.push_back(*data++);
+    }
+}
+
+std::vector<char>& BSLib::getBuffer()
+{
+    return mBuffer;
+}
+
 
 Builder::Builder(std::vector<Option> options, diagnostic::Diagnostics& diag)
     : mOptions(std::move(options))
@@ -55,6 +106,11 @@ void Builder::build()
     }
     parseConfig(projectDir / "basilisk.toml");
 
+    Type::Init(&mDiBuilder);
+
+    if (mConfig.find("link") != mConfig.end())
+        collectLibraries(projectDir);
+
     std::ifstream configFile(config);
     std::stringstream buffer;
     buffer << configFile.rdbuf();
@@ -83,13 +139,150 @@ void Builder::parseConfig(std::filesystem::path configFilePath)
     mConfig = toml::ParseFile(configFilePath);
 }
 
+void Builder::collectLibraries(std::filesystem::path projectDir)
+{
+    auto libDir = projectDir / "libs";
+
+    auto lib = mConfig["link"]->toString();
+    auto libPath = libDir / lib;
+    libPath.replace_extension(".bslib");
+    if (!std::filesystem::exists(libPath))
+    {
+        mDiag.fatalError(std::format("library '{}' not found", lib));
+        std::exit(1);
+    }
+
+    std::ifstream libFile(libPath, std::ios::binary);
+    char buffer[4];
+    libFile.read(buffer, 4);
+    if (std::string(buffer, 4) != "BSLK")
+    {
+        mDiag.fatalError(std::format("library '{}' has invalid file format", lib));
+        std::exit(1);
+    }
+    uint32_t length;
+    libFile.read(reinterpret_cast<char*>(&length), sizeof(length));
+    uint32_t moduleCount;
+    libFile.read(reinterpret_cast<char*>(&moduleCount), sizeof(moduleCount));
+    std::vector<ModuleDetails> modules;
+    modules.reserve(moduleCount);
+    for (uint32_t i = 0; i < moduleCount; ++i)
+    {
+        std::string moduleName;
+        char c;
+        while (libFile.get(c) && c != '\0')
+        {
+            moduleName += c;
+        }
+        uint32_t funcOffset, funcLength, structOffset, structLength;
+        libFile.read(reinterpret_cast<char*>(&funcOffset), sizeof(funcOffset));
+        libFile.read(reinterpret_cast<char*>(&funcLength), sizeof(funcLength));
+        libFile.read(reinterpret_cast<char*>(&structOffset), sizeof(structOffset));
+        libFile.read(reinterpret_cast<char*>(&structLength), sizeof(structLength));
+        modules.push_back({moduleName, funcOffset, funcLength, structOffset, structLength});
+    }
+
+    for (auto& module : modules)
+    {
+        libFile.seekg(module.funcOffset);
+        while (libFile.tellg() < module.funcOffset + module.funcLength)
+        {
+            uint32_t nameSize;
+            libFile.read(reinterpret_cast<char*>(&nameSize), sizeof(nameSize));
+            std::string name(nameSize, '\0');
+            libFile.read(name.data(), nameSize);
+
+            std::function<Type*(uint8_t)> parseType;
+            parseType = [this, &libFile, &parseType](uint8_t c) -> Type* {
+                switch (c)
+                {
+                    // Signed integrals
+                    case 'c': return Type::Get("i8");
+                    case 's': return Type::Get("i16");
+                    case 'i': return Type::Get("i32");
+                    case 'l': return Type::Get("i64");
+                    
+                    // Unsigned integrals
+                    case 'b': return Type::Get("u8");
+                    case 'w': return Type::Get("u16");
+                    case 'd': return Type::Get("u32");
+                    case 'q': return Type::Get("u64");
+
+                    case 'B': return Type::Get("bool");
+                    case 'v': return Type::Get("void");
+
+                    case 'P': return PointerType::Get(parseType(libFile.get()));
+                    case 'Z': return SliceType::Get(parseType(libFile.get()));
+                    case 'S':
+                    {
+                        uint32_t length;
+                        std::string lengthStr;
+                        char c;
+                        while (libFile.get(c) && isdigit(c))
+                        {
+                            lengthStr += c;
+                        }
+                        length = std::stoul(lengthStr);
+                        auto buf = new char[length];
+                        libFile.read(buf, length);
+
+                        auto type = StructType::Get(buf);
+                        delete[] buf;
+                        return type;
+                    }
+
+                    default:
+                        mDiag.fatalError("library file contains unknown type");
+                        std::exit(1);
+                }
+            };
+            std::vector<Type*> argTypes;
+            while (true)
+            {
+                uint8_t c;
+                libFile.read(reinterpret_cast<char*>(&c), sizeof(c));
+                if (c == 'E')
+                    break;
+                argTypes.push_back(parseType(c));
+            }
+            auto retType = parseType(libFile.get());
+            auto functionType = FunctionType::Create(retType, argTypes);
+            SourcePair source;
+            auto funcScope = std::make_unique<Scope>(&mLibraryScope);
+            auto func = std::make_unique<parser::Function>(true,
+                name,
+                functionType,
+                std::vector<parser::FunctionArgument>{},
+                std::move(funcScope),
+                true,
+                std::vector<parser::ASTNodePtr>{},
+                source,
+                source
+            );
+            mImportedModules[module.name].push_back(std::move(func));
+            auto c = libFile.get(); // null terminator
+        }
+    }
+
+    libFile.seekg(0, std::ios::end);
+    int fileSize = libFile.tellg();
+    std::string data;
+    data.resize(fileSize - length);
+    libFile.seekg(length);
+    libFile.read(data.data(), fileSize - length);
+
+    auto archivePath = projectDir / "build" / lib;
+    archivePath.replace_extension(".a");
+    std::ofstream archive(archivePath);
+    archive.write(data.data(), data.size());
+    mArchives.push_back(archivePath.string());
+}
+
 void Builder::compileObjects(std::filesystem::path projectDir)
 {
     std::filesystem::path sourceDir = projectDir / "src";
     std::filesystem::path buildDir = projectDir / "build";
     std::vector<std::pair<std::filesystem::path, std::filesystem::path> > files;
-
-    Type::Init(&mDiBuilder);
 
     for (std::filesystem::recursive_directory_iterator it(sourceDir); it != std::filesystem::end(it); ++it)
     {
@@ -121,6 +314,63 @@ void Builder::compileObjects(std::filesystem::path projectDir)
     }
 }
 
+void Builder::generateSymbolFile(std::filesystem::path projectDir)
+{
+    BSLib lib;
+    lib.write("BSLK"); // Magic identifier
+    uint32_t lengthOff = lib.getBuffer().size();
+    lib.write((uint32_t)0); // Length of the symbol file
+    uint32_t moduleCount = mSymbolEntries.size();
+    lib.write(moduleCount); // Number of modules
+    for (auto& [moduleName, entry] : mSymbolEntries)
+    {
+        // Null terminated module name
+        lib.write(moduleName);
+        lib.write((uint8_t)0);
+        
+        entry.headerOffset = lib.getBuffer().size();
+
+        lib.write((uint32_t)0); // Offset of functions for this module
+        lib.write((uint32_t)0); // Length of functions section for this module
+        lib.write((uint32_t)0); // Offset of structs for this module
+        lib.write((uint32_t)0); // Length of structs section for this module
+        // TODO: Add typedefs, enums etc
+    }
+
+    for (auto& [moduleName, entry] : mSymbolEntries)
+    {
+        uint32_t* header = (uint32_t*)(lib.getBuffer().data() + entry.headerOffset);
+        auto funcsStart = lib.getBuffer().size();
+        *header = funcsStart;
+        for (auto& symbol : entry.symbols)
+        {
+            if (auto func = dynamic_cast<parser::Function*>(symbol))
+            {
+                auto name = func->getName();
+                uint32_t nameSize = name.size();
+                lib.write(nameSize);
+                lib.write(name);
+                auto functionType = static_cast<FunctionType*>(func->getType());
+                for (auto argType : functionType->getArgumentTypes())
+                {
+                    lib.write(argType->getSymbolID());
+                }
+                lib.write((uint8_t)'E'); // End of argument types
+                lib.write(functionType->getReturnType()->getSymbolID());
+                lib.write((uint8_t)0); // End of function
+            }
+        }
+        header = (uint32_t*)(lib.getBuffer().data() + entry.headerOffset);
+        *(header + 1) = lib.getBuffer().size() - funcsStart;
+    }
+    // TODO: Export structs
+    *(lib.getBuffer().data() + lengthOff) = lib.getBuffer().size();
+
+    std::ofstream symbolFile(projectDir / (mConfig["name"]->toString() + ".bslib"), std::ios::binary);
+    symbolFile.write(lib.getBuffer().data(), lib.getBuffer().size());
+    symbolFile.close();
+}
+
 void Builder::linkExecutable(std::filesystem::path projectDir)
 {
     auto outputFile = projectDir / mConfig["name"]->toString();
@@ -130,6 +380,10 @@ void Builder::linkExecutable(std::filesystem::path projectDir)
     {
         linkOptions.push_back({OptionType::InputFile, objectFile.string()});
     }
+    for (auto archive : mArchives)
+    {
+        linkOptions.push_back({OptionType::InputLibrary, archive});
+    }
     linkOptions.push_back({OptionType::OutputFile, outputFile});
     Linker linker(linkOptions, mDiag);
     linker.linkExecutable();
@@ -137,7 +391,9 @@ void Builder::linkExecutable(std::filesystem::path projectDir)
 
 void Builder::linkStaticLibrary(std::filesystem::path projectDir)
 {
-    auto outputFile = projectDir / ("lib" + mConfig["name"]->toString());
+    generateSymbolFile(projectDir);
+
+    auto outputFile = projectDir / "build" / ("lib" + mConfig["name"]->toString());
     outputFile.replace_extension(".a");
 
     std::vector<Option> linkOptions;
@@ -148,6 +404,11 @@ void Builder::linkStaticLibrary(std::filesystem::path projectDir)
     linkOptions.push_back({OptionType::OutputFile, outputFile});
     Linker linker(linkOptions, mDiag);
     linker.linkLibrary();
+
+    std::ifstream libFile(outputFile, std::ios::binary);
+    std::ofstream bslib(projectDir / (mConfig["name"]->toString() + ".bslib"), std::ios::binary | std::ios::app);
+    bslib.seekp(0, std::ios::end);
+    bslib << libFile.rdbuf();
 }
 
 
@@ -205,7 +466,18 @@ void Builder::parseOne(std::filesystem::path inputFilePath)
 
     auto ast = parser.parse();
     mCUs[inputFilePath].ast = std::move(ast);
-    //importManager.reportUnknownTypeErrors();
+
+    for (auto& node : mCUs[inputFilePath].ast)
+    {
+        if (auto func = dynamic_cast<parser::Function*>(node.get()))
+        {
+            mSymbolEntries[mCUs[inputFilePath].moduleName].symbols.push_back(func);
+        }
+        else if (auto structDecl = dynamic_cast<parser::StructDeclaration*>(node.get()))
+        {
+            mSymbolEntries[mCUs[inputFilePath].moduleName].symbols.push_back(structDecl);
+        }
+    }
 }
 
 void Builder::doImports(std::filesystem::path inputFilePath)
@@ -238,6 +510,16 @@ void Builder::doImports(std::filesystem::path inputFilePath)
                 }
             }
         }
+        if (mImportedModules.find(module) != mImportedModules.end())
+        {
+            for (auto& func : mImportedModules[module])
+            {
+                if (auto cloned = func->cloneExternal(mCUs[inputFilePath].globalScope.get()))
+                {
+                    mCUs[inputFilePath].ast.insert(mCUs[inputFilePath].ast.begin(), std::move(cloned));
+                }
+            }
+        }
     }
 }
 
@@ -255,8 +537,6 @@ void Builder::compileObject(std::filesystem::path inputFilePath, std::filesystem
     diBuilder.borrowTypes(&mDiBuilder);
 
     mDiag.setText(mCUs[inputFilePath].text);
-
-    auto& tokens = mTokens[inputFilePath];
 
     module.setABI<vipir::abi::SysV>();
     Option::ParseOptimizingFlags(mOptions, module, mDiag);

@@ -45,6 +45,11 @@ Type::CastLevel ArrayType::castTo(Type* destType) const
     return Type::CastLevel::Disallowed;
 }
 
+std::string ArrayType::getSymbolID() const
+{
+    return "UNIMPLEMENTED";
+}
+
 bool ArrayType::isArrayType() const
 {
     return true;

@@ -1,8 +1,5 @@
 module io;
 
-struct b {
-    a: i32;
-}
 func putchar(c: char) -> void;
 
 func print(s: str) -> void {

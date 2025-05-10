@@ -88,6 +88,11 @@ Type::CastLevel StructType::castTo(Type*) const
     return CastLevel::Disallowed;
 }
 
+std::string StructType::getSymbolID() const
+{
+    return std::to_string(mName.size()) + mName;
+}
+
 bool StructType::isStructType() const
 {
     return true;

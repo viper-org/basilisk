@@ -1,6 +1,9 @@
 // Copyright 2025 solar-mist
 
 #include "Linker.h"
+#include <iostream>
+
+#include <filesystem>
 
 Linker::Linker(std::vector<Option> options, diagnostic::Diagnostics& diag)
     : mOptions(std::move(options))
@@ -24,7 +27,7 @@ void Linker::linkLibrary()
     std::string inputFileConcat;
     for (auto inputFile : inputFiles)
     {
-        if (!inputFile.ends_with(".o"))
+        if (!inputFile.ends_with(".o") && !inputFile.ends_with(".a"))
         {
             mDiag.fatalError(std::format("file '{}{}{}' has unrecognized file format", fmt::bold, inputFile, fmt::defaults));
             std::exit(1);
@@ -63,9 +66,20 @@ void Linker::linkExecutable()
         }
         inputFileConcat += inputFile + " ";
     }
+    for (auto option : mOptions)
+    {
+        if (option.type == OptionType::InputLibrary)
+        {
+            std::filesystem::path libPath = option.value;
+            inputFileConcat += "-L " + libPath.parent_path().string();
+
+            inputFileConcat += " -l:" + libPath.filename().string() + " ";
+        }
+    }
 
     // TODO: Use ld and link with standard library
     std::string command = "gcc -o " + outputFile + " " + inputFileConcat;
+    std::cout << command << std::endl;
     int ret = std::system(command.c_str());
     if (ret != 0)
     {

@@ -271,11 +271,13 @@ void Builder::collectLibraries(std::filesystem::path projectDir)
     libFile.seekg(length);
     libFile.read(data.data(), fileSize - length);
 
+    std::filesystem::create_directories(projectDir / "build");
     auto archivePath = projectDir / "build" / lib;
     archivePath.replace_extension(".a");
     std::ofstream archive(archivePath);
     archive.write(data.data(), data.size());
     mArchives.push_back(archivePath.string());
+    archive.close();
 }
 
 void Builder::compileObjects(std::filesystem::path projectDir)

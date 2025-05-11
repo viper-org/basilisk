@@ -87,6 +87,7 @@ namespace parser
         BreakStatementPtr parseBreakStatement();
 
         IntegerLiteralPtr parseIntegerLiteral();
+        IntegerLiteralPtr parseCharacterLiteral();
         VariableExpressionPtr parseVariableExpression();
         CallExpressionPtr parseCallExpression(ASTNodePtr callee);
         StringLiteralPtr parseStringLiteral();

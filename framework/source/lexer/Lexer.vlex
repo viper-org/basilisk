@@ -58,6 +58,7 @@ tokens basilisk {
     _identifier
     _integer_literal
     _string_literal
+    _character_literal
 
     i8 Type
     i16 Type

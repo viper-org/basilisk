@@ -13,6 +13,6 @@ func printn(s: str) -> void {
     for (let i = 0; i < len(s); i = i + 1) {
         putchar(s[i]);
     }
-    putchar(10);
+    putchar('\n');
     return;
 }

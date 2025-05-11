@@ -328,6 +328,9 @@ namespace parser
 
             case lexer::TokenType::IntegerLiteral:
                 return parseIntegerLiteral();
+            
+            case lexer::TokenType::CharacterLiteral:
+                return parseCharacterLiteral();
 
             case lexer::TokenType::Identifier:
                 return parseVariableExpression();
@@ -814,7 +817,15 @@ namespace parser
         SourcePair source{current().getStartLocation(), current().getEndLocation()};
         std::string text(consume().getText());
         auto value = std::stoull(text, nullptr, 0);
-        return std::make_unique<IntegerLiteral>(mActiveScope, value, std::move(source));
+        return std::make_unique<IntegerLiteral>(mActiveScope, value, Type::Get("i32"), std::move(source));
+    }
+
+    IntegerLiteralPtr Parser::parseCharacterLiteral()
+    {
+        SourcePair source{current().getStartLocation(), current().getEndLocation()};
+        std::string text(consume().getText());
+        auto value = text[0];
+        return std::make_unique<IntegerLiteral>(mActiveScope, value, Type::Get("i8"), std::move(source));
     }
 
     VariableExpressionPtr Parser::parseVariableExpression()

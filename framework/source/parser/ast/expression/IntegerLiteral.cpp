@@ -8,8 +8,8 @@
 
 namespace parser
 {
-    IntegerLiteral::IntegerLiteral(Scope* scope, std::uintmax_t value, SourcePair source)
-        : ASTNode(scope, source, Type::Get("i32"))
+    IntegerLiteral::IntegerLiteral(Scope* scope, std::uintmax_t value, Type* type, SourcePair source)
+        : ASTNode(scope, source, type)
         , mValue(value)
     {
     }

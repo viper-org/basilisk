@@ -9,17 +9,12 @@ FetchContent_MakeAvailable(vtoml)
 
 set(SOURCES
     "source/main.cpp"
-    "source/Options.cpp"
 
-    "source/Compiler.cpp"
     "source/Linker.cpp"
     "source/Builder.cpp"
 )
 
 set(HEADERS
-    "include/Options.h"
-
-    "include/Compiler.h"
     "include/Linker.h"
     "include/Builder.h"
 )

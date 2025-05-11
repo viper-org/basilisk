@@ -42,6 +42,11 @@ namespace diagnostic
         if (!enable && it != mWarnings.end()) mWarnings.erase(it);
     }
 
+    void Diagnostics::disableAllWarnings()
+    {
+        mWarnings.clear();
+    }
+
     void Diagnostics::setImported(bool imported)
     {
         mImported = imported;

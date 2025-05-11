@@ -3,15 +3,15 @@
 #ifndef BASILISK_COMPILER_BUILDER_H
 #define BASILISK_COMPILER_BUILDER_H 1
 
-#include "Options.h"
-
 #include "diagnostic/Diagnostic.h"
 
 #include "lexer/Token.h"
 
 #include "parser/ast/ASTNode.h"
 
-#include "vtoml/Value.h"
+#include <vtoml/Value.h>
+
+#include <vipir/Module.h>
 
 #include <filesystem>
 #include <vector>
@@ -67,12 +67,12 @@ private:
 class Builder
 {
 public:
-    Builder(std::vector<Option> options, diagnostic::Diagnostics& diag);
+    Builder(diagnostic::Diagnostics& diag);
 
     void build();
+    std::string getOutputFile();
 
 private:
-    std::vector<Option> mOptions;
     std::unordered_map<std::string, toml::ValuePtr> mConfig;
     Scope mLibraryScope { nullptr };
 

@@ -68,29 +68,14 @@ std::vector<char>& BSLib::getBuffer()
 }
 
 
-Builder::Builder(std::vector<Option> options, diagnostic::Diagnostics& diag)
-    : mOptions(std::move(options))
-    , mDiag(diag)
+Builder::Builder(diagnostic::Diagnostics& diag)
+    : mDiag(diag)
 {
 }
 
 void Builder::build()
 {
-    auto inputFiles = Option::GetInputFiles(mOptions);
-    std::filesystem::path projectDir;
-    if (inputFiles.empty())
-    {
-        projectDir = std::filesystem::current_path();
-    }
-    else if (inputFiles.size() == 1)
-    {
-        projectDir = std::filesystem::path(inputFiles[0]);
-    }
-    else
-    {
-        mDiag.fatalError("multiple project directories specified");
-        std::exit(1);
-    }
+    std::filesystem::path projectDir = std::filesystem::current_path();
 
     if (!std::filesystem::is_directory(projectDir))
     {
@@ -131,6 +116,11 @@ void Builder::build()
         mDiag.fatalError(std::format("unknown target '{}'", mConfig["target"]->toString()));
         std::exit(1);
     }
+}
+
+std::string Builder::getOutputFile()
+{
+    return mConfig["name"]->toString();
 }
 
 
@@ -396,17 +386,18 @@ void Builder::linkExecutable(std::filesystem::path projectDir)
 {
     auto outputFile = projectDir / mConfig["name"]->toString();
 
-    std::vector<Option> linkOptions;
+    std::vector<std::string> inputFiles;
+    std::vector<std::string> libraries;
     for (auto objectFile : mObjects)
     {
-        linkOptions.push_back({OptionType::InputFile, objectFile.string()});
+        inputFiles.push_back(objectFile.string());
     }
     for (auto archive : mArchives)
     {
-        linkOptions.push_back({OptionType::InputLibrary, archive});
+        libraries.push_back(archive);
     }
-    linkOptions.push_back({OptionType::OutputFile, outputFile});
-    Linker linker(linkOptions, mDiag);
+
+    Linker linker(inputFiles, libraries, outputFile, mDiag);
     linker.linkExecutable();
 }
 
@@ -417,13 +408,13 @@ void Builder::linkStaticLibrary(std::filesystem::path projectDir)
     auto outputFile = projectDir / "build" / ("lib" + mConfig["name"]->toString());
     outputFile.replace_extension(".a");
 
-    std::vector<Option> linkOptions;
+    std::vector<std::string> inputFiles;
     for (auto objectFile : mObjects)
     {
-        linkOptions.push_back({OptionType::InputFile, objectFile.string()});
+        inputFiles.push_back(objectFile.string());
     }
-    linkOptions.push_back({OptionType::OutputFile, outputFile});
-    Linker linker(linkOptions, mDiag);
+
+    Linker linker(inputFiles, {}, outputFile, mDiag);
     linker.linkLibrary();
 
     std::ifstream libFile(outputFile, std::ios::binary);
@@ -560,7 +551,6 @@ void Builder::compileObject(std::filesystem::path inputFilePath, std::filesystem
     mDiag.setText(mCUs[inputFilePath].text);
 
     module.setABI<vipir::abi::SysV>();
-    Option::ParseOptimizingFlags(mOptions, module, mDiag);
     // Always do constant folding
     if (module.getPassManager().findPass(vipir::PassType::ConstantFolding) == -1)
         module.getPassManager().insertBefore(vipir::PassType::LIREmission, std::make_unique<vipir::ConstantFoldingPass>());

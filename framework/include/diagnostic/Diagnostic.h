@@ -29,6 +29,7 @@ namespace diagnostic
 
         void setText(std::string_view text);
         void setWarning(bool enable, std::string_view warning);
+        void disableAllWarnings();
         void setImported(bool imported);
 
         [[noreturn]] void fatalError(std::string_view message);

@@ -1,31 +1,30 @@
 // Copyright 2025 solar-mist
 
 #include "Linker.h"
-#include <iostream>
 
 #include <filesystem>
+#include <format>
 
-Linker::Linker(std::vector<Option> options, diagnostic::Diagnostics& diag)
-    : mOptions(std::move(options))
+Linker::Linker(std::vector<std::string> inputFiles, std::vector<std::string> libraries, std::string outputFile, diagnostic::Diagnostics& diag)
+    : mInputFiles(std::move(inputFiles))
+    , mLibraries(std::move(libraries))
+    , mOutputFile(std::move(outputFile))
     , mDiag(diag)
 {
 }
 
 void Linker::linkLibrary()
 {
-    // TODO: Symbols as well as object files
-    auto inputFiles = Option::GetInputFiles(mOptions);
-    auto outputFile = Option::GetOutputFile(mOptions);
-    if (outputFile.empty()) outputFile = "a.out";
+    if (mOutputFile.empty()) mOutputFile = "a.out";
 
-    if (inputFiles.empty())
+    if (mInputFiles.empty())
     {
         mDiag.fatalError("no input files");
         std::exit(1);
     }
 
     std::string inputFileConcat;
-    for (auto inputFile : inputFiles)
+    for (auto inputFile : mInputFiles)
     {
         if (!inputFile.ends_with(".o") && !inputFile.ends_with(".a"))
         {
@@ -35,7 +34,7 @@ void Linker::linkLibrary()
         inputFileConcat += inputFile + " ";
     }
 
-    std::string command = "ar -rcs " + outputFile + " " + inputFileConcat;
+    std::string command = "ar -rcs " + mOutputFile + " " + inputFileConcat;
     int ret = std::system(command.c_str());
     if (ret != 0)
     {
@@ -46,18 +45,16 @@ void Linker::linkLibrary()
 
 void Linker::linkExecutable()
 {
-    auto inputFiles = Option::GetInputFiles(mOptions);
-    auto outputFile = Option::GetOutputFile(mOptions);
-    if (outputFile.empty()) outputFile = "a.out";
+    if (mOutputFile.empty()) mOutputFile = "a.out";
 
-    if (inputFiles.empty())
+    if (mInputFiles.empty())
     {
         mDiag.fatalError("no input files");
         std::exit(1);
     }
 
     std::string inputFileConcat;
-    for (auto inputFile : inputFiles)
+    for (auto inputFile : mInputFiles)
     {
         if (!inputFile.ends_with(".o"))
         {
@@ -66,20 +63,16 @@ void Linker::linkExecutable()
         }
         inputFileConcat += inputFile + " ";
     }
-    for (auto option : mOptions)
+    for (auto library : mLibraries)
     {
-        if (option.type == OptionType::InputLibrary)
-        {
-            std::filesystem::path libPath = option.value;
-            inputFileConcat += "-L " + libPath.parent_path().string();
+        std::filesystem::path libPath = library;
+        inputFileConcat += "-L " + libPath.parent_path().string();
 
-            inputFileConcat += " -l:" + libPath.filename().string() + " ";
-        }
+        inputFileConcat += " -l:" + libPath.filename().string() + " ";
     }
 
     // TODO: Use ld and link with standard library
-    std::string command = "gcc -o " + outputFile + " " + inputFileConcat;
-    std::cout << command << std::endl;
+    std::string command = "gcc -o " + mOutputFile + " " + inputFileConcat;
     int ret = std::system(command.c_str());
     if (ret != 0)
     {

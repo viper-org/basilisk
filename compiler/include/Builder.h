@@ -91,6 +91,7 @@ private:
     void parseConfig(std::filesystem::path configFilePath);
 
     void collectLibraries(std::filesystem::path projectDir);
+    void parseLibrary(std::string library, std::filesystem::path projectDir);
 
     void compileObjects(std::filesystem::path projectDir);
     void generateSymbolFile(std::filesystem::path projectDir);

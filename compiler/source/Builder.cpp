@@ -141,9 +141,28 @@ void Builder::parseConfig(std::filesystem::path configFilePath)
 
 void Builder::collectLibraries(std::filesystem::path projectDir)
 {
+    auto& libs = mConfig["link"];
+    if (!libs->isArray())
+    {
+        mDiag.fatalError("link option in config must be an array");
+        std::exit(1);
+    }
+
+    for (auto& lib : libs->toArray())
+    {
+        if (!lib->isString())
+        {
+            mDiag.fatalError("link option in config must be an array of strings");
+            std::exit(1);
+        }
+        parseLibrary(lib->toString(), projectDir);
+    }
+}
+
+void Builder::parseLibrary(std::string lib, std::filesystem::path projectDir)
+{
     auto libDir = projectDir / "libs";
 
-    auto lib = mConfig["link"]->toString();
     auto libPath = libDir / lib;
     libPath.replace_extension(".bslib");
     if (!std::filesystem::exists(libPath))

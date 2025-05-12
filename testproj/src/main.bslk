@@ -10,5 +10,7 @@ func main() -> i32 {
     let p = &x;
     x = "world";
     test(&x);
-    return len(*p);
+    let length = len(*p);
+    length -= 1;
+    return length;
 }

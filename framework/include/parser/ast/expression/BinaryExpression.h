@@ -32,6 +32,8 @@ namespace parser
 
             // Assignment
             Assign,
+            AddAssign,
+            SubAssign,
 
             // Special
             Index

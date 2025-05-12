@@ -104,6 +104,8 @@ namespace parser
                 return 50;
 
             case lexer::TokenType::Equal:
+            case lexer::TokenType::PlusEqual:
+            case lexer::TokenType::MinusEqual:
                 return 20;
 
             default:

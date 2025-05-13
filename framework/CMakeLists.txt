@@ -39,6 +39,7 @@ set(SOURCES
     "source/parser/ast/expression/NullptrLiteral.cpp"
     "source/parser/ast/expression/SizeofExpression.cpp"
     "source/parser/ast/expression/LenExpression.cpp"
+    "source/parser/ast/expression/SliceExpression.cpp"
 
     "source/diagnostic/Diagnostic.cpp"
 
@@ -84,6 +85,7 @@ set(HEADERS
     "include/parser/ast/expression/NullptrLiteral.h"
     "include/parser/ast/expression/SizeofExpression.h"
     "include/parser/ast/expression/LenExpression.h"
+    "include/parser/ast/expression/SliceExpression.h"
 
     "include/diagnostic/Diagnostic.h"
     "include/debug/SourcePair.h"

@@ -3,6 +3,7 @@
 #include "parser/Parser.h"
 
 #include "parser/ast/expression/BinaryExpression.h"
+#include "parser/ast/expression/SliceExpression.h"
 #include "parser/ast/expression/UnaryExpression.h"
 #include "parser/ast/expression/MemberAccess.h"
 
@@ -266,11 +267,7 @@ namespace parser
             }
             else if (operatorToken.getTokenType() == lexer::TokenType::LeftBracket)
             {
-                ASTNodePtr index = parseExpression(binaryOperatorPrecedence);
-                expectToken(lexer::TokenType::RightBracket);
-                source.end = consume().getEndLocation();
-
-                left = std::make_unique<BinaryExpression>(mActiveScope, std::move(left), std::move(operatorToken), std::move(index), std::move(source));
+                left = parseIndexExpression(std::move(left), source, operatorToken);
             }
             else if (operatorToken.getTokenType() == lexer::TokenType::Dot)
             {
@@ -857,6 +854,23 @@ namespace parser
         source.end = peek(-1).getEndLocation();
 
         return std::make_unique<CallExpression>(mActiveScope, std::move(callee), std::move(parameters), std::move(source));
+    }
+
+    ASTNodePtr Parser::parseIndexExpression(ASTNodePtr left, SourcePair source, lexer::Token operatorToken)
+    {
+        auto index = parseExpression();
+
+        if (current().getTokenType() == lexer::TokenType::Colon)
+        {
+            consume();
+            auto end = parseExpression();
+            expectToken(lexer::TokenType::RightBracket);
+            source.end = consume().getEndLocation();
+            return std::make_unique<SliceExpression>(mActiveScope, std::move(left), std::move(index), std::move(end), std::move(source));
+        }
+        expectToken(lexer::TokenType::RightBracket);
+        source.end = consume().getEndLocation();
+        return std::make_unique<BinaryExpression>(mActiveScope, std::move(left), operatorToken, std::move(index), std::move(source));
     }
 
     StringLiteralPtr Parser::parseStringLiteral()

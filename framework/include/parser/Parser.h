@@ -90,6 +90,7 @@ namespace parser
         IntegerLiteralPtr parseCharacterLiteral();
         VariableExpressionPtr parseVariableExpression();
         CallExpressionPtr parseCallExpression(ASTNodePtr callee);
+        ASTNodePtr parseIndexExpression(ASTNodePtr left, SourcePair source, lexer::Token operatorToken);
         StringLiteralPtr parseStringLiteral();
         BooleanLiteralPtr parseBooleanLiteral();
         NullptrLiteralPtr parseNullptrLiteral();

@@ -7,6 +7,14 @@ func test(arg: void[]) -> void {
 
 func main() -> i32 {
     let x: str = "hello";
+    let array: char[5];
+    array[0] = 'w';
+    array[1] = 'o';
+    array[2] = 'r';
+    array[3] = 'l';
+    array[4] = 'd';
+    let y: str = array[1:5];
     test(x);
+    test(y);
     return 0;
 }

@@ -9,6 +9,7 @@
 #include <vipir/IR/Instruction/GEPInst.h>
 #include <vipir/IR/Instruction/BinaryInst.h>
 #include <vipir/IR/Instruction/LoadInst.h>
+#include <vipir/IR/Instruction/AddrInst.h>
 
 #include <vipir/IR/Constant/ConstantStruct.h>
 #include <vipir/IR/Constant/ConstantInt.h>
@@ -46,6 +47,18 @@ namespace parser
             vipir::Value* newPtr = builder.CreateGEP(ptr, start);
             vipir::Value* newLength = builder.CreateSub(end, start);
             return builder.CreateConstantStruct(mType->getVipirType(), {newPtr, newLength});
+        }
+        else if (mSlicee->getType()->isArrayType())
+        {
+            auto pointerOperand = vipir::getPointerOperand(slicee);
+            auto instruction = static_cast<vipir::Instruction*>(slicee);
+            instruction->eraseFromParent();
+            
+            auto ptrGep = builder.CreateGEP(pointerOperand, start);
+            auto ptr = builder.CreateAddrOf(ptrGep);
+            vipir::Value* length = builder.CreateSub(end, start);
+            // TODO: Check if length < array length?
+            return builder.CreateConstantStruct(mType->getVipirType(), {ptr, length});
         }
         return nullptr; // TODO: Array slicing
     }

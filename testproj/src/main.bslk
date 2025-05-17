@@ -1,6 +1,7 @@
 module test;
 import io;
 import std::memory;
+import std::sys::syscall;
 
 func f() -> i32 {
     return 0;
@@ -11,12 +12,14 @@ func thing() -> i32;
 func main() -> i32 {
     let message = "hello";
     let buffer: char[5];
-    let p = buffer[0:5];
-    memset(p, 'A');
+    let z = buffer[0:5];
+    memset(z, 'A');
+
+    let p = &buffer[0];
 
     let x = 0;
     if (x == 1 || !(f() != 0 && x == 0)) {
-        printn(p);
+        write(1, p, 5);
     }
     return thing();
 }

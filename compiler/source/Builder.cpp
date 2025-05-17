@@ -400,7 +400,7 @@ void Builder::generateSymbolFile(std::filesystem::path projectDir)
         *(header + 1) = lib.getBuffer().size() - funcsStart;
     }
     // TODO: Export structs
-    *(lib.getBuffer().data() + lengthOff) = lib.getBuffer().size();
+    *(uint32_t*)(lib.getBuffer().data() + lengthOff) = lib.getBuffer().size();
 
     std::ofstream symbolFile(projectDir / (mConfig["name"]->toString() + ".bslib"), std::ios::binary);
     symbolFile.write(lib.getBuffer().data(), lib.getBuffer().size());

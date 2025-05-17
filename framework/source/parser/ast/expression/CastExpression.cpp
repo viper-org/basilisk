@@ -15,6 +15,8 @@
 #include <vipir/IR/Instruction/GEPInst.h>
 #include <vipir/IR/Instruction/LoadInst.h>
 #include <vipir/IR/Instruction/PtrCastInst.h>
+#include <vipir/IR/Instruction/PtrToIntInst.h>
+#include <vipir/IR/Instruction/IntToPtrInst.h>
 
 #include <vipir/IR/Constant/ConstantInt.h>
 #include <vipir/IR/Constant/ConstantStruct.h>
@@ -109,6 +111,14 @@ namespace parser
         else if (mType->isPointerType() && mValue->getType()->isPointerType())
         {
             return builder.CreatePtrCast(value, mType->getVipirType());
+        }
+        else if (mType->isIntegerType() && mValue->getType()->isPointerType())
+        {
+            return builder.CreatePtrToInt(value, mType->getVipirType());
+        }
+        else if (mType->isPointerType() && mValue->getType()->isIntegerType())
+        {
+            return builder.CreateIntToPtr(value, mType->getVipirType());
         }
         else if (mType->isSliceType() && mValue->getType()->isSliceType())
         {

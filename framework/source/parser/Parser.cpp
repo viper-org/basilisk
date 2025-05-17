@@ -5,6 +5,7 @@
 #include "parser/ast/expression/BinaryExpression.h"
 #include "parser/ast/expression/SliceExpression.h"
 #include "parser/ast/expression/UnaryExpression.h"
+#include "parser/ast/expression/CastExpression.h"
 #include "parser/ast/expression/MemberAccess.h"
 
 #include "type/StructType.h"
@@ -380,7 +381,21 @@ namespace parser
 
     ASTNodePtr Parser::parseParenthesizedExpression()
     {
-        consume(); // (
+        SourcePair source;
+        source.start = consume().getStartLocation(); // (
+        if (current().getTokenType() == lexer::TokenType::Type)
+        { // Cast expression
+            auto destType = parseType();
+
+            expectToken(lexer::TokenType::RightParen);
+            consume();
+
+            auto expression = parseExpression(85); // Precedence of the cast operator
+
+            source.end = peek(-1).getEndLocation();
+            return std::make_unique<CastExpression>(mActiveScope, std::move(expression), destType, std::move(source));
+        }
+
         auto expression = parseExpression();
         expectToken(lexer::TokenType::RightParen);
         consume();

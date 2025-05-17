@@ -156,6 +156,18 @@ namespace parser
     void CastExpression::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         mValue->typeCheck(diag, exit);
+
+        if (mValue->getType()->castTo(mType) == Type::CastLevel::Disallowed)
+        {
+            diag.reportCompilerError(
+                mSource.start,
+                mSource.end,
+                std::format("no cast from '{}{}{}' to '{}{}{}'",
+                    fmt::bold, mValue->getType()->getName(), fmt::defaults,
+                    fmt::bold, mType->getName(), fmt::defaults)
+            );
+            exit = true;
+        }
     }
 
     bool CastExpression::triviallyImplicitCast(diagnostic::Diagnostics& diag, Type* destType)

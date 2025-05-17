@@ -435,6 +435,8 @@ void Builder::lexOne(std::filesystem::path inputFilePath)
     lexer::Lexer lexer(mCUs[inputFilePath].text, inputFilePath.string());
     auto tokens = lexer.lex();
     mCUs[inputFilePath].tokens = tokens;
+
+    mDiag.addText(inputFilePath.string(), mCUs[inputFilePath].text);
 }
 
 void Builder::parseModule(std::filesystem::path inputFilePath)
@@ -444,7 +446,18 @@ void Builder::parseModule(std::filesystem::path inputFilePath)
     {
         if (tokens[1].getTokenType() == lexer::TokenType::Identifier)
         {
-            std::string moduleName(tokens[1].getText());
+            int pos = 1;
+            std::string moduleName;
+            while (tokens[pos].getTokenType() == lexer::TokenType::Identifier)
+            {
+                moduleName += tokens[pos++].getText();
+                if (tokens[pos].getTokenType() == lexer::TokenType::Semicolon) break;
+                if (tokens[pos].getTokenType() == basilisk::lexer::TokenType::DoubleColon)
+                {
+                    ++pos;
+                    moduleName += ":";
+                }
+            }
             mModules[moduleName].push_back(inputFilePath.string());
             mCUs[inputFilePath].moduleName = std::move(moduleName);
         }
@@ -469,8 +482,6 @@ void Builder::parseModule(std::filesystem::path inputFilePath)
 
 void Builder::parseOne(std::filesystem::path inputFilePath)
 {
-    mDiag.setText(mCUs[inputFilePath].text);
-
     mCUs[inputFilePath].globalScope = std::make_unique<Scope>(nullptr);
     auto tokens = mCUs[inputFilePath].tokens;
 
@@ -501,7 +512,31 @@ void Builder::doImports(std::filesystem::path inputFilePath)
     {
         if (auto import = dynamic_cast<parser::ImportStatement*>(node.get()))
         {
-            modules.push_back(import->getModule()[0]);
+            std::string module;
+            for (auto& name : import->getModule())
+            {
+                module += name + ":";
+            }
+            module.pop_back();
+            modules.push_back(module);
+
+            if (mModules.find(module) == mModules.end() && mImportedModules.find(module) == mImportedModules.end())
+            {
+                std::string realName;
+                for (auto& name : import->getModule())
+                {
+                    realName += name + "::";
+                }
+                realName.pop_back();
+                realName.pop_back();
+                mDiag.reportCompilerError(
+                    import->getSourcePair().start,
+                    import->getSourcePair().end,
+                    std::format("could not find module '{}{}{}'",
+                        fmt::bold, realName, fmt::defaults)
+                );
+                std::exit(1);
+            }
         }
     }
 
@@ -547,8 +582,6 @@ void Builder::compileObject(std::filesystem::path inputFilePath, std::filesystem
     diBuilder.setDirectory(inputFilePath.parent_path().string());
     diBuilder.setFilename(inputFilePath.filename().string());
     diBuilder.borrowTypes(&mDiBuilder);
-
-    mDiag.setText(mCUs[inputFilePath].text);
 
     module.setABI<vipir::abi::SysV>();
     // Always do constant folding

@@ -1,14 +1,20 @@
 module test;
 import io;
+import std::memory;
 
 func f() -> i32 {
     return 0;
 }
 
 func main() -> i32 {
+    let message = "hello";
+    let buffer: char[5];
+    let p = buffer[0:5];
+    memset(p, 'A');
+
     let x = 0;
     if (x == 1 || !(f() != 0 && x == 0)) {
-        return 3;
+        printn(p);
     }
     return 0;
 }

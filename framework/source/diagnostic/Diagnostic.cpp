@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <format>
 #include <iostream>
-#include <sstream>
 
 namespace diagnostic
 {
@@ -24,9 +23,9 @@ namespace diagnostic
         };
     }
 
-    void Diagnostics::setText(std::string_view text)
+    void Diagnostics::addText(std::string path, std::string_view text)
     {
-        mText = text;
+        mTexts[path] = text;
     }
 
     void Diagnostics::setWarning(bool enable, std::string_view warning)
@@ -62,13 +61,15 @@ namespace diagnostic
 
     void Diagnostics::reportCompilerError(lexer::SourceLocation start, lexer::SourceLocation end, std::string_view message)
     {
-        int lineStart = getLinePosition(start.line-1);
-        int lineEnd = getLinePosition(end.line)-1;
+        auto text = mTexts[start.file];
+
+        int lineStart = getLinePosition(text, start.line-1);
+        int lineEnd = getLinePosition(text, end.line)-1;
 
         end.position += 1;
-        std::string before = std::string(mText.substr(lineStart, start.position - lineStart));
-        std::string_view error = mText.substr(start.position, end.position - start.position);
-        std::string_view after = mText.substr(end.position, lineEnd - end.position);
+        std::string before = std::string(text.substr(lineStart, start.position - lineStart));
+        std::string_view error = text.substr(start.position, end.position - start.position);
+        std::string_view after = text.substr(end.position, lineEnd - end.position);
         std::string spacesBefore = std::string(std::to_string(start.line).length(), ' ');
         std::string spacesAfter = std::string(before.length(), ' ');
 
@@ -84,13 +85,15 @@ namespace diagnostic
         auto it = std::find(mWarnings.begin(), mWarnings.end(), type);
         if (it == mWarnings.end()) return;
 
-        int lineStart = getLinePosition(start.line-1);
-        int lineEnd = getLinePosition(end.line)-1;
+        auto text = mTexts[start.file];
+
+        int lineStart = getLinePosition(text, start.line-1);
+        int lineEnd = getLinePosition(text, end.line)-1;
 
         end.position += 1;
-        std::string_view before = mText.substr(lineStart, start.position - lineStart);
-        std::string_view error = mText.substr(start.position, end.position - start.position);
-        std::string_view after = mText.substr(end.position, lineEnd - end.position);
+        std::string_view before = text.substr(lineStart, start.position - lineStart);
+        std::string_view error = text.substr(start.position, end.position - start.position);
+        std::string_view after = text.substr(end.position, lineEnd - end.position);
         std::string spacesBefore = std::string(std::to_string(start.line).length(), ' ');
         std::string spacesAfter = std::string(before.length(), ' ');
 
@@ -101,12 +104,12 @@ namespace diagnostic
     }
 
 
-    int Diagnostics::getLinePosition(int lineNumber)
+    int Diagnostics::getLinePosition(std::string_view text, int lineNumber)
     {
         int line = 0;
         for (int i = 0; i < lineNumber; ++i)
         {
-            while(mText[line] != '\n')
+            while(text[line] != '\n')
             {
                 ++line;
             }

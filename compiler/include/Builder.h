@@ -28,6 +28,9 @@ struct CompileUnit
     ScopePtr globalScope;
 
     vipir::Module module{"error"};
+
+
+    diagnostic::Diagnostics diag;
 };
 
 // For writing

@@ -221,9 +221,17 @@ namespace parser
 
             case lexer::TokenType::ModuleKeyword:
                 consume();
-                expectToken(lexer::TokenType::Identifier);
-                consume();
-                expectToken(lexer::TokenType::Semicolon);
+                while (current().getTokenType() != lexer::TokenType::Semicolon)
+                {
+                    expectToken(lexer::TokenType::Identifier);
+                    consume();
+
+                    if (current().getTokenType() != lexer::TokenType::Semicolon)
+                    {
+                        expectToken(lexer::TokenType::DoubleColon);
+                        consume();
+                    }
+                }
                 consume();
                 return nullptr;
 
@@ -594,7 +602,7 @@ namespace parser
 
             if (current().getTokenType() != lexer::TokenType::Semicolon)
             {
-                expectToken(lexer::TokenType::Colon);
+                expectToken(lexer::TokenType::DoubleColon);
                 consume();
             }
         }

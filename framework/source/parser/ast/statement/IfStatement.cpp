@@ -18,7 +18,7 @@ namespace parser
 
     vipir::Value* IfStatement::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        vipir::Value* condition = mCondition->dcodegen(builder, diBuilder, module, diag);
+        vipir::Value* condition;
 
         vipir::BasicBlock* startBasicBlock = builder.getInsertPoint();
 
@@ -31,16 +31,25 @@ namespace parser
 
         vipir::BasicBlock* mergeBasicBlock = vipir::BasicBlock::Create("", builder.getInsertPoint()->getParent());
 
-        trueBasicBlock->loopEnd() = mergeBasicBlock;
         if (mElseBody)
         {
             falseBasicBlock->loopEnd() = mergeBasicBlock;
+            condition = mCondition->ccodegen(builder, diBuilder, module, diag, trueBasicBlock, falseBasicBlock);
+        }
+        else
+        {
+            condition = mCondition->ccodegen(builder, diBuilder, module, diag, trueBasicBlock, mergeBasicBlock);
+        }
+
+        /*trueBasicBlock->loopEnd() = mergeBasicBlock;
+        if (mElseBody)
+        {
             builder.CreateCondBr(condition, trueBasicBlock, falseBasicBlock);
         }
         else
         {
             builder.CreateCondBr(condition, trueBasicBlock, mergeBasicBlock);
-        }
+        }*/
 
         builder.setInsertPoint(trueBasicBlock);
         mBody->dcodegen(builder, diBuilder, module, diag);

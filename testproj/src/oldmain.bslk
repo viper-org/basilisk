@@ -1,0 +1,23 @@
+module test;
+import io;
+
+func pmemcpy(dest: i8*, src: i8*, size: usz) -> void {
+    for (let i: usz = 0; i < size; i += 1) {
+        dest[i] = src[i];
+    }
+}
+
+func memcpy(dest: void[], src: void[]) -> void {
+    pmemcpy(&dest[0], &src[0], len(dest));
+}
+
+func oldmain() -> i32 {
+    let s1: str = "hello";
+    let s2: str = "world";
+    let array: char[5];
+    let y: str = array[0:5];
+    memcpy(y, s2);
+    printn(s1);
+    printn(y);
+    return 0;
+}

@@ -47,8 +47,9 @@ namespace parser
         }
 
         mInit->dcodegen(builder, diBuilder, module, diag);
-        vipir::Value* precondition = mCondition->dcodegen(builder, diBuilder, module, diag);
-        builder.CreateCondBr(precondition, bodyBasicBlock, mergeBasicBlock);
+        mCondition->ccodegen(builder, diBuilder, module, diag, bodyBasicBlock, mergeBasicBlock);
+        //vipir::Value* precondition = mCondition->dcodegen(builder, diBuilder, module, diag);
+        //builder.CreateCondBr(precondition, bodyBasicBlock, mergeBasicBlock);
         
         bodyBasicBlock->loopEnd() = mergeBasicBlock;
         itBasicBlock->loopEnd() = mergeBasicBlock;
@@ -82,8 +83,9 @@ namespace parser
         {
             builder.setInsertPoint(itBasicBlock);
             mIt->dcodegen(builder, diBuilder, module, diag);
-            vipir::Value* condition = mCondition->dcodegen(builder, diBuilder, module, diag);
-            builder.CreateCondBr(condition, bodyBasicBlock, mergeBasicBlock);
+            mCondition->ccodegen(builder, diBuilder, module, diag, bodyBasicBlock, mergeBasicBlock);
+            //vipir::Value* condition = mCondition->dcodegen(builder, diBuilder, module, diag);
+            //builder.CreateCondBr(condition, bodyBasicBlock, mergeBasicBlock);
         }
         
         for (int i = 0; i < phis.size(); ++i)

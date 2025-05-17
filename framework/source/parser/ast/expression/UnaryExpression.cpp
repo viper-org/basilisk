@@ -23,6 +23,10 @@ namespace parser
 	{
 		switch (mOperatorToken.getTokenType())
 		{
+            case lexer::TokenType::Bang:
+                mOperator = Operator::LogicalNot;
+                break;
+
             case lexer::TokenType::Star:
                 mOperator = Operator::Indirection;
                 break;
@@ -81,6 +85,16 @@ namespace parser
         return nullptr; // Unreachable
     }
 
+    vipir::Value* UnaryExpression::ccodegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag, vipir::BasicBlock* trueBB, vipir::BasicBlock* falseBB)
+    {
+        if (mOperator == Operator::LogicalNot)
+        {
+            mOperand->ccodegen(builder, diBuilder, module, diag, falseBB, trueBB);
+        }
+
+        return nullptr;
+    }
+
     std::vector<ASTNode*> UnaryExpression::getChildren()
     {
         return {mOperand.get()};
@@ -92,6 +106,29 @@ namespace parser
 
         switch (mOperator) 
         {
+            case Operator::LogicalNot:
+                if (!mOperand->getType()->isBooleanType())
+                {
+                    if (mOperand->canImplicitCast(diag, Type::Get("bool")))
+                    {
+                        mOperand = Cast(mOperand, Type::Get("bool"));
+                    }
+                    else
+                    {
+                        diag.reportCompilerError(
+                            mSource.start,
+                            mSource.end,
+                            std::format("No match for '{}operator{}{} with type '{}{}{}'",
+                                fmt::bold, mOperatorToken.getName(), fmt::defaults,
+                                fmt::bold, mOperand->getType()->getName(), fmt::defaults)
+                        );
+                        exit = true;
+                        mType = Type::Get("error-type");
+                    }
+                }
+                mType = Type::Get("bool");
+                break;
+
             case Operator::Indirection:
                 if (!mOperand->getType()->isPointerType())
                 {

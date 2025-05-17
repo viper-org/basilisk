@@ -60,6 +60,13 @@ namespace parser
                 mOperator = Operator::GreaterEqual;
                 break;
 
+            case lexer::TokenType::DoubleAmpersand:
+                mOperator = Operator::LogicalAnd;
+                break;
+            case lexer::TokenType::DoublePipe:
+                mOperator = BinaryExpression::Operator::LogicalOr;
+                break;
+
             case lexer::TokenType::Equal:
                 mOperator = Operator::Assign;
                 break;
@@ -253,6 +260,59 @@ namespace parser
         return nullptr; // Unreachable
     }
 
+    vipir::Value* BinaryExpression::ccodegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag, vipir::BasicBlock* trueBB, vipir::BasicBlock* falseBB)
+    {
+        if (mOperator == Operator::LogicalAnd)
+        {
+            auto newBB = vipir::BasicBlock::Create("", trueBB->getParent());
+
+            mLeft->ccodegen(builder, diBuilder, module, diag, newBB, falseBB);
+            builder.setInsertPoint(newBB);
+            mRight->ccodegen(builder, diBuilder, module, diag, trueBB, falseBB);
+        }
+        else if (mOperator == Operator::LogicalOr)
+        {
+            auto newBB = vipir::BasicBlock::Create("", trueBB->getParent());
+
+            mLeft->ccodegen(builder, diBuilder, module, diag, trueBB, newBB);
+            builder.setInsertPoint(newBB);
+            mRight->ccodegen(builder, diBuilder, module, diag, trueBB, falseBB);
+        }
+        else
+        {
+            vipir::Value* condition;
+            vipir::Value* left  = mLeft->dcodegen(builder, diBuilder, module, diag);
+            vipir::Value* right = mRight->dcodegen(builder, diBuilder, module, diag);
+            switch (mOperator)
+            {
+                case Operator::Equal:
+                    condition = builder.CreateCmpEQ(left, right);
+                    break;
+                case Operator::NotEqual:
+                    condition = builder.CreateCmpNE(left, right);
+                    break;
+                case Operator::LessThan:
+                    condition = builder.CreateCmpLT(left, right);
+                    break;
+                case Operator::GreaterThan:
+                    condition = builder.CreateCmpGT(left, right);
+                    break;
+                case Operator::LessEqual:
+                    condition = builder.CreateCmpLE(left, right);
+                    break;
+                case Operator::GreaterEqual:
+                    condition = builder.CreateCmpGE(left, right);
+                    break;
+
+                default:
+                    return nullptr;
+            }
+            builder.CreateCondBr(condition, trueBB, falseBB);
+        }
+
+        return nullptr;
+    }
+
     std::vector<ASTNode*> BinaryExpression::getChildren()
     {
         return {mLeft.get(), mRight.get()};
@@ -368,6 +428,36 @@ namespace parser
                 }
                 mType = Type::Get("bool");
                 break;
+
+            case parser::BinaryExpression::Operator::LogicalAnd:
+            case parser::BinaryExpression::Operator::LogicalOr:
+            {
+                auto checkOperand = [this, &diag, &exit](ASTNodePtr& operand){
+                    if (!operand->getType()->isBooleanType())
+                    {
+                        if (operand->canImplicitCast(diag, Type::Get("bool")))
+                        {
+                            operand = Cast(mLeft, Type::Get("bool"));
+                        }
+                        else
+                        {
+                            diag.reportCompilerError(
+                                mSource.start,
+                                mSource.end,
+                                std::format("No match for '{}operator{}{} with types '{}{}{}' and '{}{}{}'",
+                                    fmt::bold, mOperatorToken.getName(), fmt::defaults,
+                                    fmt::bold, mLeft->getType()->getName(), fmt::defaults,
+                                    fmt::bold, mRight->getType()->getName(), fmt::defaults)
+                            );
+                            exit = true;
+                        }
+                    }
+                };
+                checkOperand(mLeft);
+                checkOperand(mRight);
+                mType = Type::Get("bool");
+                break;
+            }
 
             case Operator::Assign:
                 if (mLeft->getType() != mRight->getType())

@@ -43,6 +43,10 @@ Type::CastLevel SliceType::castTo(Type* destType) const
         {
             return Type::CastLevel::Implicit;
         }
+        if (mPointeeType->isVoidType())
+        {
+            return Type::CastLevel::Implicit;
+        }
     }
     return Type::CastLevel::Disallowed;
 }

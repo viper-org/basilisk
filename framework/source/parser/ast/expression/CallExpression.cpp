@@ -89,7 +89,7 @@ namespace parser
             unsigned int index = 0;
             for (auto& parameter : mParameters)
             {
-                auto argumentType = functionType->getArgumentTypes()[index];
+                auto argumentType = functionType->getArgumentTypes()[index++];
                 if (parameter->getType() != argumentType)
                 {
                     if (parameter->canImplicitCast(diag, argumentType))

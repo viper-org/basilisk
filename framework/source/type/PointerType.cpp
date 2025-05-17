@@ -34,6 +34,10 @@ Type::CastLevel PointerType::castTo(Type* destType) const
         {
             return Type::CastLevel::Implicit;
         }
+        if (mPointeeType->isVoidType())
+        {
+            return Type::CastLevel::Implicit;
+        }
         return Type::CastLevel::Explicit;
     }
     if (destType->isIntegerType())

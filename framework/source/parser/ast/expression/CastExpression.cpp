@@ -106,6 +106,10 @@ namespace parser
                 return builder.CreateZExt(value, mType->getVipirType());
             }
         }
+        else if (mType->isPointerType() && mValue->getType()->isPointerType())
+        {
+            return builder.CreatePtrCast(value, mType->getVipirType());
+        }
         else if (mType->isSliceType() && mValue->getType()->isSliceType())
         {
             auto pointer = vipir::getPointerOperand(value);

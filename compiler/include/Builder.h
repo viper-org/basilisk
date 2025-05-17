@@ -106,6 +106,8 @@ private:
     void parseOne(std::filesystem::path inputFilePath);
     void doImports(std::filesystem::path inputFilePath);
     void compileObject(std::filesystem::path inputFilePath, std::filesystem::path outputFilePath);
+
+    void assembleOne(std::filesystem::path inputFilePath, std::filesystem::path outputFilePath);
 };
 
 #endif // BASILISK_COMPILER_BUILDER_H

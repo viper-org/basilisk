@@ -6,6 +6,8 @@ func f() -> i32 {
     return 0;
 }
 
+func thing() -> i32;
+
 func main() -> i32 {
     let message = "hello";
     let buffer: char[5];
@@ -16,5 +18,5 @@ func main() -> i32 {
     if (x == 1 || !(f() != 0 && x == 0)) {
         printn(p);
     }
-    return 0;
+    return thing();
 }

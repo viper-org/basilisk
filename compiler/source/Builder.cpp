@@ -17,6 +17,15 @@
 #include <vipir/ABI/SysV.h>
 #include <vipir/Pass/DefaultPass.h>
 
+#include <vasm/lexer/Lexer.h>
+#include <vasm/lexer/Token.h>
+
+#include <vasm/parser/Parser.h>
+
+#include <vasm/error/ErrorReporter.h>
+
+#include <vasm/codegen/Elf.h>
+
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -294,6 +303,7 @@ void Builder::compileObjects(std::filesystem::path projectDir)
     std::filesystem::path sourceDir = projectDir / "src";
     std::filesystem::path buildDir = projectDir / "build";
     std::vector<std::pair<std::filesystem::path, std::filesystem::path> > files;
+    std::vector<std::pair<std::filesystem::path, std::filesystem::path> > vasmFiles;
 
     for (std::filesystem::recursive_directory_iterator it(sourceDir); it != std::filesystem::end(it); ++it)
     {
@@ -311,6 +321,16 @@ void Builder::compileObjects(std::filesystem::path projectDir)
             parseModule(inputFile);
             parseOne(inputFile);
         }
+        else if (it->is_regular_file() && it->path().extension() == ".vas")
+        {
+            auto inputFile = it->path();
+            auto inputFileRelativePath = std::filesystem::relative(inputFile, sourceDir);
+            auto outputFile = buildDir / "objects" / inputFileRelativePath;
+            outputFile.replace_extension(".o");
+            std::filesystem::create_directories(outputFile.parent_path());
+            mObjects.push_back(outputFile);
+            vasmFiles.push_back({inputFile, outputFile});
+        }
     }
     Type::FinalizeDITypes();
 
@@ -322,6 +342,11 @@ void Builder::compileObjects(std::filesystem::path projectDir)
     for (auto& file : files)
     {
         compileObject(file.first, file.second);
+    }
+
+    for (auto& vasmFile : vasmFiles)
+    {
+        assembleOne(vasmFile.first, vasmFile.second);
     }
 }
 
@@ -631,4 +656,30 @@ void Builder::compileObject(std::filesystem::path inputFilePath, std::filesystem
     std::ofstream outputFile(outputFilePath);
     module.setOutputFormat(vipir::OutputFormat::ELF);
     module.emit(outputFile);
+}
+
+void Builder::assembleOne(std::filesystem::path inputFilePath, std::filesystem::path outputFilePath)
+{
+    std::ifstream file(inputFilePath);
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+
+    std::string text = std::move(buffer).str();
+
+    lexing::Lexer lexer(text); // vasm lexer
+    auto tokens = lexer.lex();
+    error::ErrorReporter errorReporter;
+    parsing::Parser parser(inputFilePath.string(), tokens, errorReporter);
+    auto instructions = parser.parse();
+    
+    codegen::ELFFormat output(inputFilePath.string());
+    codegen::OpcodeBuilder builder(&output, inputFilePath.string());
+    for (auto& inst : instructions)
+    {
+        inst->emit(builder, builder.getSection());
+    }
+    builder.patchForwardLabels();
+
+    std::ofstream outFile(outputFilePath, std::ios::binary);
+    output.print(outFile);
 }

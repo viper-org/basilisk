@@ -7,6 +7,9 @@ Makefile
 *.a
 *.o
 *.so
+*.sym
+*.bslib
+a.out
 
 CMakeCache.txt
 install_manifest.txt

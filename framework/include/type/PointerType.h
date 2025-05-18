@@ -15,11 +15,13 @@ public:
     virtual int getSize() const override;
     virtual vipir::Type* getVipirType() const override;
     virtual CastLevel castTo(Type* destType) const override;
+    virtual std::string getSymbolID() const override;
 
     bool isPointerType() const override;
 
     static PointerType* Get(Type* pointeeType);
     static void SetDITypes();
+    static void Reset();
 
 private:
     Type* mPointeeType;

@@ -51,6 +51,14 @@ SymbolValue* Symbol::getLatestValueX(vipir::BasicBlock* basicBlock)
         return &*it;
     }
 
+    if (basicBlock->predecessors().size() == 1)
+    {
+        if (auto value = getLatestValueX(basicBlock->predecessors()[0]))
+        {
+            return value;
+        }
+    }
+
     return nullptr;
 }
 
@@ -61,14 +69,9 @@ Scope::Scope(Scope* parent)
     if (parent) parent->children.push_back(this);
 }
 
-Scope* Scope::GetGlobalScope()
-{
-    static Scope globalScope(nullptr);
-    return &globalScope;
-}
-
 Symbol* Scope::resolveSymbol(std::string name)
 {
+    Scope* prev = nullptr;
     Scope* current = this;
     while (current)
     {
@@ -77,6 +80,8 @@ Symbol* Scope::resolveSymbol(std::string name)
         });
 
         if (it != current->symbols.end()) return it->get();
+
+        prev = current;
         current = current->parent;
     }
 
@@ -95,24 +100,36 @@ Type* Scope::getCurrentReturnType()
     return nullptr;
 }
 
-vipir::BasicBlock* Scope::getContinueTo()
+vipir::BasicBlock* Scope::getContinueTo(std::string label)
 {
     Scope* current = this;
     while (current)
     {
-        if (current->continueTo) return current->continueTo;
+        if (current->loopContext.continueTo)
+        {
+            if (label.empty() || current->loopContext.label == label)
+            {
+                return current->loopContext.continueTo;
+            }
+        }
         current = current->parent;
     }
 
     return nullptr;
 }
 
-vipir::BasicBlock* Scope::getBreakTo()
+vipir::BasicBlock* Scope::getBreakTo(std::string label)
 {
     Scope* current = this;
     while (current)
     {
-        if (current->breakTo) return current->breakTo;
+        if (current->loopContext.breakTo)
+        {
+            if (label.empty() || current->loopContext.label == label)
+            {
+                return current->loopContext.breakTo;
+            }
+        }
         current = current->parent;
     }
 

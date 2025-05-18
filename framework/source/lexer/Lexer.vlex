@@ -1,4 +1,4 @@
-tokens {
+tokens basilisk {
     (
     )
     {
@@ -25,12 +25,23 @@ tokens {
     <=
     >=
 
+    !
+    &&
+    ||
+
     =
+    +=
+    -=
     &
+
+    @
+
+    ::
 
     func
     struct
-
+    
+    module
     import
     export
 
@@ -47,6 +58,7 @@ tokens {
     continue
 
     sizeof
+    len
 
     true
     false
@@ -55,6 +67,7 @@ tokens {
     _identifier
     _integer_literal
     _string_literal
+    _character_literal
 
     i8 Type
     i16 Type
@@ -68,4 +81,10 @@ tokens {
     
     void Type
     bool Type
+
+    str Type
+    char Type
+    byte Type
+    isz Type
+    usz Type
 }

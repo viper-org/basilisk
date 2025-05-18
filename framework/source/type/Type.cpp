@@ -5,7 +5,10 @@
 #include "type/VoidType.h"
 #include "type/BooleanType.h"
 #include "type/PointerType.h"
+#include "type/SliceType.h"
+#include "type/ArrayType.h"
 #include "type/StructType.h"
+#include "type/FunctionType.h"
 #include "type/ErrorType.h"
 #include "type/PendingType.h"
 
@@ -49,6 +52,12 @@ void Type::Init(vipir::DIBuilder* diBuilder)
 
     types["error-type"] = std::make_unique<ErrorType>();
 
+    AddAlias("char", types["i8"].get());
+    AddAlias("byte", types["u8"].get());
+    AddAlias("isz", types["i64"].get());
+    AddAlias("usz", types["u64"].get());
+    AddAlias("str", SliceType::Get(types["i8"].get()));
+
 
     types["i8"]->setDiType(diBuilder->createBasicType("i8", types["i8"]->getVipirType(), DW_ATE_signed_char));
     types["i16"]->setDiType(diBuilder->createBasicType("i16", types["i16"]->getVipirType(), DW_ATE_signed));
@@ -67,16 +76,26 @@ void Type::Init(vipir::DIBuilder* diBuilder)
     builder = diBuilder;
 }
 
+std::unordered_map<std::string, Type*> aliases;
+void Type::AddAlias(std::string name, Type* type)
+{
+    aliases[name] = type;
+}
+
 bool Type::Exists(const std::string& name)
 {
     auto type = types.find(name);
-    return type != types.end();
+    auto alias = aliases.find(name);
+    return type != types.end() || alias != aliases.end();
 }
 
 Type* Type::Get(const std::string& name)
 {
     auto type = types.find(name);
     if (type != types.end()) return type->second.get();
+
+    auto alias = aliases.find(name);
+    if (alias != aliases.end()) return alias->second;
 
     return nullptr;
 }
@@ -91,5 +110,16 @@ void Type::FinalizeDITypes()
         }
     }
     PointerType::SetDITypes();
+    SliceType::SetDITypes();
     StructType::SetDITypes();
+}
+
+void Type::Reset()
+{
+    types.clear();
+    builder = nullptr;
+    PointerType::Reset();
+    StructType::Reset();
+    FunctionType::Reset();
+    ArrayType::Reset();
 }

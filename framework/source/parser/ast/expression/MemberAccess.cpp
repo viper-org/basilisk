@@ -55,6 +55,11 @@ namespace parser
         return builder.CreateLoad(gep);
     }
 
+    std::vector<ASTNode*> MemberAccess::getChildren()
+    {
+        return {mStruct.get()};
+    }
+
     void MemberAccess::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         mStruct->typeCheck(diag, exit);

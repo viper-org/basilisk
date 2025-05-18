@@ -3,55 +3,27 @@
 #include "parser/Parser.h"
 
 #include "parser/ast/expression/BinaryExpression.h"
+#include "parser/ast/expression/SliceExpression.h"
 #include "parser/ast/expression/UnaryExpression.h"
+#include "parser/ast/expression/CastExpression.h"
 #include "parser/ast/expression/MemberAccess.h"
 
 #include "type/StructType.h"
 #include "type/PointerType.h"
+#include "type/SliceType.h"
 #include "type/ArrayType.h"
 #include "type/PendingType.h"
 
-#include <algorithm>
-
 namespace parser
 {
-    Parser::Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag, ImportManager& importManager, bool imported)
+    Parser::Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag, Scope* globalScope, bool imported)
         : mTokens(tokens)
         , mPosition(0)
         , mDiag(diag)
-        , mImportManager(importManager)
         , mImported(imported)
         , mDoneImports(false)
-        , mActiveScope(Scope::GetGlobalScope())
+        , mActiveScope(globalScope)
     {
-    }
-
-    std::vector<std::filesystem::path> Parser::findImports()
-    {
-        std::vector<std::filesystem::path> ret;
-
-        while (current().getTokenType() == lexer::TokenType::ImportKeyword ||
-              (current().getTokenType() == lexer::TokenType::ExportKeyword && peek(1).getTokenType() == lexer::TokenType::ImportKeyword))
-        {
-            if (current().getTokenType() == lexer::TokenType::ExportKeyword) consume();
-            consume();
-            std::filesystem::path path;
-            while (current().getTokenType() != lexer::TokenType::Semicolon)
-            {
-                expectToken(lexer::TokenType::Identifier);
-                path /= consume().getText();
-
-                if (current().getTokenType() != lexer::TokenType::Semicolon)
-                {
-                    expectToken(lexer::TokenType::Dot);
-                    consume();
-                }
-            }
-            consume();
-            ret.push_back(std::move(path));
-        }
-
-        return ret;
     }
 
     std::vector<ASTNodePtr> Parser::parse()
@@ -133,7 +105,15 @@ namespace parser
             case lexer::TokenType::BangEqual:
                 return 50;
 
+            case lexer::TokenType::DoubleAmpersand:
+                return 30;
+
+            case lexer::TokenType::DoublePipe:
+                return 25;
+
             case lexer::TokenType::Equal:
+            case lexer::TokenType::PlusEqual:
+            case lexer::TokenType::MinusEqual:
                 return 20;
 
             default:
@@ -147,6 +127,7 @@ namespace parser
         {
             case lexer::TokenType::Ampersand:
             case lexer::TokenType::Star:
+            case lexer::TokenType::Bang:
                 return 85;
 
             default:
@@ -196,15 +177,22 @@ namespace parser
             else // [
             {
                 consume();
+                if (current().getTokenType() == lexer::TokenType::RightBracket)
+                {
+                    consume();
+                    type = SliceType::Get(type);
+                }
+                else
+                {
+                    expectToken(lexer::TokenType::IntegerLiteral);
+                    std::string text(consume().getText());
+                    auto value = std::stoull(text, nullptr, 0);
 
-                expectToken(lexer::TokenType::IntegerLiteral);
-                std::string text(consume().getText());
-                auto value = std::stoull(text, nullptr, 0);
+                    expectToken(lexer::TokenType::RightBracket);
+                    consume();
 
-                expectToken(lexer::TokenType::RightBracket);
-                consume();
-
-                type = ArrayType::Get(type, value);
+                    type = ArrayType::Get(type, value);
+                }
             }
         }
 
@@ -221,8 +209,7 @@ namespace parser
                 return parseGlobal(true);
 
             case lexer::TokenType::ImportKeyword:
-                parseImport();
-                return nullptr;
+                return parseImport();
 
             case lexer::TokenType::FuncKeyword:
                 return parseFunction(exported);
@@ -234,6 +221,22 @@ namespace parser
                 return parseGlobalVariableDeclaration(exported, false, true);
             case lexer::TokenType::ConstKeyword:
                 return parseGlobalVariableDeclaration(exported, true, true);
+
+            case lexer::TokenType::ModuleKeyword:
+                consume();
+                while (current().getTokenType() != lexer::TokenType::Semicolon)
+                {
+                    expectToken(lexer::TokenType::Identifier);
+                    consume();
+
+                    if (current().getTokenType() != lexer::TokenType::Semicolon)
+                    {
+                        expectToken(lexer::TokenType::DoubleColon);
+                        consume();
+                    }
+                }
+                consume();
+                return nullptr;
 
             case lexer::TokenType::EndOfFile:
                 consume();
@@ -282,11 +285,7 @@ namespace parser
             }
             else if (operatorToken.getTokenType() == lexer::TokenType::LeftBracket)
             {
-                ASTNodePtr index = parseExpression(binaryOperatorPrecedence);
-                expectToken(lexer::TokenType::RightBracket);
-                source.end = consume().getEndLocation();
-
-                left = std::make_unique<BinaryExpression>(mActiveScope, std::move(left), std::move(operatorToken), std::move(index), std::move(source));
+                left = parseIndexExpression(std::move(left), source, operatorToken);
             }
             else if (operatorToken.getTokenType() == lexer::TokenType::Dot)
             {
@@ -348,6 +347,9 @@ namespace parser
 
             case lexer::TokenType::IntegerLiteral:
                 return parseIntegerLiteral();
+            
+            case lexer::TokenType::CharacterLiteral:
+                return parseCharacterLiteral();
 
             case lexer::TokenType::Identifier:
                 return parseVariableExpression();
@@ -368,6 +370,9 @@ namespace parser
             case lexer::TokenType::SizeofKeyword:
                 return parseSizeofExpression();
 
+            case lexer::TokenType::LenKeyword:
+                return parseLenExpression();
+
             default:
                 mDiag.reportCompilerError(
                     current().getStartLocation(),
@@ -380,7 +385,21 @@ namespace parser
 
     ASTNodePtr Parser::parseParenthesizedExpression()
     {
-        consume(); // (
+        SourcePair source;
+        source.start = consume().getStartLocation(); // (
+        if (current().getTokenType() == lexer::TokenType::Type)
+        { // Cast expression
+            auto destType = parseType();
+
+            expectToken(lexer::TokenType::RightParen);
+            consume();
+
+            auto expression = parseExpression(85); // Precedence of the cast operator
+
+            source.end = peek(-1).getEndLocation();
+            return std::make_unique<CastExpression>(mActiveScope, std::move(expression), destType, std::move(source));
+        }
+
         auto expression = parseExpression();
         expectToken(lexer::TokenType::RightParen);
         consume();
@@ -425,10 +444,13 @@ namespace parser
         }
         consume();
 
-        expectToken(lexer::TokenType::RightArrow);
-        consume();
+        Type* returnType = Type::Get("error-type"); // Use error-type as a placeholder
+        if (current().getTokenType() == lexer::TokenType::RightArrow)
+        {
+            consume();
+            returnType = parseType();
+        }
 
-        auto returnType = parseType();
         auto functionType = FunctionType::Create(returnType, std::move(argumentTypes));
         std::vector<ASTNodePtr> body;
 
@@ -517,7 +539,7 @@ namespace parser
         if (mImported)
         {
             auto structDef = std::make_unique<StructDeclaration>(mActiveScope, exported, true, name, std::move(fields), std::move(source));
-            mImportManager.addPendingType(std::move(name));
+            //mImportManager.addPendingType(std::move(name));
             return structDef;
         }
 
@@ -585,78 +607,28 @@ namespace parser
         return std::make_unique<GlobalVariableDeclaration>(mActiveScope, std::move(name), type, std::move(initialValue), exported, constant, std::move(source));
     }
 
-    void Parser::parseImport()
+    ImportStatementPtr Parser::parseImport()
     {
+        SourcePair source;
+        source.start = current().getStartLocation();
         consume(); // import
 
-        std::filesystem::path path;
+        std::vector<std::string> module;
         while (current().getTokenType() != lexer::TokenType::Semicolon)
         {
             expectToken(lexer::TokenType::Identifier);
-            path /= consume().getText();
+            module.emplace_back(consume().getText());
 
             if (current().getTokenType() != lexer::TokenType::Semicolon)
             {
-                expectToken(lexer::TokenType::Dot);
+                expectToken(lexer::TokenType::DoubleColon);
                 consume();
             }
         }
+        source.end = peek(-1).getEndLocation();
         consume();
-        if (mImported || mDoneImports) return;
 
-        std::vector<Import> allImports;
-        mImportManager.collectAllImports(path, mTokens[0].getStartLocation().file, allImports);
-        for (auto it = allImports.begin(); it != allImports.end(); ++it)
-        {
-            auto& import = *it;
-
-            // Don't import the current file
-            if (import.from == mTokens[0].getStartLocation().file) continue;
-            // We only want to import each file once
-            auto lookIt = std::find_if(allImports.begin(), allImports.end(), [import](const auto& imp){
-                return imp.from == import.from;
-            });
-            if (lookIt != it) continue;
-
-            //ScopePtr scope = std::make_unique<Scope>(nullptr);
-
-            auto nodes = mImportManager.resolveImports(import.from, import.to, mActiveScope, true);
-            for (auto& node : nodes)
-            {
-                mInsertNodeFn(node);
-            }
-
-            auto exports = mImportManager.getExports();
-            std::vector<Export> invalid;
-            for (auto& exp : exports)
-            {
-                bool importedHere = mImportManager.wasExportedTo(std::string(mTokens[0].getStartLocation().file), allImports, exp);
-                if (!exp.symbol || !importedHere)
-                {
-                    invalid.push_back(exp);
-                }
-            }
-            for (auto& symbol : invalid)
-            {
-                if (symbol.symbol)
-                {
-                    symbol.symbol->removed = true;
-                }
-            }
-
-            //mActiveScope->children.push_back(scope.get());
-            for (auto& pendingType : mImportManager.getPendingTypeNames())
-            {
-                auto type = static_cast<PendingType*>(Type::Get(pendingType));
-                auto sym = mActiveScope->resolveSymbol(pendingType);
-                if (sym && !sym->removed) type->initComplete();
-                else type->initIncomplete();
-            }
-
-            //mImportManager.seizeScope(std::move(scope));
-            mImportManager.clearExports();
-        }
-        mDoneImports = true;
+        return std::make_unique<ImportStatement>(mActiveScope, std::move(module), std::move(source));
     }
 
 
@@ -824,9 +796,18 @@ namespace parser
         expectToken(lexer::TokenType::RightParen);
         source.end = consume().getEndLocation();
 
+        std::string label;
+        if (current().getTokenType() == lexer::TokenType::Asperand)
+        {
+            consume();
+            expectToken(lexer::TokenType::Identifier);
+            label = consume().getText();
+            source.end = peek(-1).getEndLocation();
+        }
+
         auto body = parseExpression();
 
-        return std::make_unique<ForStatement>(std::move(init), std::move(condition), std::move(it), std::move(body), mActiveScope, std::move(source));
+        return std::make_unique<ForStatement>(std::move(init), std::move(condition), std::move(it), std::move(body), mActiveScope, std::move(label), std::move(source));
     }
 
     ContinueStatementPtr Parser::parseContinueStatement()
@@ -834,7 +815,16 @@ namespace parser
         SourcePair source { current().getStartLocation(), current().getEndLocation() };
         consume();
 
-        return std::make_unique<ContinueStatement>(mActiveScope, std::move(source));
+        std::string label;
+        if (current().getTokenType() == lexer::TokenType::Asperand)
+        {
+            consume();
+            expectToken(lexer::TokenType::Identifier);
+            label = consume().getText();
+            source.end = peek(-1).getEndLocation();
+        }
+
+        return std::make_unique<ContinueStatement>(mActiveScope, label, std::move(source));
     }
 
     BreakStatementPtr Parser::parseBreakStatement()
@@ -842,7 +832,16 @@ namespace parser
         SourcePair source { current().getStartLocation(), current().getEndLocation() };
         consume();
 
-        return std::make_unique<BreakStatement>(mActiveScope, std::move(source));
+        std::string label;
+        if (current().getTokenType() == lexer::TokenType::Asperand)
+        {
+            consume();
+            expectToken(lexer::TokenType::Identifier);
+            label = consume().getText();
+            source.end = peek(-1).getEndLocation();
+        }
+
+        return std::make_unique<BreakStatement>(mActiveScope, label, std::move(source));
     }
 
 
@@ -851,7 +850,15 @@ namespace parser
         SourcePair source{current().getStartLocation(), current().getEndLocation()};
         std::string text(consume().getText());
         auto value = std::stoull(text, nullptr, 0);
-        return std::make_unique<IntegerLiteral>(mActiveScope, value, std::move(source));
+        return std::make_unique<IntegerLiteral>(mActiveScope, value, Type::Get("i32"), std::move(source));
+    }
+
+    IntegerLiteralPtr Parser::parseCharacterLiteral()
+    {
+        SourcePair source{current().getStartLocation(), current().getEndLocation()};
+        std::string text(consume().getText());
+        auto value = text[0];
+        return std::make_unique<IntegerLiteral>(mActiveScope, value, Type::Get("i8"), std::move(source));
     }
 
     VariableExpressionPtr Parser::parseVariableExpression()
@@ -881,6 +888,23 @@ namespace parser
         source.end = peek(-1).getEndLocation();
 
         return std::make_unique<CallExpression>(mActiveScope, std::move(callee), std::move(parameters), std::move(source));
+    }
+
+    ASTNodePtr Parser::parseIndexExpression(ASTNodePtr left, SourcePair source, lexer::Token operatorToken)
+    {
+        auto index = parseExpression();
+
+        if (current().getTokenType() == lexer::TokenType::Colon)
+        {
+            consume();
+            auto end = parseExpression();
+            expectToken(lexer::TokenType::RightBracket);
+            source.end = consume().getEndLocation();
+            return std::make_unique<SliceExpression>(mActiveScope, std::move(left), std::move(index), std::move(end), std::move(source));
+        }
+        expectToken(lexer::TokenType::RightBracket);
+        source.end = consume().getEndLocation();
+        return std::make_unique<BinaryExpression>(mActiveScope, std::move(left), operatorToken, std::move(index), std::move(source));
     }
 
     StringLiteralPtr Parser::parseStringLiteral()
@@ -929,5 +953,21 @@ namespace parser
         source.end = consume().getEndLocation();
 
         return std::make_unique<SizeofExpression>(mActiveScope, std::move(operand), std::move(source));
+    }
+
+    LenExpressionPtr Parser::parseLenExpression()
+    {
+        SourcePair source{ current().getStartLocation(), current().getEndLocation() };
+        consume(); // len
+
+        expectToken(lexer::TokenType::LeftParen);
+        consume();
+
+        auto operand = parseExpression();
+
+        expectToken(lexer::TokenType::RightParen);
+        source.end = consume().getEndLocation();
+
+        return std::make_unique<LenExpression>(mActiveScope, std::move(operand), std::move(source));
     }
 }

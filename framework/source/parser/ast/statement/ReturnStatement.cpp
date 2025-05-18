@@ -26,6 +26,14 @@ namespace parser
         return builder.CreateRet(returnValue);
     }
 
+    std::vector<ASTNode*> ReturnStatement::getChildren()
+    {
+        if (mReturnValue)
+            return {mReturnValue.get()};
+
+        return {};
+    }
+
     void ReturnStatement::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         if (mReturnValue)
@@ -36,7 +44,7 @@ namespace parser
         auto returnType = mScope->getCurrentReturnType();
         if (returnType->isVoidType())
         {
-            if (mReturnValue != nullptr)
+            if (mReturnValue != nullptr && !mReturnValue->getType()->isVoidType())
             {
                 diag.reportCompilerError(
                     mReturnValue->getSourcePair().start,

@@ -45,15 +45,19 @@ Type::CastLevel ArrayType::castTo(Type* destType) const
     return Type::CastLevel::Disallowed;
 }
 
+std::string ArrayType::getSymbolID() const
+{
+    return "UNIMPLEMENTED";
+}
+
 bool ArrayType::isArrayType() const
 {
     return true;
 }
 
+static std::vector<std::unique_ptr<ArrayType> > arrayTypes;
 ArrayType* ArrayType::Get(Type* elementType, unsigned int length)
 {
-    // Maybe replace this with a hashmap?
-    static std::vector<std::unique_ptr<ArrayType> > arrayTypes;
     auto it = std::find_if(arrayTypes.begin(), arrayTypes.end(), [elementType, length](const auto& type){
         return type->getElementType() == elementType && type->getLength() == length;
     });
@@ -65,4 +69,9 @@ ArrayType* ArrayType::Get(Type* elementType, unsigned int length)
 
     arrayTypes.push_back(std::make_unique<ArrayType>(elementType, length));
     return arrayTypes.back().get();
+}
+
+void ArrayType::Reset()
+{
+    arrayTypes.clear();
 }

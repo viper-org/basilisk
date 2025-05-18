@@ -6,7 +6,7 @@ endif()
 
 if(NOT DEFINED CMAKE_Basilisk_LINK_EXECUTABLE)
     set(CMAKE_Basilisk_LINK_EXECUTABLE 
-        "gcc -o <TARGET> <OBJECTS>"
+        "basilisk --cexec -o <TARGET> <OBJECTS>"
     )
 endif()
 

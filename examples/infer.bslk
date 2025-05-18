@@ -1,0 +1,29 @@
+func main() {
+    return 1;
+}
+
+func abc() -> void {
+    return;
+}
+
+func test() -> void {
+    return abc();
+}
+
+func test2() {
+    if (true) {
+        return;
+    }
+    else {
+        return;
+    }
+}
+
+func test3() {
+    if (true) {
+        return 1;
+    }
+    else {
+        return 3;
+    }
+}

@@ -1,0 +1,12 @@
+func print(val: i32) -> void;
+
+func main() {
+    for (let i = 0; i < 10; i = i + 1) @outer {
+        for (let j = 0; j < 10; j = j + 1) @inner {
+            print(i * j);
+            continue @outer;
+        }
+    }
+
+    return 0;
+}

@@ -5,6 +5,8 @@
 
 #include "lexer/SourceLocation.h"
 
+using namespace basilisk;
+
 struct SourcePair
 {
     lexer::SourceLocation start;

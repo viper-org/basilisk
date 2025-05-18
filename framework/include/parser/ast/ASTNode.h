@@ -13,8 +13,9 @@
 #include <vipir/DI/DIBuilder.h>
 
 #include <cassert>
-#include <iostream>
 #include <memory>
+
+using namespace basilisk;
 
 namespace parser
 {
@@ -37,11 +38,16 @@ namespace parser
             auto val = codegen(builder, diBuilder, module, diag);
             return val;
         }
+        virtual vipir::Value* ccodegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag, vipir::BasicBlock* trueBB, vipir::BasicBlock* falseBB) { return nullptr; }
+
+        virtual std::vector<ASTNode*> getChildren() { return {}; }
 
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) = 0;
 
         virtual bool triviallyImplicitCast(diagnostic::Diagnostics& diag, Type* destType) { return false; }
         bool canImplicitCast(diagnostic::Diagnostics& diag, Type* destType);
+
+        virtual ASTNodePtr cloneExternal(Scope* in) { return nullptr; }
 
         static ASTNodePtr Cast(ASTNodePtr& node, Type* destType);
         

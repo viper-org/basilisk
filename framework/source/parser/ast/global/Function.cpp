@@ -2,8 +2,17 @@
 
 #include "parser/ast/global/Function.h"
 
-#include <vipir/Type/FunctionType.h>
+#include "parser/ast/statement/ReturnStatement.h"
+
 #include <vipir/IR/Function.h>
+
+#include <vipir/IR/Instruction/AllocaInst.h>
+
+#include <vipir/IR/Constant/ConstantInt.h>
+
+#include <vipir/Type/FunctionType.h>
+
+#include <functional>
 
 namespace parser
 {
@@ -70,23 +79,122 @@ namespace parser
             argument.symbol->diVariable = diVariable;
 
             auto arg = function->getArgument(index++);
-            auto q1 = builder.CreateQueryAddress();
-            argument.symbol->values.push_back({entryBB, arg, q1, nullptr});
+            if(false)//if (argument.type->isArrayType() || argument.type->isStructType() || argument.type->isSliceType())
+            {
+                auto alloca = builder.CreateAlloca(argument.type->getVipirType());
+                builder.CreateStore(alloca, arg);
+                argument.symbol->values.push_back({entryBB, alloca, nullptr, nullptr});
+            }
+            else
+            {
+                auto q1 = builder.CreateQueryAddress();
+                argument.symbol->values.push_back({entryBB, arg, q1, nullptr});
+            }
         }
 
         for (auto& node : mBody)
         {
             node->dcodegen(builder, diBuilder, module, diag);
         }
+        if (!builder.getInsertPoint()->hasTerminator())
+        {
+            auto retType = static_cast<FunctionType*>(mType)->getReturnType();
+            if (retType->isVoidType())
+            {
+                builder.CreateRet(nullptr);
+            }
+            else if (retType->isIntegerType())
+            {
+                builder.CreateRet(vipir::ConstantInt::Get(module, 0, retType->getVipirType()));
+            }
+        }
 
         return function;
     }
 
+    std::vector<ASTNode*> Function::getChildren()
+    {
+        std::vector<ASTNode*> children;
+        for (auto& node : mBody)
+        {
+            children.push_back(node.get());
+        }
+        return children;
+    }
+
     void Function::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
+        if (static_cast<FunctionType*>(mType)->getReturnType() == Type::Get("error-type"))
+        {
+            std::function<ReturnStatement*(ASTNode*)> process;
+            process = [&process](ASTNode* node) -> ReturnStatement* {
+                if (auto ret = dynamic_cast<ReturnStatement*>(node))
+                {
+                    return ret;
+                }
+                for (auto child : node->getChildren())
+                {
+                    if (auto ret = process(child))
+                    {
+                        return ret;
+                    }
+                }
+                return nullptr;
+            };
+            std::vector<Type*> parameterTypes;
+            Type* returnType = nullptr;
+            for (auto& argument : mArguments)
+            {
+                parameterTypes.push_back(argument.type);
+            }
+            for (auto& node : mBody)
+            {
+                if (auto ret = process(node.get()))
+                {
+                    if (ret->getChildren().empty())
+                    {
+                        returnType = Type::Get("void");
+                    }
+                    else
+                    {
+                        returnType = ret->getChildren()[0]->getType();
+                    }
+                    break;
+                }
+            }
+            if (!returnType)
+            {
+                diag.reportCompilerError(
+                    mSource.start,
+                    mSource.end,
+                    std::format("could not deduce return type")
+                );
+                exit = true;
+            }
+            else
+            {
+                auto functionType = FunctionType::Create(returnType, std::move(parameterTypes));
+                mType = functionType;
+                mSymbol->type = functionType;
+                mOwnScope->currentReturnType = returnType;
+            }
+        }
+
         for (auto& node : mBody)
         {
             node->typeCheck(diag, exit);
         }
+    }
+
+    ASTNodePtr Function::cloneExternal(Scope* in)
+    {
+        auto ownScope = std::make_unique<Scope>(in);
+        auto functionType = static_cast<FunctionType*>(mType);
+        return std::make_unique<Function>(false, mName, functionType, mArguments, std::move(ownScope), true, std::vector<ASTNodePtr>(), mSource, mBlockEnd);
+    }
+
+    std::string Function::getName() const
+    {
+        return mName;
     }
 }

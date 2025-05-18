@@ -50,24 +50,38 @@ struct Symbol
 };
 using SymbolPtr = std::unique_ptr<Symbol>;
 
+struct LoopContext
+{
+    LoopContext(vipir::BasicBlock* continueTo, vipir::BasicBlock* breakTo, std::string label)
+        : continueTo(continueTo), breakTo(breakTo), label(std::move(label))
+    {
+    }
+
+    LoopContext(vipir::BasicBlock* continueTo, vipir::BasicBlock* breakTo)
+        : continueTo(continueTo), breakTo(breakTo)
+    {
+    };
+
+    vipir::BasicBlock* continueTo;
+    vipir::BasicBlock* breakTo;
+    std::string label;
+};
+
 struct Scope
 {
     Scope(Scope* parent);
-
-    static Scope* GetGlobalScope();
 
     Symbol* getSymbol(unsigned long id);
     Symbol* resolveSymbol(std::string name);
 
     Type* getCurrentReturnType();
-    vipir::BasicBlock* getContinueTo();
-    vipir::BasicBlock* getBreakTo();
+    vipir::BasicBlock* getContinueTo(std::string label = "");
+    vipir::BasicBlock* getBreakTo(std::string label = "");
 
     Scope* parent;
 
     Type* currentReturnType{ nullptr };
-    vipir::BasicBlock* continueTo{ nullptr };
-    vipir::BasicBlock* breakTo{ nullptr };
+    LoopContext loopContext { nullptr, nullptr };
 
     std::vector<SymbolPtr> symbols;
 

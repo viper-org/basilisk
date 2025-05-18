@@ -31,6 +31,14 @@ namespace parser
         return vipir::ConstantInt::Get(module, mOperandType->getVipirType()->getSizeInBits() / 8, mType->getVipirType());
     }
 
+    std::vector<ASTNode*> SizeofExpression::getChildren()
+    {
+        if (mOperandExpression)
+            return {mOperandExpression.get()};
+
+        return {};
+    }
+
     void SizeofExpression::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
     {
         if (mOperandExpression)

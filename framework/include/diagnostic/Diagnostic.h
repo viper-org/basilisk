@@ -4,12 +4,14 @@
 #define BASILISK_FRAMEWORK_DIAGNOSTIC_DIAGNOSTIC_H 1
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
-namespace lexer
+namespace basilisk::lexer
 {
     class SourceLocation;
 }
+using namespace basilisk;
 
 namespace fmt
 {
@@ -26,8 +28,9 @@ namespace diagnostic
     public:
         Diagnostics();
 
-        void setText(std::string_view text);
+        void addText(std::string path, std::string_view text);
         void setWarning(bool enable, std::string_view warning);
+        void disableAllWarnings();
         void setImported(bool imported);
 
         [[noreturn]] void fatalError(std::string_view message);
@@ -36,11 +39,11 @@ namespace diagnostic
         void compilerWarning(std::string_view type, lexer::SourceLocation start, lexer::SourceLocation end, std::string_view message);
 
     private:
-        std::string_view mText;
+        std::unordered_map<std::string_view, std::string_view> mTexts;
         std::vector<std::string_view> mWarnings;
         bool mImported{ false };
 
-        int getLinePosition(int lineNumber);
+        int getLinePosition(std::string_view text, int lineNumber);
     };
 }
 

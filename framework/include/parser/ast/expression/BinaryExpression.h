@@ -30,8 +30,14 @@ namespace parser
             LessEqual,
             GreaterEqual,
 
+            // Logical
+            LogicalAnd,
+            LogicalOr,
+
             // Assignment
             Assign,
+            AddAssign,
+            SubAssign,
 
             // Special
             Index
@@ -40,6 +46,9 @@ namespace parser
         BinaryExpression(Scope* scope, ASTNodePtr left, lexer::Token operatorToken, ASTNodePtr right, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
+        virtual vipir::Value* ccodegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag, vipir::BasicBlock* trueBB, vipir::BasicBlock* falseBB) override;
+
+        virtual std::vector<ASTNode*> getChildren() override;
 
         virtual void typeCheck(diagnostic::Diagnostics& diag, bool& exit) override;
 

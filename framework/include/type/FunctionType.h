@@ -16,10 +16,12 @@ public:
     virtual int getSize() const override;
     virtual vipir::Type* getVipirType() const override;
     virtual CastLevel castTo(Type* destType) const override;
+    virtual std::string getSymbolID() const override;
 
     bool isFunctionType() const override;
 
     static FunctionType* Create(Type* returnType, std::vector<Type*> argumentTypes);
+    static void Reset();
 
 private:
     std::vector<Type*> mArgumentTypes;

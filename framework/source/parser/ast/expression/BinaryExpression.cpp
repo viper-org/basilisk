@@ -6,6 +6,8 @@
 #include "type/IntegerType.h"
 #include "type/ArrayType.h"
 #include "type/PointerType.h"
+#include "type/SliceType.h"
+#include "vipir/IR/Argument.h"
 
 #include <vipir/Module.h>
 
@@ -58,8 +60,22 @@ namespace parser
                 mOperator = Operator::GreaterEqual;
                 break;
 
+            case lexer::TokenType::DoubleAmpersand:
+                mOperator = Operator::LogicalAnd;
+                break;
+            case lexer::TokenType::DoublePipe:
+                mOperator = BinaryExpression::Operator::LogicalOr;
+                break;
+
             case lexer::TokenType::Equal:
                 mOperator = Operator::Assign;
+                break;
+
+            case lexer::TokenType::PlusEqual:
+                mOperator = Operator::AddAssign;
+                break;
+            case lexer::TokenType::MinusEqual:
+                mOperator = Operator::SubAssign;
                 break;
 
             case lexer::TokenType::LeftBracket:
@@ -75,6 +91,66 @@ namespace parser
     {
         vipir::Value* left = mLeft->dcodegen(builder, diBuilder, module, diag);
         vipir::Value* right = mRight->dcodegen(builder, diBuilder, module, diag);
+
+        auto createAssign = [&](vipir::Value* left, vipir::Value* right) -> vipir::Value* {
+            if (auto variableExpression = dynamic_cast<VariableExpression*>(mLeft.get()))
+            {
+                auto symbol = mScope->resolveSymbol(variableExpression->getName());
+                if (symbol->constant) {
+                    diag.reportCompilerError(
+                        mSource.start,
+                        mSource.end,
+                        "attempted to mutate the value of a constant"
+                    );
+                    std::exit(1);
+                }
+              
+                if (dynamic_cast<vipir::AllocaInst*>(symbol->getLatestValue()->value))
+                {
+                    auto instruction = static_cast<vipir::Instruction*>(left);
+                    instruction->eraseFromParent();
+                    
+                    builder.CreateStore(symbol->getLatestValue()->value, right);
+
+                    return right;
+                }
+                else if (dynamic_cast<vipir::GlobalVar*>(symbol->getLatestValue()->value))
+                {
+                    auto instruction = static_cast<vipir::Instruction*>(left);
+                    instruction->eraseFromParent();
+                    
+                    builder.CreateStore(symbol->getLatestValue()->value, right);
+
+                    return right;
+                }
+                else
+                {
+                    auto q2 = builder.CreateQueryAddress();
+                    symbol->getLatestValue()->end = q2;
+                    vipir::DIVariable* pointer = nullptr;
+                    if (auto addr = dynamic_cast<vipir::AddrInst*>(right))
+                    {
+                        if (addr->getDebugVariable())
+                        {
+                            pointer = addr->getDebugVariable();
+                        }
+                    }
+                    symbol->values.push_back({builder.getInsertPoint(), right, q2, nullptr, pointer});
+                    return right;
+                }
+            }
+            else if (auto load = dynamic_cast<vipir::LoadInst*>(left))
+            {
+                auto pointerOperand = vipir::getPointerOperand(load);
+                auto instruction = static_cast<vipir::Instruction*>(left);
+                instruction->eraseFromParent();
+
+                builder.CreateStore(pointerOperand, right);
+
+                return right;
+            }
+            return nullptr;
+        };
 
         switch (mOperator)
         {
@@ -128,60 +204,24 @@ namespace parser
                 return builder.CreateCmpGE(left, right);
 
             case Operator::Assign:
+                return createAssign(left, right);
+            
+            case Operator::AddAssign:
+                if (mLeft->getType()->isPointerType())
+                {
+                    auto gep = builder.CreateGEP(left, right);
+                    return createAssign(left, gep);
+                }
+                else
+                {
+                    auto add = builder.CreateAdd(left, right);
+                    return createAssign(left, add);
+                }
+            
+            case Operator::SubAssign:
             {
-                if (auto variableExpression = dynamic_cast<VariableExpression*>(mLeft.get()))
-                {
-                    auto symbol = mScope->resolveSymbol(variableExpression->getName());
-
-                    if (symbol->constant) {
-                        diag.reportCompilerError(
-                            mSource.start,
-                            mSource.end,
-                            "attempted to mutate the value of a constant"
-                        );
-                        std::exit(1);
-                    }
-
-                    if (dynamic_cast<vipir::AllocaInst*>(symbol->getLatestValue()->value))
-                    {
-                        auto instruction = static_cast<vipir::Instruction*>(left);
-                        instruction->eraseFromParent();
-                        
-                        builder.CreateStore(symbol->getLatestValue()->value, right);
-
-                        return right;
-                    }
-                    else if (dynamic_cast<vipir::GlobalVar*>(symbol->getLatestValue()->value))
-                    {
-                        auto instruction = static_cast<vipir::Instruction*>(left);
-                        instruction->eraseFromParent();
-                        
-                        return builder.CreateStore(symbol->getLatestValue()->value, right);
-                    }
-                    else
-                    {
-                        auto q2 = builder.CreateQueryAddress();
-                        symbol->getLatestValue()->end = q2;
-                        vipir::DIVariable* pointer = nullptr;
-                        if (auto addr = dynamic_cast<vipir::AddrInst*>(right))
-                        {
-                            if (addr->getDebugVariable())
-                            {
-                                pointer = addr->getDebugVariable();
-                            }
-                        }
-                        symbol->values.push_back({builder.getInsertPoint(), right, q2, nullptr, pointer});
-                        return right;
-                    }
-                }
-                else if (auto load = dynamic_cast<vipir::LoadInst*>(left))
-                {
-                    auto pointerOperand = vipir::getPointerOperand(load);
-                    auto instruction = static_cast<vipir::Instruction*>(left);
-                    instruction->eraseFromParent();
-
-                    return builder.CreateStore(pointerOperand, right);
-                }
+                auto sub = builder.CreateSub(left, right);
+                return createAssign(left, sub);
             }
 
             case Operator::Index:
@@ -197,8 +237,27 @@ namespace parser
                         auto pointerOperand = vipir::getPointerOperand(load);
                         auto instruction = static_cast<vipir::Instruction*>(left);
                         instruction->eraseFromParent();
-
+                        
+                        if (mLeft->getType()->isSliceType())
+                        {
+                            auto fieldGep = builder.CreateStructGEP(pointerOperand, 0);
+                            auto field = builder.CreateLoad(fieldGep);
+                            auto sliceGep = builder.CreateGEP(field, right);
+                            return builder.CreateLoad(sliceGep);
+                        }
                         auto gep = builder.CreateGEP(pointerOperand, right);
+                        return builder.CreateLoad(gep);
+                    }
+                    else if (auto arg = dynamic_cast<vipir::Argument*>(left))
+                    {
+                        if (mLeft->getType()->isSliceType())
+                        {
+                            auto fieldGep = builder.CreateStructGEP(arg, 0);
+                            auto field = builder.CreateLoad(fieldGep);
+                            auto sliceGep = builder.CreateGEP(field, right);
+                            return builder.CreateLoad(sliceGep);
+                        }
+                        auto gep = builder.CreateGEP(arg, right);
                         return builder.CreateLoad(gep);
                     }
                 }
@@ -208,6 +267,64 @@ namespace parser
                 break;
         }
         return nullptr; // Unreachable
+    }
+
+    vipir::Value* BinaryExpression::ccodegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag, vipir::BasicBlock* trueBB, vipir::BasicBlock* falseBB)
+    {
+        if (mOperator == Operator::LogicalAnd)
+        {
+            auto newBB = vipir::BasicBlock::Create("", trueBB->getParent());
+
+            mLeft->ccodegen(builder, diBuilder, module, diag, newBB, falseBB);
+            builder.setInsertPoint(newBB);
+            mRight->ccodegen(builder, diBuilder, module, diag, trueBB, falseBB);
+        }
+        else if (mOperator == Operator::LogicalOr)
+        {
+            auto newBB = vipir::BasicBlock::Create("", trueBB->getParent());
+
+            mLeft->ccodegen(builder, diBuilder, module, diag, trueBB, newBB);
+            builder.setInsertPoint(newBB);
+            mRight->ccodegen(builder, diBuilder, module, diag, trueBB, falseBB);
+        }
+        else
+        {
+            vipir::Value* condition;
+            vipir::Value* left  = mLeft->dcodegen(builder, diBuilder, module, diag);
+            vipir::Value* right = mRight->dcodegen(builder, diBuilder, module, diag);
+            switch (mOperator)
+            {
+                case Operator::Equal:
+                    condition = builder.CreateCmpEQ(left, right);
+                    break;
+                case Operator::NotEqual:
+                    condition = builder.CreateCmpNE(left, right);
+                    break;
+                case Operator::LessThan:
+                    condition = builder.CreateCmpLT(left, right);
+                    break;
+                case Operator::GreaterThan:
+                    condition = builder.CreateCmpGT(left, right);
+                    break;
+                case Operator::LessEqual:
+                    condition = builder.CreateCmpLE(left, right);
+                    break;
+                case Operator::GreaterEqual:
+                    condition = builder.CreateCmpGE(left, right);
+                    break;
+
+                default:
+                    return nullptr;
+            }
+            builder.CreateCondBr(condition, trueBB, falseBB);
+        }
+
+        return nullptr;
+    }
+
+    std::vector<ASTNode*> BinaryExpression::getChildren()
+    {
+        return {mLeft.get(), mRight.get()};
     }
 
     void BinaryExpression::typeCheck(diagnostic::Diagnostics& diag, bool& exit)
@@ -321,6 +438,36 @@ namespace parser
                 mType = Type::Get("bool");
                 break;
 
+            case parser::BinaryExpression::Operator::LogicalAnd:
+            case parser::BinaryExpression::Operator::LogicalOr:
+            {
+                auto checkOperand = [this, &diag, &exit](ASTNodePtr& operand){
+                    if (!operand->getType()->isBooleanType())
+                    {
+                        if (operand->canImplicitCast(diag, Type::Get("bool")))
+                        {
+                            operand = Cast(mLeft, Type::Get("bool"));
+                        }
+                        else
+                        {
+                            diag.reportCompilerError(
+                                mSource.start,
+                                mSource.end,
+                                std::format("No match for '{}operator{}{} with types '{}{}{}' and '{}{}{}'",
+                                    fmt::bold, mOperatorToken.getName(), fmt::defaults,
+                                    fmt::bold, mLeft->getType()->getName(), fmt::defaults,
+                                    fmt::bold, mRight->getType()->getName(), fmt::defaults)
+                            );
+                            exit = true;
+                        }
+                    }
+                };
+                checkOperand(mLeft);
+                checkOperand(mRight);
+                mType = Type::Get("bool");
+                break;
+            }
+
             case Operator::Assign:
                 if (mLeft->getType() != mRight->getType())
                 {
@@ -342,9 +489,70 @@ namespace parser
                     }
                 }
                 break;
+
+            case parser::BinaryExpression::Operator::AddAssign:
+            case parser::BinaryExpression::Operator::SubAssign:
+                if (mLeft->getType()->isPointerType())
+                {
+                    if (!mRight->getType()->isIntegerType())
+                    {
+                        if (mRight->canImplicitCast(diag, Type::Get("i64")))
+                        {
+                            mRight = Cast(mRight, Type::Get("i64"));
+                        }
+                        else
+                        {
+                            diag.reportCompilerError(
+                                mSource.start,
+                                mSource.end,
+                                std::format("No match for '{}operator{}{}' with types '{}{}{}' and '{}{}{}'",
+                                    fmt::bold, mOperatorToken.getName(), fmt::defaults,
+                                    fmt::bold, mLeft->getType()->getName(), fmt::defaults,
+                                    fmt::bold, mRight->getType()->getName(), fmt::defaults)
+                            );
+                            exit = true;
+                        }
+                    }
+                }
+                else if (mLeft->getType()->isIntegerType())
+                {
+                    if (mLeft->getType() != mRight->getType())
+                    {
+                        if (mRight->canImplicitCast(diag, mLeft->getType()))
+                        {
+                            mRight = Cast(mRight, mLeft->getType());
+                        }
+                        else
+                        {
+                            diag.reportCompilerError(
+                                mSource.start,
+                                mSource.end,
+                                std::format("No match for '{}operator{}{}' with types '{}{}{}' and '{}{}{}'",
+                                    fmt::bold, mOperatorToken.getName(), fmt::defaults,
+                                    fmt::bold, mLeft->getType()->getName(), fmt::defaults,
+                                    fmt::bold, mRight->getType()->getName(), fmt::defaults)
+                            );
+                            exit = true;
+                        }
+                        mType = mLeft->getType();
+                    }
+                }
+                else
+                {
+                    diag.reportCompilerError(
+                        mSource.start,
+                        mSource.end,
+                        std::format("No match for '{}operator{}{}' with types '{}{}{}' and '{}{}{}'",
+                            fmt::bold, mOperatorToken.getName(), fmt::defaults,
+                            fmt::bold, mLeft->getType()->getName(), fmt::defaults,
+                            fmt::bold, mRight->getType()->getName(), fmt::defaults)
+                    );
+                    exit = true;
+                }
+                break;
             
             case Operator::Index:
-                if (!mLeft->getType()->isArrayType() && !mLeft->getType()->isPointerType())
+                if (!mLeft->getType()->isArrayType() && !mLeft->getType()->isPointerType() && !mLeft->getType()->isSliceType())
                 {
                     diag.reportCompilerError(
                         mSource.start,
@@ -377,9 +585,13 @@ namespace parser
                 {
                     mType = static_cast<ArrayType*>(mLeft->getType())->getElementType();
                 }
-                else
+                else if (mLeft->getType()->isPointerType())
                 {
                     mType = static_cast<PointerType*>(mLeft->getType())->getPointeeType();
+                }
+                else if (mLeft->getType()->isSliceType())
+                {
+                    mType = static_cast<SliceType*>(mLeft->getType())->getPointeeType();
                 }
                 break;
 

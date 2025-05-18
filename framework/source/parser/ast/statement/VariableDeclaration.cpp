@@ -19,12 +19,18 @@ namespace parser
     vipir::Value* VariableDeclaration::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         mSymbol->diVariable = diBuilder.createLocalVariable(mName, builder.getInsertPoint()->getParent(), mType->getDIType(), mSource.start.line, mSource.start.col);
-        if (mType->isArrayType() || mType->isStructType())
+        if (mType->isArrayType() || mType->isStructType() || mType->isSliceType())
         {
             auto alloca = builder.CreateAlloca(mType->getVipirType());
             //mSymbol->values.push_back(std::make_pair(builder.getInsertPoint(), alloca));
             mSymbol->values.push_back({builder.getInsertPoint(), alloca, nullptr, nullptr});
-            // TODO: Check initValue here
+            
+            if (mInitValue)
+            {
+                vipir::Value* initValue = mInitValue->dcodegen(builder, diBuilder, module, diag);
+                builder.CreateStore(alloca, initValue);
+            }
+            return nullptr;
         }
         
 
@@ -45,6 +51,14 @@ namespace parser
 
 
         return nullptr;
+    }
+
+    std::vector<ASTNode*> VariableDeclaration::getChildren()
+    {
+        if (mInitValue)
+            return {mInitValue.get()};
+
+        return {};
     }
 
     void VariableDeclaration::typeCheck(diagnostic::Diagnostics& diag, bool& exit)

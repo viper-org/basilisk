@@ -16,10 +16,12 @@ public:
     virtual int getSize() const override;
     virtual vipir::Type* getVipirType() const override;
     virtual CastLevel castTo(Type* destType) const override;
+    virtual std::string getSymbolID() const override;
 
     bool isArrayType() const override;
 
     static ArrayType* Get(Type* elementType, unsigned int length);
+    static void Reset();
 
 private:
     Type* mElementType;

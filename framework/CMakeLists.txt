@@ -18,6 +18,7 @@ set(SOURCES
     "source/parser/ast/global/Function.cpp"
     "source/parser/ast/global/StructDeclaration.cpp"
     "source/parser/ast/global/GlobalVariableDeclaration.cpp"
+    "source/parser/ast/global/ImportStatement.cpp"
     "source/parser/ast/statement/ReturnStatement.cpp"
     "source/parser/ast/statement/VariableDeclaration.cpp"
     "source/parser/ast/statement/IfStatement.cpp"
@@ -37,18 +38,19 @@ set(SOURCES
     "source/parser/ast/expression/BooleanLiteral.cpp"
     "source/parser/ast/expression/NullptrLiteral.cpp"
     "source/parser/ast/expression/SizeofExpression.cpp"
+    "source/parser/ast/expression/LenExpression.cpp"
+    "source/parser/ast/expression/SliceExpression.cpp"
 
     "source/diagnostic/Diagnostic.cpp"
 
     "source/scope/Scope.cpp"
-
-    "source/import/ImportManager.cpp"
 
     "source/type/Type.cpp"
     "source/type/IntegerType.cpp"
     "source/type/VoidType.cpp"
     "source/type/BooleanType.cpp"
     "source/type/PointerType.cpp"
+    "source/type/SliceType.cpp"
     "source/type/ArrayType.cpp"
     "source/type/StructType.cpp"
     "source/type/FunctionType.cpp"
@@ -62,6 +64,7 @@ set(HEADERS
     "include/parser/ast/global/Function.h"
     "include/parser/ast/global/StructDeclaration.h"
     "include/parser/ast/global/GlobalVariableDeclaration.h"
+    "include/parser/ast/global/ImportStatement.h"
     "include/parser/ast/statement/ReturnStatement.h"
     "include/parser/ast/statement/VariableDeclaration.h"
     "include/parser/ast/statement/IfStatement.h"
@@ -81,19 +84,20 @@ set(HEADERS
     "include/parser/ast/expression/BooleanLiteral.h"
     "include/parser/ast/expression/NullptrLiteral.h"
     "include/parser/ast/expression/SizeofExpression.h"
+    "include/parser/ast/expression/LenExpression.h"
+    "include/parser/ast/expression/SliceExpression.h"
 
     "include/diagnostic/Diagnostic.h"
     "include/debug/SourcePair.h"
 
     "include/scope/Scope.h"
 
-    "include/import/ImportManager.h"
-
     "include/type/Type.h"
     "include/type/IntegerType.h"
     "include/type/VoidType.h"
     "include/type/BooleanType.h"
     "include/type/PointerType.h"
+    "include/type/SliceType.h"
     "include/type/ArrayType.h"
     "include/type/StructType.h"
     "include/type/FunctionType.h"
@@ -111,3 +115,6 @@ target_compile_features(basilisk-framework-basilisk-framework PUBLIC cxx_std_20)
 target_link_libraries(basilisk-framework-basilisk-framework vipir)
 
 vlex_generate(basilisk-framework-basilisk-framework source/lexer/Lexer.vlex source/lexer include/lexer)
+
+add_compile_options("-fsanitize=address,undefined")
+add_link_options("-fsanitize=address,undefined")

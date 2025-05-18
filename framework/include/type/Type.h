@@ -30,19 +30,23 @@ public:
     virtual vipir::Type* getVipirType() const = 0;
     virtual CastLevel castTo(Type* destType) const = 0;
     virtual std::string getImplicitCastWarning(Type* destType) const { return ""; }
+    virtual std::string getSymbolID() const = 0;
 
     virtual bool isIntegerType()  const { return false; }
     virtual bool isVoidType()     const { return false; }
     virtual bool isFunctionType() const { return false; }
     virtual bool isBooleanType()  const { return false; }
     virtual bool isPointerType()  const { return false; }
+    virtual bool isSliceType()    const { return false; }
     virtual bool isArrayType()    const { return false; }
     virtual bool isStructType()   const { return false; }
 
     static void Init(vipir::DIBuilder* diBuilder);
+    static void AddAlias(std::string name, Type* type);
     static bool Exists(const std::string& name);
     static Type* Get(const std::string& name);
     static void FinalizeDITypes();
+    static void Reset();
 
     virtual std::string_view getName() { return mName; }
 

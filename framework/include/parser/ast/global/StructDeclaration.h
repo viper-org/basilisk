@@ -4,7 +4,6 @@
 #define BASILISK_FRAMEWORK_PARSER_AST_GLOBAL_STRUCT_DECLARATION_H 1
 
 #include "parser/ast/ASTNode.h"
-#include "parser/ast/global/Function.h"
 
 #include <memory>
 #include <string>

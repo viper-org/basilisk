@@ -22,6 +22,11 @@ vipir::Type* VoidType::getVipirType() const
     return vipir::Type::GetVoidType();
 }
 
+std::string VoidType::getSymbolID() const
+{
+    return "v";
+}
+
 bool VoidType::isVoidType() const
 {
     return true;

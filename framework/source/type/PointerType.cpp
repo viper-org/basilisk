@@ -34,6 +34,10 @@ Type::CastLevel PointerType::castTo(Type* destType) const
         {
             return Type::CastLevel::Implicit;
         }
+        if (mPointeeType->isVoidType())
+        {
+            return Type::CastLevel::Implicit;
+        }
         return Type::CastLevel::Explicit;
     }
     if (destType->isIntegerType())
@@ -44,6 +48,11 @@ Type::CastLevel PointerType::castTo(Type* destType) const
         }
     }
     return Type::CastLevel::Disallowed;
+}
+
+std::string PointerType::getSymbolID() const
+{
+    return "P" + mPointeeType->getSymbolID();
 }
 
 bool PointerType::isPointerType() const
@@ -75,4 +84,9 @@ void PointerType::SetDITypes()
     {
         type->mDiType = Type::GetDIBuilder()->createPointerType(type->mPointeeType->getDIType());
     }
+}
+
+void PointerType::Reset()
+{
+    pointerTypes.clear();
 }

@@ -13,7 +13,7 @@ namespace parser
     class IntegerLiteral : public ASTNode
     {
     public:
-        IntegerLiteral(Scope* scope, std::uintmax_t value, SourcePair source);
+        IntegerLiteral(Scope* scope, std::uintmax_t value, Type* type, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 

@@ -8,6 +8,7 @@
 #include "parser/ast/global/Function.h"
 #include "parser/ast/global/StructDeclaration.h"
 #include "parser/ast/global/GlobalVariableDeclaration.h"
+#include "parser/ast/global/ImportStatement.h"
 
 #include "parser/ast/statement/ReturnStatement.h"
 #include "parser/ast/statement/VariableDeclaration.h"
@@ -25,14 +26,12 @@
 #include "parser/ast/expression/BooleanLiteral.h"
 #include "parser/ast/expression/NullptrLiteral.h"
 #include "parser/ast/expression/SizeofExpression.h"
+#include "parser/ast/expression/LenExpression.h"
 
 #include "diagnostic/Diagnostic.h"
 
 #include "lexer/Token.h"
 
-#include "import/ImportManager.h"
-
-#include <filesystem>
 #include <functional>
 
 namespace parser
@@ -40,9 +39,7 @@ namespace parser
     class Parser
     {
     public:
-        Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag, ImportManager& importManager, bool imported = false);
-
-        std::vector<std::filesystem::path> findImports();
+        Parser(std::vector<lexer::Token>& tokens, diagnostic::Diagnostics& diag, Scope* globalScope, bool imported = false);
 
         std::vector<ASTNodePtr> parse();
 
@@ -52,7 +49,6 @@ namespace parser
 
         diagnostic::Diagnostics& mDiag;
 
-        ImportManager& mImportManager;
         bool mImported;
         bool mDoneImports;
         std::function<void(ASTNodePtr&)> mInsertNodeFn;
@@ -79,7 +75,7 @@ namespace parser
         FunctionPtr parseFunction(bool exported);
         StructDeclarationPtr parseStructDeclaration(bool exported);
         GlobalVariableDeclarationPtr parseGlobalVariableDeclaration(bool exported, bool constant, bool globalScope);
-        void parseImport();
+        ImportStatementPtr parseImport();
 
         ReturnStatementPtr parseReturnStatement();
         VariableDeclarationPtr parseVariableDeclaration();
@@ -91,12 +87,15 @@ namespace parser
         BreakStatementPtr parseBreakStatement();
 
         IntegerLiteralPtr parseIntegerLiteral();
+        IntegerLiteralPtr parseCharacterLiteral();
         VariableExpressionPtr parseVariableExpression();
         CallExpressionPtr parseCallExpression(ASTNodePtr callee);
+        ASTNodePtr parseIndexExpression(ASTNodePtr left, SourcePair source, lexer::Token operatorToken);
         StringLiteralPtr parseStringLiteral();
         BooleanLiteralPtr parseBooleanLiteral();
         NullptrLiteralPtr parseNullptrLiteral();
         SizeofExpressionPtr parseSizeofExpression();
+        LenExpressionPtr parseLenExpression();
     };
 }
 

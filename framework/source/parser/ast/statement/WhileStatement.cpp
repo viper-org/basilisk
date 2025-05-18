@@ -40,8 +40,9 @@ namespace parser
             current = current->parent;
         }
 
-        vipir::Value* precondition = mCondition->dcodegen(builder, diBuilder, module, diag);
-        builder.CreateCondBr(precondition, bodyBasicBlock, mergeBasicBlock);
+        mCondition->ccodegen(builder, diBuilder, module, diag, bodyBasicBlock, mergeBasicBlock);
+        //vipir::Value* precondition = mCondition->dcodegen(builder, diBuilder, module, diag);
+        //builder.CreateCondBr(precondition, bodyBasicBlock, mergeBasicBlock);
 
         bodyBasicBlock->loopEnd() = mergeBasicBlock;
 
@@ -63,8 +64,9 @@ namespace parser
             symbol->values.push_back({bodyBasicBlock, phi, q2, nullptr});
         }
         mBody->dcodegen(builder, diBuilder, module, diag);
-        vipir::Value* condition = mCondition->dcodegen(builder, diBuilder, module, diag);
-        builder.CreateCondBr(condition, bodyBasicBlock, mergeBasicBlock);
+        mCondition->ccodegen(builder, diBuilder, module, diag, bodyBasicBlock, mergeBasicBlock);
+        //vipir::Value* condition = mCondition->dcodegen(builder, diBuilder, module, diag);
+        //builder.CreateCondBr(condition, bodyBasicBlock, mergeBasicBlock);
         
         for (int i = 0; i < phis.size(); ++i)
         {
@@ -92,6 +94,11 @@ namespace parser
 
         builder.setInsertPoint(mergeBasicBlock);
         return nullptr;
+    }
+
+    std::vector<ASTNode*> WhileStatement::getChildren()
+    {
+        return {mCondition.get(), mBody.get()};
     }
 
     void WhileStatement::typeCheck(diagnostic::Diagnostics& diag, bool& exit)

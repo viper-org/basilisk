@@ -39,7 +39,7 @@ namespace diagnostic
         void compilerWarning(std::string_view type, lexer::SourceLocation start, lexer::SourceLocation end, std::string_view message);
 
     private:
-        std::unordered_map<std::string_view, std::string_view> mTexts;
+        std::unordered_map<std::string, std::string_view> mTexts;
         std::vector<std::string_view> mWarnings;
         bool mImported{ false };
 

@@ -88,3 +88,8 @@ tokens basilisk {
     isz Type
     usz Type
 }
+
+comments {
+    //
+    /* close */
+}

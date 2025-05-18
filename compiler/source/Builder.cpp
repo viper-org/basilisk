@@ -454,14 +454,15 @@ void Builder::lexOne(std::filesystem::path inputFilePath)
     std::ifstream inputFile(inputFilePath);
     std::stringstream buffer;
     buffer << inputFile.rdbuf();
+    mCUs[inputFilePath].pathString = inputFilePath.string();
     mCUs[inputFilePath].text = std::move(buffer).str();
     inputFile.close();
 
-    lexer::Lexer lexer(mCUs[inputFilePath].text, inputFilePath.string());
+    lexer::Lexer lexer(mCUs[inputFilePath].text, mCUs[inputFilePath].pathString);
     auto tokens = lexer.lex();
     mCUs[inputFilePath].tokens = tokens;
 
-    mDiag.addText(inputFilePath.string(), mCUs[inputFilePath].text);
+    mDiag.addText(mCUs[inputFilePath].pathString, mCUs[inputFilePath].text);
 }
 
 void Builder::parseModule(std::filesystem::path inputFilePath)
@@ -483,7 +484,7 @@ void Builder::parseModule(std::filesystem::path inputFilePath)
                     moduleName += ":";
                 }
             }
-            mModules[moduleName].push_back(inputFilePath.string());
+            mModules[moduleName].push_back(inputFilePath);
             mCUs[inputFilePath].moduleName = std::move(moduleName);
         }
         else
@@ -508,7 +509,7 @@ void Builder::parseModule(std::filesystem::path inputFilePath)
 void Builder::parseOne(std::filesystem::path inputFilePath)
 {
     mCUs[inputFilePath].globalScope = std::make_unique<Scope>(nullptr);
-    auto tokens = mCUs[inputFilePath].tokens;
+    auto& tokens = mCUs[inputFilePath].tokens;
 
     parser::Parser parser(tokens, mDiag, mCUs[inputFilePath].globalScope.get(), false);
 
@@ -600,7 +601,7 @@ void Builder::compileObject(std::filesystem::path inputFilePath, std::filesystem
     auto& ast = mCUs[inputFilePath].ast;
     auto& module = mCUs[inputFilePath].module;
 
-    mCUs[inputFilePath].module = vipir::Module(inputFilePath.string());
+    mCUs[inputFilePath].module = vipir::Module(mCUs[inputFilePath].pathString);
 
     vipir::DIBuilder diBuilder;
     diBuilder.setProducer("basilisk");

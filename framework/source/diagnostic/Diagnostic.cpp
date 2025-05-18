@@ -61,7 +61,7 @@ namespace diagnostic
 
     void Diagnostics::reportCompilerError(lexer::SourceLocation start, lexer::SourceLocation end, std::string_view message)
     {
-        auto text = mTexts[start.file];
+        auto text = mTexts[std::string(start.file)];
 
         int lineStart = getLinePosition(text, start.line-1);
         int lineEnd = getLinePosition(text, end.line)-1;
@@ -85,7 +85,7 @@ namespace diagnostic
         auto it = std::find(mWarnings.begin(), mWarnings.end(), type);
         if (it == mWarnings.end()) return;
 
-        auto text = mTexts[start.file];
+        auto text = mTexts[std::string(start.file)];
 
         int lineStart = getLinePosition(text, start.line-1);
         int lineEnd = getLinePosition(text, end.line)-1;

@@ -19,6 +19,7 @@
 struct CompileUnit
 {
     std::filesystem::path path;
+    std::string pathString;
     std::string text;
 
     std::vector<lexer::Token> tokens;

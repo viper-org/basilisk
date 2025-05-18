@@ -12,8 +12,16 @@
 #include "type/ErrorType.h"
 #include "type/PendingType.h"
 
-#include <dwarf.h>
 #include <unordered_map>
+
+enum DwarfEncodings {           // i actually HATE you for not making a dwarf header
+    DW_ATE_signed_char = 0x6,   // - JesusTouchMe
+    DW_ATE_signed = 0x5,
+    DW_ATE_unsigned_char = 0x8,
+    DW_ATE_unsigned = 0x7,
+    DW_ATE_boolean = 0x2,
+    DW_ATE_void = 0x0
+};
 
 std::unordered_map<std::string, std::unique_ptr<Type>> types;
 

@@ -48,6 +48,7 @@ tokens basilisk {
     return
     let
     global
+    const
     
     if
     else

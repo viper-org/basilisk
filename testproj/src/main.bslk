@@ -17,6 +17,7 @@ const length = 5;
 */
 func main() -> i32 {
     let message = "hello";
+    let message2 = "world"z;
     let buffer: char[5];
     let z = buffer[0:5];
     memset(z, 'A');

@@ -30,6 +30,11 @@ namespace parser
             LessEqual,
             GreaterEqual,
 
+            // Bitwise
+            BWAnd,
+            BWOr,
+            BWXor,
+
             // Logical
             LogicalAnd,
             LogicalOr,

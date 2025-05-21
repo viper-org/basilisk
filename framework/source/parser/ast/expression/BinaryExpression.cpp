@@ -60,6 +60,16 @@ namespace parser
                 mOperator = Operator::GreaterEqual;
                 break;
 
+            case lexer::TokenType::Ampersand:
+                mOperator = Operator::BWAnd;
+                break;
+            case lexer::TokenType::Pipe:
+                mOperator = Operator::BWOr;
+                break;
+            case lexer::TokenType::Caret:
+                mOperator = Operator::BWXor;
+                break;
+
             case lexer::TokenType::DoubleAmpersand:
                 mOperator = Operator::LogicalAnd;
                 break;
@@ -202,6 +212,13 @@ namespace parser
                 return builder.CreateCmpLE(left, right);
             case Operator::GreaterEqual:
                 return builder.CreateCmpGE(left, right);
+
+            case Operator::BWAnd:
+                return builder.CreateBWAnd(left, right);
+            case Operator::BWOr:
+                return builder.CreateBWOr(left, right);
+            case Operator::BWXor:
+                return builder.CreateBWXor(left, right);
 
             case Operator::Assign:
                 return createAssign(left, right);
@@ -364,6 +381,9 @@ namespace parser
             case parser::BinaryExpression::Operator::Sub:
             case parser::BinaryExpression::Operator::Mul:
             case parser::BinaryExpression::Operator::Div:
+            case parser::BinaryExpression::Operator::BWAnd: //
+            case parser::BinaryExpression::Operator::BWOr:  // Not sure if these should be their own paths, but to me it seems like they need the exact same type checking
+            case parser::BinaryExpression::Operator::BWXor: //
                 if (mLeft->getType() != mRight->getType() && mLeft->getType()->isIntegerType() && mRight->getType()->isIntegerType())
                 {
                     if (mLeft->getType()->getSize() > mRight->getType()->getSize()) // lhs > rhs

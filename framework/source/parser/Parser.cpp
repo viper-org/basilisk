@@ -105,6 +105,13 @@ namespace parser
             case lexer::TokenType::BangEqual:
                 return 50;
 
+            case lexer::TokenType::Ampersand:
+                return 45;
+            case lexer::TokenType::Pipe:
+                return 40;
+            case lexer::TokenType::Caret:
+                return 35;
+
             case lexer::TokenType::DoubleAmpersand:
                 return 30;
 
@@ -125,6 +132,7 @@ namespace parser
     {
         switch (tokenType) 
         {
+            case lexer::TokenType::Tilde:
             case lexer::TokenType::Ampersand:
             case lexer::TokenType::Star:
             case lexer::TokenType::Bang:

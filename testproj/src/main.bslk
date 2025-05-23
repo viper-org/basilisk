@@ -1,33 +1,12 @@
-module test;
-import io;
-import std::memory;
-import std::sys::syscall;
-
-func f() -> i32 {
-    return 0;
-}
-
-// assembly function
-func thing() -> i32;
-
-const length = 5;
+module main;
 
 /*
  * main function
 */
 func main() -> i32 {
-    let message = "hello";
-    let message2 = "world"z;
-    let buffer: char[5];
-    let z = buffer[0:5];
-    memset(z, 'A');
-    z[4] = '\n';
+    let a = 255 & 3;
+    let b = 255 | 3;
+    //let c = ~255;
 
-    let p = &buffer[0];
-
-    let x = 0;
-    if (x == 1 || !(f() != 0 && x == 0)) {
-        exit(write(1, p, length));
-    }
-    return thing();
+    return a + b;
 }

@@ -23,6 +23,10 @@ namespace parser
 	{
 		switch (mOperatorToken.getTokenType())
 		{
+            case basilisk::lexer::TokenType::Tilde:
+                mOperator = Operator::BWNot;
+                break;
+
             case lexer::TokenType::Bang:
                 mOperator = Operator::LogicalNot;
                 break;
@@ -46,6 +50,9 @@ namespace parser
 
         switch (mOperator) 
         {
+            case Operator::BWNot:
+                diag.fatalError("solar mist has not yet implemented bitwise in vipir. please try again later");
+
             case parser::UnaryExpression::Operator::Indirection:
                 return builder.CreateLoad(operand);
 
@@ -106,6 +113,11 @@ namespace parser
 
         switch (mOperator) 
         {
+            case Operator::BWNot: // TODO: type checking for unary not. Good luck solar!
+                exit = true;
+                mType = Type::Get("error-type");
+                break;
+
             case Operator::LogicalNot:
                 if (!mOperand->getType()->isBooleanType())
                 {

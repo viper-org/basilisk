@@ -1,6 +1,7 @@
 _deps/
 CMakeFiles/
 .cache/
+.cmake/
 
 Makefile
 *.json

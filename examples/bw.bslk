@@ -1,0 +1,7 @@
+func main() -> i32 {
+    let a = 255 & 3;
+    let b = 255 | 3;
+    let c = ~255;
+
+    return 0;
+}

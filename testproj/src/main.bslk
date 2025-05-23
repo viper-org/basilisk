@@ -1,4 +1,11 @@
 module main;
+import std::sys::syscall;
+
+const length = 5;
+
+func f() -> i32 {
+    return 0;
+}
 
 /*
  * main function
@@ -8,5 +15,11 @@ func main() -> i32 {
     let b = 255 | 3;
     //let c = ~255;
 
+    let message2 = "Hello"z;
+
+    let x = 0;
+    if (x == 1 || !(f() != 0 && x == 0)) {
+        exit(write(1, message2, length));
+    }
     return a + b;
 }

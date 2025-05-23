@@ -919,7 +919,16 @@ namespace parser
     {
         SourcePair source{current().getStartLocation(), current().getEndLocation()};
         std::string text(consume().getText());
-        return std::make_unique<StringLiteral>(mActiveScope, std::move(text), std::move(source));
+        bool nullTerminate = false;
+        if (current().getTokenType() == lexer::TokenType::Identifier)
+        {
+            if (current().getText() == "z")
+            {
+                consume();
+                nullTerminate = true;
+            }
+        }
+        return std::make_unique<StringLiteral>(mActiveScope, std::move(text), nullTerminate, std::move(source));
     }
 
     BooleanLiteralPtr Parser::parseBooleanLiteral()

@@ -10,7 +10,7 @@ namespace parser
     class StringLiteral : public ASTNode
     {
     public:
-        StringLiteral(Scope* scope, std::string value, SourcePair source);
+        StringLiteral(Scope* scope, std::string value, bool cString, SourcePair source);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
@@ -18,6 +18,7 @@ namespace parser
 
     private:
         std::string mValue;
+        bool mCString;
     };
     using StringLiteralPtr = std::unique_ptr<StringLiteral>;
 }

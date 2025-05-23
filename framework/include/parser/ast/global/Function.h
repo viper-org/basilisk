@@ -46,6 +46,9 @@ namespace parser
 
         ScopePtr mOwnScope;
         Symbol* mSymbol;
+
+
+        static std::string MangleName(std::string name, FunctionType* functionType);
     };
     using FunctionPtr = std::unique_ptr<Function>;
 }

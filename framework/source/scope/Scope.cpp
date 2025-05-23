@@ -88,6 +88,25 @@ Symbol* Scope::resolveSymbol(std::string name)
     return nullptr;
 }
 
+std::vector<Symbol*> Scope::getCandidateFunctions(std::string name)
+{
+    std::vector<Symbol*> candidates;
+    Scope* current = this;
+    while (current)
+    {
+        for (auto& symbol : current->symbols)
+        {
+            if (symbol->name == name)
+            {
+                candidates.push_back(symbol.get());
+            }
+        }
+
+        current = current->parent;
+    }
+    return candidates;
+}
+
 Type* Scope::getCurrentReturnType()
 {
     Scope* current = this;

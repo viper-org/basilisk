@@ -24,7 +24,7 @@ namespace parser
 
     vipir::Value* CallExpression::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        vipir::Value* callee = mFunction->getLatestValue()->value;
+        vipir::Value* callee = mBestViableFunction->getLatestValue()->value;
 
         std::vector<vipir::Value*> parameters;
         for (auto& parameter : mParameters)
@@ -53,38 +53,15 @@ namespace parser
         {
             parameter->typeCheck(diag, exit);
         }
-        if (auto var = dynamic_cast<VariableExpression*>(mCallee.get()))
+        mBestViableFunction = getBestViableFunction(diag, exit);
+        if (!mBestViableFunction)
         {
-            mFunction = mScope->resolveSymbol(var->getName());
-            if (mFunction && !mFunction->type->isFunctionType())
-            {
-                diag.reportCompilerError(
-                    mSource.start,
-                    mSource.end,
-                    std::format("object is not callable")
-                    // TODO: Print "no matching function for call to ..."
-                );
-                exit = true;
-                mFunction = nullptr;
-            }
-        }
-        else
-        {
-            diag.reportCompilerError(
-                mSource.start,
-                mSource.end,
-                std::format("object is not callable")
-            );
             exit = true;
-        }
-
-        if (!mFunction)
-        {
             mType = Type::Get("error-type");
         }
         else
         {
-            auto functionType = static_cast<FunctionType*>(mFunction->type);
+            auto functionType = static_cast<FunctionType*>(mBestViableFunction->type);
             mType = functionType->getReturnType();
             unsigned int index = 0;
             for (auto& parameter : mParameters)
@@ -102,7 +79,7 @@ namespace parser
                             mSource.start,
                             mSource.end,
                             std::format("no matching function for call to '{}{}(){}'",
-                                fmt::bold, mFunction->name, fmt::defaults)
+                                fmt::bold, mBestViableFunction->name, fmt::defaults)
                         );
                         exit = true;
                         mType = Type::Get("error-type");
@@ -110,5 +87,93 @@ namespace parser
                 }
             }
         }
+    }
+
+
+    struct ViableFunction
+    {
+        Symbol* symbol;
+        int score;
+        bool disallowed;
+    };
+
+    Symbol* CallExpression::getBestViableFunction(diagnostic::Diagnostics& diag, bool& exit)
+    {
+        // TODO: Check for member access
+        if (auto var = dynamic_cast<VariableExpression*>(mCallee.get()))
+        {
+            std::vector<Symbol*> candidateFunctions = mScope->getCandidateFunctions(var->getName());
+            std::string errorName = var->getName();
+            // TODO: Check for function pointer
+
+            // Find all viable functions
+            for (auto it = candidateFunctions.begin(); it != candidateFunctions.end();)
+            {
+                auto candidate = *it;
+                if (!candidate->type->isFunctionType()) it = candidateFunctions.erase(it);
+                else
+                {
+                    auto functionType = static_cast<FunctionType*>(candidate->type);
+                    auto arguments = functionType->getArgumentTypes();
+                    if (arguments.size() != mParameters.size())
+                        it = candidateFunctions.erase(it);
+                    else
+                        ++it;
+                }
+            }
+
+            std::vector<ViableFunction> viableFunctions;
+            for (auto& candidate : candidateFunctions)
+            {
+                auto functionType = static_cast<FunctionType*>(candidate->type);
+                int score = 0;
+                bool disallowed = false;
+                size_t i = 0;
+                for (;i < mParameters.size(); ++i)
+                {
+                    auto castLevel = mParameters[i]->getType()->castTo(functionType->getArgumentTypes()[i]);
+                    int multiplier = 0;
+                    if (mParameters[i]->getType() == functionType->getArgumentTypes()[i]) multiplier = 0;
+                    else if (castLevel == Type::CastLevel::Implicit) multiplier = 1;
+                    else if (castLevel == Type::CastLevel::ImplicitWarning) multiplier = 2;
+                    else disallowed = true;
+                    score += multiplier * (mParameters.size() - i); // Weight earlier scores more
+                }
+                if (!disallowed)
+                {
+                    viableFunctions.push_back({candidate, score});
+                }
+            }
+
+            if (viableFunctions.empty())
+            {
+                diag.reportCompilerError(
+                    mSource.start,
+                    mSource.end,
+                    std::format("no matching function for call to '{}{}(){}'",
+                        fmt::bold, errorName, fmt::defaults)
+                );
+                return nullptr;
+            }
+
+            std::sort(viableFunctions.begin(), viableFunctions.end(), [](const auto& lhs, const auto& rhs){
+                return lhs.score < rhs.score;
+            });
+            if (viableFunctions.size() >= 2)
+            {
+                if (viableFunctions[0].score == viableFunctions[1].score)
+                {
+                    diag.reportCompilerError(
+                        mSource.start,
+                        mSource.end,
+                        std::format("call to '{}{}(){}' is ambiguous",
+                            fmt::bold, errorName, fmt::defaults)
+                    );
+                    return nullptr;
+                }
+            }
+            return viableFunctions.front().symbol;
+        }
+        return nullptr;
     }
 }

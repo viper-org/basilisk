@@ -7,6 +7,10 @@ func f() -> i32 {
     return 0;
 }
 
+func f(x: i32) -> i32 {
+    return x;
+}
+
 /*
  * main function
 */
@@ -18,7 +22,7 @@ func main() -> i32 {
     let message2 = "Hello"z;
 
     let x = 0;
-    if (x == 1 || !(f() != 0 && x == 0)) {
+    if (x == 1 || !(f(0) != 0 && x == 0)) {
         exit(write(1, message2, length));
     }
     return a + b;

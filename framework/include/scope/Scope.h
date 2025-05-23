@@ -73,6 +73,7 @@ struct Scope
 
     Symbol* getSymbol(unsigned long id);
     Symbol* resolveSymbol(std::string name);
+    std::vector<Symbol*> getCandidateFunctions(std::string name);
 
     Type* getCurrentReturnType();
     vipir::BasicBlock* getContinueTo(std::string label = "");

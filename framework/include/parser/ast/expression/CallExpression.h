@@ -23,7 +23,9 @@ namespace parser
     private:
         ASTNodePtr mCallee;
         std::vector<ASTNodePtr> mParameters;
-        Symbol* mFunction;
+        Symbol* mBestViableFunction;
+
+        Symbol* getBestViableFunction(diagnostic::Diagnostics& diag, bool& exit);
     };
     using CallExpressionPtr = std::unique_ptr<CallExpression>;
 }

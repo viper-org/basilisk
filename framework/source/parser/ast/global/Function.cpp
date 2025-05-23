@@ -55,7 +55,9 @@ namespace parser
             std::exit(1);
         }
 
-        vipir::Function* function = vipir::Function::Create(functionType, module, mName, false);
+        auto mangledName = MangleName(mName, static_cast<FunctionType*>(mType));
+
+        vipir::Function* function = vipir::Function::Create(functionType, module, mangledName, false);
 
         mSymbol->values.push_back({nullptr, function, nullptr, nullptr});
 
@@ -196,5 +198,25 @@ namespace parser
     std::string Function::getName() const
     {
         return mName;
+    }
+
+
+    std::string Function::MangleName(std::string name, FunctionType* functionType)
+    {
+        if (name == "_start" || name == "main") return name;
+
+        std::string ret = "_F";
+
+        // TODO: Add type of impl block if it exists
+
+        ret += std::to_string(name.length());
+        ret += name;
+
+        for (auto& arg : functionType->getArgumentTypes())
+        {
+            ret += arg->getSymbolID();
+        }
+
+        return ret;
     }
 }

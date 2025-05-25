@@ -2,6 +2,7 @@
 
 #include "parser/ast/expression/MemberAccess.h"
 
+#include "type/FunctionType.h"
 #include "type/StructType.h"
 #include "type/PointerType.h"
 #include "type/PendingType.h"
@@ -130,6 +131,21 @@ namespace parser
             mType = structField->type;
         else
         {
+            auto functions = mScope->getCandidateFunctions(mId);
+            if (!functions.empty())
+            {
+                for (auto function : functions)
+                {
+                    if (auto functionType = dynamic_cast<FunctionType*>(function->type))
+                    {
+                        if (functionType->getArgumentTypes()[0] == PointerType::Get(mStructType))
+                        {
+                            return;
+                        }
+                    }
+                }
+            }
+
             diag.reportCompilerError(
                 mSource.start,
                 mSource.end,

@@ -4,6 +4,8 @@
 
 #include "parser/ast/statement/ReturnStatement.h"
 
+#include "type/PointerType.h"
+
 #include <vipir/IR/Function.h>
 
 #include <vipir/IR/Instruction/AllocaInst.h>
@@ -23,8 +25,9 @@ namespace parser
     }
     
 
-    Function::Function(bool exported, std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source, SourcePair blockEnd)
+    Function::Function(bool exported, Type* implType, std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source, SourcePair blockEnd)
         : ASTNode(ownScope->parent, source, functionType)
+        , mImplType(implType)
         , mName(std::move(name))
         , mArguments(std::move(arguments))
         , mExternal(external)
@@ -32,6 +35,16 @@ namespace parser
         , mBlockEnd(std::move(blockEnd))
         , mOwnScope(std::move(ownScope))
     {
+        if (mImplType)
+        {
+            mArguments.insert(mArguments.begin(), FunctionArgument(PointerType::Get(mImplType), "this"));
+
+            auto argTypes = functionType->getArgumentTypes();
+            argTypes.insert(argTypes.begin(), PointerType::Get(mImplType));
+            functionType = FunctionType::Create(functionType->getReturnType(), std::move(argTypes));
+            mType = functionType;
+        }
+
         mOwnScope->currentReturnType = functionType->getReturnType();
         mScope->symbols.push_back(std::make_unique<Symbol>(mName, functionType));
         mSymbol = mScope->symbols.back().get();
@@ -55,7 +68,7 @@ namespace parser
             std::exit(1);
         }
 
-        auto mangledName = MangleName(mName, static_cast<FunctionType*>(mType));
+        auto mangledName = MangleName(mName, mImplType, static_cast<FunctionType*>(mType));
 
         vipir::Function* function = vipir::Function::Create(functionType, module, mangledName, false);
 
@@ -192,7 +205,7 @@ namespace parser
     {
         auto ownScope = std::make_unique<Scope>(in);
         auto functionType = static_cast<FunctionType*>(mType);
-        return std::make_unique<Function>(false, mName, functionType, mArguments, std::move(ownScope), true, std::vector<ASTNodePtr>(), mSource, mBlockEnd);
+        return std::make_unique<Function>(false, mImplType, mName, functionType, mArguments, std::move(ownScope), true, std::vector<ASTNodePtr>(), mSource, mBlockEnd);
     }
 
     std::string Function::getName() const
@@ -201,13 +214,12 @@ namespace parser
     }
 
 
-    std::string Function::MangleName(std::string name, FunctionType* functionType)
+    std::string Function::MangleName(std::string name, Type* implType, FunctionType* functionType)
     {
         if (name == "_start" || name == "main") return name;
 
         std::string ret = "_F";
-
-        // TODO: Add type of impl block if it exists
+        if (implType) ret += "I" + implType->getSymbolID();
 
         ret += std::to_string(name.length());
         ret += name;

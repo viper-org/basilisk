@@ -13,6 +13,7 @@ namespace parser
 {
     class MemberAccess : public ASTNode
     {
+    friend class CallExpression;
     public:
         MemberAccess(Scope* scope, ASTNodePtr struc, std::string id, bool pointer, SourcePair source);
 

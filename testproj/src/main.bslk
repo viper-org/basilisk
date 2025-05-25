@@ -1,29 +1,32 @@
 module main;
 import std::sys::syscall;
 
-const length = 5;
+const length = 6;
 
-func f() -> i32 {
-    return 0;
+struct Thing {
+    x: i32;
 }
 
-func f(x: i32) -> i32 {
-    return x;
+impl struct Thing {
+    func getX() -> i32 {
+        return this->x;
+    }
+
+    func setX(x: i32) -> void {
+        this->x = x;
+        return;
+    }
 }
 
 /*
  * main function
 */
 func main() -> i32 {
-    let a = 255 & 3;
-    let b = 255 | 3;
-    //let c = ~255;
+    let test: struct Thing;
+    test.x = length;
+    test.setX(6);
 
-    let message2 = "Hello"z;
+    let message2 = "Hello\n"z;
 
-    let x = 0;
-    if (x == 1 || !(f(0) != 0 && x == 0)) {
-        exit(write(1, message2, length));
-    }
-    return a + b;
+    exit(write(1, message2, test.getX()));
 }

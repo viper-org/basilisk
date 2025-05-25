@@ -23,6 +23,8 @@ namespace parser
     private:
         ASTNodePtr mCallee;
         std::vector<ASTNodePtr> mParameters;
+
+        bool mIsMemberFunction;
         Symbol* mBestViableFunction;
 
         Symbol* getBestViableFunction(diagnostic::Diagnostics& diag, bool& exit);

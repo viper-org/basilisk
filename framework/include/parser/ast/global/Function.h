@@ -25,7 +25,7 @@ namespace parser
     class Function : public ASTNode
     {
     public:
-        Function(bool exported, std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source, SourcePair blockEnd);
+        Function(bool exported, Type* implType, std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source, SourcePair blockEnd);
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
 
@@ -38,6 +38,7 @@ namespace parser
         std::string getName() const;
 
     private:
+        Type* mImplType;
         std::string mName;
         std::vector<FunctionArgument> mArguments;
         bool mExternal;
@@ -48,7 +49,7 @@ namespace parser
         Symbol* mSymbol;
 
 
-        static std::string MangleName(std::string name, FunctionType* functionType);
+        static std::string MangleName(std::string name, Type* implType, FunctionType* functionType);
     };
     using FunctionPtr = std::unique_ptr<Function>;
 }

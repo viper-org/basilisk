@@ -267,7 +267,9 @@ void Builder::parseLibrary(std::string lib, std::filesystem::path projectDir)
             auto functionType = FunctionType::Create(retType, argTypes);
             SourcePair source;
             auto funcScope = std::make_unique<Scope>(&mLibraryScope);
-            auto func = std::make_unique<parser::Function>(true,
+            auto func = std::make_unique<parser::Function>(
+                true,
+                nullptr, // TODO: Get impl type
                 name,
                 functionType,
                 std::vector<parser::FunctionArgument>{},

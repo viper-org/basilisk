@@ -220,7 +220,7 @@ namespace parser
                 return parseImport();
 
             case lexer::TokenType::FuncKeyword:
-                return parseFunction(exported);
+                return parseFunction(nullptr, exported);
 
             case lexer::TokenType::StructKeyword:
                 return parseStructDeclaration(exported);
@@ -244,6 +244,10 @@ namespace parser
                     }
                 }
                 consume();
+                return nullptr;
+
+            case lexer::TokenType::ImplKeyword:
+                parseImpl();
                 return nullptr;
 
             case lexer::TokenType::EndOfFile:
@@ -416,7 +420,7 @@ namespace parser
     }
 
 
-    FunctionPtr Parser::parseFunction(bool exported)
+    FunctionPtr Parser::parseFunction(Type* implType, bool exported)
     {
         SourcePair source;
         source.start = current().getStartLocation();
@@ -467,7 +471,18 @@ namespace parser
             SourcePair blockEnd {current().getStartLocation(), current().getEndLocation()};
             consume();
             ScopePtr scope = std::make_unique<Scope>(mActiveScope);
-            return std::make_unique<Function>(exported, std::move(name), functionType, std::move(arguments), std::move(scope), true, std::move(body), std::move(source), std::move(blockEnd));
+            return std::make_unique<Function>(
+                exported,
+                implType,
+                std::move(name),
+                functionType,
+                std::move(arguments),
+                std::move(scope),
+                true,
+                std::move(body),
+                std::move(source),
+                std::move(blockEnd)
+            );
         }
 
         expectToken(lexer::TokenType::LeftBrace);
@@ -496,6 +511,7 @@ namespace parser
 
         return std::make_unique<Function>(
             exported,
+            implType,
             std::move(name),
             functionType,
             std::move(arguments),
@@ -637,6 +653,25 @@ namespace parser
         consume();
 
         return std::make_unique<ImportStatement>(mActiveScope, std::move(module), std::move(source));
+    }
+
+    void Parser::parseImpl()
+    {
+        SourcePair source;
+        source.start = current().getStartLocation();
+        consume(); // impl
+
+        auto type = parseType();
+
+        expectToken(lexer::TokenType::LeftBrace);
+        source.end = consume().getEndLocation();
+
+        while (current().getTokenType() != basilisk::lexer::TokenType::RightBrace)
+        {
+            ASTNodePtr func = parseFunction(type, false);
+            mInsertNodeFn(func);
+        }
+        consume();
     }
 
 

@@ -1,6 +1,7 @@
 // Copyright 2025 solar-mist
 
 #include "parser/ast/expression/CallExpression.h"
+#include "parser/ast/expression/MemberAccess.h"
 #include "parser/ast/expression/VariableExpression.h"
 
 #include "type/FunctionType.h"
@@ -19,6 +20,7 @@ namespace parser
         : ASTNode(scope, std::move(source))
         , mCallee(std::move(callee))
         , mParameters(std::move(parameters))
+        , mIsMemberFunction(false)
     {
     }
 
@@ -27,6 +29,33 @@ namespace parser
         vipir::Value* callee = mBestViableFunction->getLatestValue()->value;
 
         std::vector<vipir::Value*> parameters;
+
+        if (auto memberAccess = dynamic_cast<MemberAccess*>(mCallee.get()))
+        {
+            auto value = memberAccess->mStruct->dcodegen(builder, diBuilder, module, diag);
+            if (memberAccess->mStruct->getType()->isStructType())
+            {
+                vipir::Value* self = vipir::getPointerOperand(value);
+
+                vipir::Instruction* instruction = static_cast<vipir::Instruction*>(value);
+                instruction->eraseFromParent();
+
+                if (dynamic_cast<vipir::GEPInst*>(self))
+                {
+                    value = self;
+                }
+                else
+                {
+                    value = builder.CreateAddrOf(self);
+                }
+                parameters.push_back(value);
+            }
+            else
+            {
+                parameters.push_back(value);
+            }
+        }
+
         for (auto& parameter : mParameters)
         {
             parameters.push_back(parameter->dcodegen(builder, diBuilder, module, diag));
@@ -66,7 +95,8 @@ namespace parser
             unsigned int index = 0;
             for (auto& parameter : mParameters)
             {
-                auto argumentType = functionType->getArgumentTypes()[index++];
+                auto argumentType = functionType->getArgumentTypes()[index + mIsMemberFunction];
+                ++index;
                 if (parameter->getType() != argumentType)
                 {
                     if (parameter->canImplicitCast(diag, argumentType))
@@ -100,10 +130,23 @@ namespace parser
     Symbol* CallExpression::getBestViableFunction(diagnostic::Diagnostics& diag, bool& exit)
     {
         // TODO: Check for member access
-        if (auto var = dynamic_cast<VariableExpression*>(mCallee.get()))
+        if (dynamic_cast<VariableExpression*>(mCallee.get()) || dynamic_cast<MemberAccess*>(mCallee.get()))
         {
-            std::vector<Symbol*> candidateFunctions = mScope->getCandidateFunctions(var->getName());
-            std::string errorName = var->getName();
+            std::vector<Symbol*> candidateFunctions;
+            std::string errorName;
+
+            if (auto var = dynamic_cast<VariableExpression*>(mCallee.get()))
+            {
+                candidateFunctions = mScope->getCandidateFunctions(var->getName());
+                errorName = var->getName();
+            }
+            else if (auto memberAccess = dynamic_cast<MemberAccess*>(mCallee.get()))
+            {
+                mIsMemberFunction = true;
+                candidateFunctions = mScope->getCandidateFunctions(memberAccess->mId);
+                errorName = std::format("{}::{}", memberAccess->mStructType->getName(), memberAccess->mId);
+            }
+            
             // TODO: Check for function pointer
 
             // Find all viable functions
@@ -115,7 +158,7 @@ namespace parser
                 {
                     auto functionType = static_cast<FunctionType*>(candidate->type);
                     auto arguments = functionType->getArgumentTypes();
-                    if (arguments.size() != mParameters.size())
+                    if (arguments.size() != (mParameters.size() + mIsMemberFunction))
                         it = candidateFunctions.erase(it);
                     else
                         ++it;
@@ -131,7 +174,7 @@ namespace parser
                 size_t i = 0;
                 for (;i < mParameters.size(); ++i)
                 {
-                    auto castLevel = mParameters[i]->getType()->castTo(functionType->getArgumentTypes()[i]);
+                    auto castLevel = mParameters[i]->getType()->castTo(functionType->getArgumentTypes()[i+mIsMemberFunction]);
                     int multiplier = 0;
                     if (mParameters[i]->getType() == functionType->getArgumentTypes()[i]) multiplier = 0;
                     else if (castLevel == Type::CastLevel::Implicit) multiplier = 1;

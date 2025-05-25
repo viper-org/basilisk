@@ -72,10 +72,11 @@ namespace parser
         ASTNodePtr parsePrimary();
         ASTNodePtr parseParenthesizedExpression();
 
-        FunctionPtr parseFunction(bool exported);
+        FunctionPtr parseFunction(Type* implType, bool exported);
         StructDeclarationPtr parseStructDeclaration(bool exported);
         GlobalVariableDeclarationPtr parseGlobalVariableDeclaration(bool exported, bool constant, bool globalScope);
         ImportStatementPtr parseImport();
+        void parseImpl();
 
         ReturnStatementPtr parseReturnStatement();
         VariableDeclarationPtr parseVariableDeclaration();

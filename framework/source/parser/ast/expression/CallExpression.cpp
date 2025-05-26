@@ -14,6 +14,8 @@
 #include <vipir/IR/Instruction/GEPInst.h>
 #include <vipir/IR/Instruction/AddrInst.h>
 
+#include <algorithm>
+
 namespace parser
 {
     CallExpression::CallExpression(Scope* scope, ASTNodePtr callee, std::vector<ASTNodePtr> parameters, SourcePair source)

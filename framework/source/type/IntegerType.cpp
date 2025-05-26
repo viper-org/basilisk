@@ -37,6 +37,10 @@ Type::CastLevel IntegerType::castTo(Type* destType) const
     {
         return Type::CastLevel::ImplicitWarning;
     }
+    else if (destType->isPointerType())
+    {
+	return Type::CastLevel::Explicit;
+    }
     return Type::CastLevel::Disallowed;
 }
 

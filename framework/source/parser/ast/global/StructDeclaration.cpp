@@ -47,6 +47,7 @@ namespace parser
             else
             {
                 mType = StructType::Create(mName, std::move(structTypeFields), mSource.start.line, mSource.start.col);
+                static_cast<StructType*>(mType)->setDIType(); // TODO: nicer solution, but i am lazy
             }
         }
     }

@@ -132,6 +132,7 @@ namespace parser
     {
         switch (tokenType) 
         {
+            case lexer::TokenType::Minus:
             case lexer::TokenType::Tilde:
             case lexer::TokenType::Ampersand:
             case lexer::TokenType::Star:
@@ -399,7 +400,7 @@ namespace parser
     {
         SourcePair source;
         source.start = consume().getStartLocation(); // (
-        if (current().getTokenType() == lexer::TokenType::Type)
+        if (current().getTokenType() == lexer::TokenType::Type || current().getTokenType() == lexer::TokenType::StructKeyword)
         { // Cast expression
             auto destType = parseType();
 

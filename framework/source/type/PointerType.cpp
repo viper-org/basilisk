@@ -34,7 +34,7 @@ Type::CastLevel PointerType::castTo(Type* destType) const
         {
             return Type::CastLevel::Implicit;
         }
-        if (mPointeeType->isVoidType())
+        if (mPointeeType->isVoidType() || static_cast<PointerType*>(destType)->mPointeeType->isVoidType())
         {
             return Type::CastLevel::Implicit;
         }

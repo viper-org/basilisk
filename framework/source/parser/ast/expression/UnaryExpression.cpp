@@ -23,7 +23,11 @@ namespace parser
 	{
 		switch (mOperatorToken.getTokenType())
 		{
-            case basilisk::lexer::TokenType::Tilde:
+            case lexer::TokenType::Minus:
+                mOperator = Operator::Negate;
+                break;
+
+            case lexer::TokenType::Tilde:
                 mOperator = Operator::BWNot;
                 break;
 
@@ -50,13 +54,16 @@ namespace parser
 
         switch (mOperator) 
         {
-            case Operator::BWNot:
-                diag.fatalError("solar mist has not yet implemented bitwise in vipir. please try again later");
+            case Operator::Negate:
+                return builder.CreateNeg(operand);
 
-            case parser::UnaryExpression::Operator::Indirection:
+            case Operator::BWNot:
+                return builder.CreateNot(operand);
+
+            case Operator::Indirection:
                 return builder.CreateLoad(operand);
 
-            case parser::UnaryExpression::Operator::AddressOf:
+            case Operator::AddressOf:
             {
                 if (auto var = dynamic_cast<VariableExpression*>(mOperand.get()))
                 {
@@ -113,9 +120,44 @@ namespace parser
 
         switch (mOperator) 
         {
-            case Operator::BWNot: // TODO: type checking for unary not. Good luck solar!
-                exit = true;
-                mType = Type::Get("error-type");
+            case Operator::Negate:
+                if (!mOperand->getType()->isIntegerType())
+                {
+                    // implicit cast?
+                    diag.reportCompilerError(
+                        mSource.start,
+                        mSource.end,
+                        std::format("No match for '{}operator{}{}' with type '{}{}{}'",
+                            fmt::bold, mOperatorToken.getName(), fmt::defaults,
+                            fmt::bold, mOperand->getType()->getName(), fmt::defaults)
+                    );
+                    exit = true;
+                    mType = Type::Get("error-type");
+                }
+                else
+                {
+                    mType = mOperand->getType();
+                }
+                break;
+
+            case Operator::BWNot:
+                if (!mOperand->getType()->isIntegerType())
+                {
+                    // implicit cast?
+                    diag.reportCompilerError(
+                        mSource.start,
+                        mSource.end,
+                        std::format("No match for '{}operator{}{}' with type '{}{}{}'",
+                            fmt::bold, mOperatorToken.getName(), fmt::defaults,
+                            fmt::bold, mOperand->getType()->getName(), fmt::defaults)
+                    );
+                    exit = true;
+                    mType = Type::Get("error-type");
+                }
+                else
+                {
+                    mType = mOperand->getType();
+                }
                 break;
 
             case Operator::LogicalNot:

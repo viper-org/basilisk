@@ -2,6 +2,7 @@
 
 
 #include "type/StructType.h"
+#include "type/PendingType.h"
 #include "type/PointerType.h"
 
 #include <vipir/Type/StructType.h>
@@ -55,6 +56,10 @@ int StructType::getFieldOffset(std::string fieldName)
     }) - mFields.begin();
 }
 
+void StructType::setDIType() {
+    mDiType = Type::GetDIBuilder()->createStructureType(mName, static_cast<vipir::StructType*>(getVipirType()), mLine, mCol);
+}
+
 int StructType::getSize() const
 {
     int size = 0;
@@ -77,6 +82,11 @@ vipir::Type* StructType::getVipirType() const
                 fieldTypes.push_back(vipir::PointerType::GetPointerType(vipir::Type::GetIntegerType(8)));
                 continue;
             }
+	    else if (auto pending = dynamic_cast<PendingType*>(static_cast<PointerType*>(field)->getPointeeType()); pending->get() == this) // this is ugly, you make it good solar :thumbsup:
+	    {
+                fieldTypes.push_back(vipir::PointerType::GetPointerType(vipir::Type::GetIntegerType(8)));
+                continue;
+	    }
         }
         fieldTypes.push_back(field->getVipirType());
     }
@@ -123,7 +133,6 @@ StructType* StructType::Create(std::string name, std::vector<StructType::Field> 
 
     structTypes.push_back(std::make_unique<StructType>(name, fields, line, col));
     auto* type = structTypes.back().get();
-    type->mDiType = Type::GetDIBuilder()->createStructureType(type->mName, static_cast<vipir::StructType*>(type->getVipirType()), type->mLine, type->mCol);
     
     return type;
 }

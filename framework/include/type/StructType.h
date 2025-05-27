@@ -25,6 +25,8 @@ public:
     Field* getField(std::string_view fieldName);
     int getFieldOffset(std::string fieldName);
 
+    void setDIType();
+
     virtual int getSize() const override;
     virtual vipir::Type* getVipirType() const override;
     virtual CastLevel castTo(Type* destType) const override;

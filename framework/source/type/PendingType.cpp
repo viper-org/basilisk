@@ -52,6 +52,7 @@ bool PendingType::isStructType() const
 void PendingType::initComplete()
 {
     mImpl = StructType::Create(mName, mFields, mSource.start.line, mSource.start.col);
+    static_cast<StructType*>(mImpl)->setDIType();
     std::erase(pendings, this);
     mDiType = mImpl->getDIType();
 }

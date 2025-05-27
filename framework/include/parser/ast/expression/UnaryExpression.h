@@ -16,6 +16,8 @@ namespace parser
     public:
         enum class Operator 
         {
+            Negate,
+
             // Bitwise
             BWNot,
 

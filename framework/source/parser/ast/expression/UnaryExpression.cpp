@@ -58,7 +58,7 @@ namespace parser
                 return builder.CreateNeg(operand);
 
             case Operator::BWNot:
-                diag.fatalError("solar mist has not yet implemented bitwise in vipir. please try again later");
+                return builder.CreateNot(operand);
 
             case Operator::Indirection:
                 return builder.CreateLoad(operand);
@@ -134,10 +134,30 @@ namespace parser
                     exit = true;
                     mType = Type::Get("error-type");
                 }
+                else
+                {
+                    mType = mOperand->getType();
+                }
+                break;
 
-            case Operator::BWNot: // TODO: type checking for unary not. Good luck solar!
-                exit = true;
-                mType = Type::Get("error-type");
+            case Operator::BWNot:
+                if (!mOperand->getType()->isIntegerType())
+                {
+                    // implicit cast?
+                    diag.reportCompilerError(
+                        mSource.start,
+                        mSource.end,
+                        std::format("No match for '{}operator{}{}' with type '{}{}{}'",
+                            fmt::bold, mOperatorToken.getName(), fmt::defaults,
+                            fmt::bold, mOperand->getType()->getName(), fmt::defaults)
+                    );
+                    exit = true;
+                    mType = Type::Get("error-type");
+                }
+                else
+                {
+                    mType = mOperand->getType();
+                }
                 break;
 
             case Operator::LogicalNot:

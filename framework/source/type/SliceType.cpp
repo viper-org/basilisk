@@ -51,9 +51,9 @@ Type::CastLevel SliceType::castTo(Type* destType) const
     return Type::CastLevel::Disallowed;
 }
 
-std::string SliceType::getSymbolID() const
+std::string SliceType::getSymbolID(Type* thisType) const
 {
-    return "Z" + mPointeeType->getSymbolID();
+    return "Z" + mPointeeType->getSymbolID(thisType);
 }
 
 bool SliceType::isSliceType() const

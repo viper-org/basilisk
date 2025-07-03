@@ -11,6 +11,7 @@
 #include "type/PointerType.h"
 #include "type/SliceType.h"
 #include "type/StructType.h"
+#include "type/PendingType.h"
 
 #include <vtoml/parser/Parser.h>
 
@@ -200,6 +201,100 @@ void Builder::parseLibrary(std::string lib, std::filesystem::path projectDir)
         modules.push_back({moduleName, funcOffset, funcLength, structOffset, structLength});
     }
 
+    std::function<Type*(uint8_t, Type*)> parseType;
+    parseType = [this, &libFile, &parseType](uint8_t c, Type* thisType) -> Type* {
+        switch (c)
+        {
+            // Signed integrals
+            case 'c': return Type::Get("i8");
+            case 's': return Type::Get("i16");
+            case 'i': return Type::Get("i32");
+            case 'l': return Type::Get("i64");
+            
+            // Unsigned integrals
+            case 'b': return Type::Get("u8");
+            case 'w': return Type::Get("u16");
+            case 'd': return Type::Get("u32");
+            case 'q': return Type::Get("u64");
+
+            case 'B': return Type::Get("bool");
+            case 'v': return Type::Get("void");
+
+            case 'P': return PointerType::Get(parseType(libFile.get(), thisType));
+            case 'Z': return SliceType::Get(parseType(libFile.get(), thisType));
+            case 'S':
+            {
+                uint32_t length;
+                std::string lengthStr;
+                char c;
+                while ((c = libFile.peek()) && isdigit(c))
+                {
+                    libFile.get(c);
+                    lengthStr += c;
+                }
+                length = std::stoul(lengthStr);
+                auto buf = new char[length+1];
+                buf[length] = '\0';
+                libFile.read(buf, length);
+
+                auto type = StructType::Get(buf);
+                if (!type) type = static_cast<PendingType*>(PendingType::Get(buf))->get();
+                delete[] buf;
+                return type;
+            }
+            case 'T': return thisType;
+
+            default:
+                mDiag.fatalError("library file contains unknown type");
+                std::exit(1);
+        }
+    };
+
+    for (auto& module : modules)
+    {
+        libFile.seekg(module.structOffset);
+        while (libFile.tellg() < module.structOffset + module.structLength)
+        {
+            uint32_t nameSize;
+            libFile.read(reinterpret_cast<char*>(&nameSize), sizeof(nameSize));
+            std::string name(nameSize, '\0');
+            libFile.read(name.data(), nameSize);
+
+            SourcePair source;
+            auto thisType = PendingType::Create(source, name, {});
+
+            std::vector<parser::StructField> fields;
+            while (true)
+            {
+                if (libFile.peek() == 0) // End of struct
+                {
+                    libFile.get();
+                    break;
+                }
+
+                uint32_t fieldNameSize;
+                libFile.read(reinterpret_cast<char*>(&fieldNameSize), sizeof(fieldNameSize));
+                std::string fieldName(fieldNameSize, '\0');
+                libFile.read(fieldName.data(), fieldNameSize);
+
+                char c;
+                libFile.get(c);
+                Type* fieldType = parseType(c, thisType);
+                fields.push_back({fieldType, fieldName}); // TODO: Set line and column
+            }
+            auto structDecl = std::make_unique<parser::StructDeclaration>(
+                &mLibraryScope,
+                true,
+                false,
+                name,
+                std::move(fields),
+                source
+            );
+            thisType->initComplete();
+            mImportedModules[module.name].push_back(std::move(structDecl));
+        }
+    }
+
     for (auto& module : modules)
     {
         libFile.seekg(module.funcOffset);
@@ -210,50 +305,6 @@ void Builder::parseLibrary(std::string lib, std::filesystem::path projectDir)
             std::string name(nameSize, '\0');
             libFile.read(name.data(), nameSize);
 
-            std::function<Type*(uint8_t)> parseType;
-            parseType = [this, &libFile, &parseType](uint8_t c) -> Type* {
-                switch (c)
-                {
-                    // Signed integrals
-                    case 'c': return Type::Get("i8");
-                    case 's': return Type::Get("i16");
-                    case 'i': return Type::Get("i32");
-                    case 'l': return Type::Get("i64");
-                    
-                    // Unsigned integrals
-                    case 'b': return Type::Get("u8");
-                    case 'w': return Type::Get("u16");
-                    case 'd': return Type::Get("u32");
-                    case 'q': return Type::Get("u64");
-
-                    case 'B': return Type::Get("bool");
-                    case 'v': return Type::Get("void");
-
-                    case 'P': return PointerType::Get(parseType(libFile.get()));
-                    case 'Z': return SliceType::Get(parseType(libFile.get()));
-                    case 'S':
-                    {
-                        uint32_t length;
-                        std::string lengthStr;
-                        char c;
-                        while (libFile.get(c) && isdigit(c))
-                        {
-                            lengthStr += c;
-                        }
-                        length = std::stoul(lengthStr);
-                        auto buf = new char[length];
-                        libFile.read(buf, length);
-
-                        auto type = StructType::Get(buf);
-                        delete[] buf;
-                        return type;
-                    }
-
-                    default:
-                        mDiag.fatalError("library file contains unknown type");
-                        std::exit(1);
-                }
-            };
             std::vector<Type*> argTypes;
             while (true)
             {
@@ -261,9 +312,9 @@ void Builder::parseLibrary(std::string lib, std::filesystem::path projectDir)
                 libFile.read(reinterpret_cast<char*>(&c), sizeof(c));
                 if (c == 'E')
                     break;
-                argTypes.push_back(parseType(c));
+                argTypes.push_back(parseType(c, nullptr));
             }
-            auto retType = parseType(libFile.get());
+            auto retType = parseType(libFile.get(), nullptr);
             auto functionType = FunctionType::Create(retType, argTypes);
             SourcePair source;
             auto funcScope = std::make_unique<Scope>(&mLibraryScope);
@@ -391,17 +442,54 @@ void Builder::generateSymbolFile(std::filesystem::path projectDir)
                 auto functionType = static_cast<FunctionType*>(func->getType());
                 for (auto argType : functionType->getArgumentTypes())
                 {
-                    lib.write(argType->getSymbolID());
+                    lib.write(argType->getSymbolID(nullptr));
                 }
                 lib.write((uint8_t)'E'); // End of argument types
-                lib.write(functionType->getReturnType()->getSymbolID());
+                lib.write(functionType->getReturnType()->getSymbolID(nullptr));
                 lib.write((uint8_t)0); // End of function
             }
         }
         header = (uint32_t*)(lib.getBuffer().data() + entry.headerOffset);
         *(header + 1) = lib.getBuffer().size() - funcsStart;
     }
-    // TODO: Export structs
+    for (auto& [moduleName, entry] : mSymbolEntries)
+    {
+        uint32_t* header = (uint32_t*)(lib.getBuffer().data() + entry.headerOffset);
+        auto structsStart = lib.getBuffer().size();
+        *(header + 2) = structsStart;
+        for (auto& symbol : entry.symbols)
+        {
+            if (auto structDecl = dynamic_cast<parser::StructDeclaration*>(symbol))
+            {
+                auto type = structDecl->getType();
+                StructType* structType = nullptr;
+                if (auto pending = dynamic_cast<PendingType*>(type))
+                {
+                    structType = pending->get();
+                }
+                else
+                {
+                    structType = static_cast<StructType*>(type);
+                }
+                
+                auto name = structType->getName();
+                uint32_t nameSize = name.size();
+                lib.write(nameSize);
+                lib.write(name);
+                auto fields = structType->getFields();
+                for (auto& field : fields)
+                {
+                    uint32_t nameSize = field.name.size();
+                    lib.write(nameSize);
+                    lib.write(field.name);
+                    lib.write(field.type->getSymbolID(type));
+                }
+                lib.write((uint8_t)0); // End of fields
+            }
+        }
+        header = (uint32_t*)(lib.getBuffer().data() + entry.headerOffset);
+        *(header + 3) = lib.getBuffer().size() - structsStart;
+    }
     *(uint32_t*)(lib.getBuffer().data() + lengthOff) = lib.getBuffer().size();
 
     std::ofstream symbolFile(projectDir / (mConfig["name"]->toString() + ".bslib"), std::ios::binary);
@@ -625,6 +713,11 @@ void Builder::compileObject(std::filesystem::path inputFilePath, std::filesystem
     }
     if (exit) std::exit(1);
 
+    for (auto& node : ast)
+    {
+        node->setEmittedValue(builder, diBuilder, module, mDiag);
+    }
+    
     for (auto& node : ast)
     {
         node->codegen(builder, diBuilder, module, mDiag);

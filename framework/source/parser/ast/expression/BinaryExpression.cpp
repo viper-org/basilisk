@@ -102,7 +102,7 @@ namespace parser
         vipir::Value* left = mLeft->dcodegen(builder, diBuilder, module, diag);
         vipir::Value* right = mRight->dcodegen(builder, diBuilder, module, diag);
 
-        auto createAssign = [&](vipir::Value* left, vipir::Value* right) -> vipir::Value* {
+        auto createAssign = [&](vipir::Value* left, vipir::Value* right, bool eraseLeft = true) -> vipir::Value* {
             if (auto variableExpression = dynamic_cast<VariableExpression*>(mLeft.get()))
             {
                 auto symbol = mScope->resolveSymbol(variableExpression->getName());
@@ -153,7 +153,7 @@ namespace parser
             {
                 auto pointerOperand = vipir::getPointerOperand(load);
                 auto instruction = static_cast<vipir::Instruction*>(left);
-                instruction->eraseFromParent();
+                if (eraseLeft) instruction->eraseFromParent();
 
                 builder.CreateStore(pointerOperand, right);
 
@@ -227,18 +227,18 @@ namespace parser
                 if (mLeft->getType()->isPointerType())
                 {
                     auto gep = builder.CreateGEP(left, right);
-                    return createAssign(left, gep);
+                    return createAssign(left, gep, false);
                 }
                 else
                 {
                     auto add = builder.CreateAdd(left, right);
-                    return createAssign(left, add);
+                    return createAssign(left, add, false);
                 }
             
             case Operator::SubAssign:
             {
                 auto sub = builder.CreateSub(left, right);
-                return createAssign(left, sub);
+                return createAssign(left, sub, false);
             }
 
             case Operator::Index:

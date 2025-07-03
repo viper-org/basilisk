@@ -39,9 +39,13 @@ Type::CastLevel PendingType::castTo(Type* type) const
     return mImpl->castTo(type);
 }
 
-std::string PendingType::getSymbolID() const
+std::string PendingType::getSymbolID(Type* thisType) const
 {
-    return mImpl->getSymbolID();
+    if (thisType == this)
+    {
+        return "T";
+    }
+    return mImpl->getSymbolID(thisType);
 }
 
 bool PendingType::isStructType() const

@@ -39,6 +39,7 @@ namespace parser
             return val;
         }
         virtual vipir::Value* ccodegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag, vipir::BasicBlock* trueBB, vipir::BasicBlock* falseBB) { return nullptr; }
+        virtual void setEmittedValue(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) { };
 
         virtual std::vector<ASTNode*> getChildren() { return {}; }
 

@@ -77,6 +77,11 @@ namespace parser
         }
     }
 
+    ASTNodePtr VariableExpression::cloneExternal(Scope* in)
+    {
+        return std::make_unique<VariableExpression>(in, mName, mSource);
+    }
+
     std::string VariableExpression::getName()
     {
         return mName;

@@ -2,6 +2,7 @@
 
 #include "parser/ast/statement/IfStatement.h"
 #include "parser/ast/statement/VariableDeclaration.h"
+#include "vipir/IR/Instruction/AllocaInst.h"
 
 #include <vipir/IR/BasicBlock.h>
 #include <vipir/IR/Instruction/PhiInst.h>
@@ -77,52 +78,34 @@ namespace parser
             }
             current = current->parent;
         }
-        if (!mElseBody)
+        for (auto symbol : symbols)
         {
-            for (auto symbol : symbols)
+            auto startBasicBlockValue = symbol->getLatestValue(startBasicBlock);
+            if (!startBasicBlockValue || dynamic_cast<vipir::AllocaInst*>(startBasicBlockValue->value))
             {
-                auto trueBasicBlockValue = symbol->getLatestValue(trueBasicBlock);
-                auto startBasicBlockValue = symbol->getLatestValue(startBasicBlock);
-                if (trueBasicBlockValue && trueBasicBlockValue != startBasicBlockValue)
-                {
-                    auto phi = builder.CreatePhi(symbol->type->getVipirType());
-                    phi->addIncoming(trueBasicBlockValue->value, trueBasicBlock);
-                    phi->addIncoming(startBasicBlockValue->value, startBasicBlock);
+                continue;
+            }
 
-                    auto q2 = builder.CreateQueryAddress();
-                    symbol->getLatestValue()->end = q2;
-                    symbol->values.push_back({mergeBasicBlock, phi, q2, nullptr});
+            std::vector<std::pair<SymbolValue*, vipir::BasicBlock*> > values;
+            for (auto pred : mergeBasicBlock->predecessors())
+            {
+                auto value = symbol->getLatestValueX(pred);
+                if (value) values.push_back({value, pred});
+            }
+
+            if (values.size() > 1)
+            {
+                auto phi = builder.CreatePhi(symbol->type->getVipirType());
+                for (auto value : values)
+                {
+                    phi->addIncoming(value.first->value, value.second);
                 }
+
+                auto q2 = builder.CreateQueryAddress();
+                symbol->getLatestValue()->end = q2;
+                symbol->values.push_back({mergeBasicBlock, phi, q2, nullptr});
             }
         }
-        else
-        {
-            for (auto symbol : symbols)
-            {
-                auto trueBasicBlockValue = symbol->getLatestValue(trueBasicBlock);
-                auto falseBasicBlockValue = symbol->getLatestValue(falseBasicBlock);
-                if (trueBasicBlockValue != falseBasicBlockValue)
-                {
-                    if (trueBasicBlockValue == nullptr)
-                    {
-                        trueBasicBlockValue = symbol->getLatestValue(startBasicBlock);
-                    }
-                    else if (falseBasicBlockValue == nullptr)
-                    {
-                        falseBasicBlockValue = symbol->getLatestValue(startBasicBlock);
-                    }
-
-                    auto phi = builder.CreatePhi(symbol->type->getVipirType());
-                    phi->addIncoming(trueBasicBlockValue->value, trueBasicBlock);
-                    phi->addIncoming(falseBasicBlockValue->value, falseBasicBlock);
-
-                    auto q2 = builder.CreateQueryAddress();
-                    symbol->getLatestValue()->end = q2;
-                    symbol->values.push_back({mergeBasicBlock, phi, q2, nullptr});
-                }
-            }
-        }
-
         return nullptr;
     }
 

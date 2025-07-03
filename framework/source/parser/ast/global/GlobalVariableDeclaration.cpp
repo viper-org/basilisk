@@ -106,4 +106,13 @@ namespace parser
             }
         }
     }
+
+    ASTNodePtr GlobalVariableDeclaration::cloneExternal(Scope* in)
+    {
+        bool constant = mSymbol->constant;
+        if (!constant) return nullptr; // TODO
+
+        auto newInitValue = mInitValue ? mInitValue->cloneExternal(in) : nullptr;
+        return std::make_unique<GlobalVariableDeclaration>(in, mName, mType, std::move(newInitValue), false, constant, mSource);
+    }
 }

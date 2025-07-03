@@ -59,20 +59,7 @@ namespace parser
 
     vipir::Value* Function::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        vipir::FunctionType* functionType = dynamic_cast<vipir::FunctionType*>(mType->getVipirType());
-
-        // This should never happen but good to check just in case
-        if (!functionType)
-        {
-            diag.fatalError("mType of parser::Function is not a function type.");
-            std::exit(1);
-        }
-
-        auto mangledName = MangleName(mName, mImplType, static_cast<FunctionType*>(mType));
-
-        vipir::Function* function = vipir::Function::Create(functionType, module, mangledName, false);
-
-        mSymbol->values.push_back({nullptr, function, nullptr, nullptr});
+        auto function = static_cast<vipir::Function*>(mSymbol->values.front().value);
 
         diBuilder.setDebugType(function, static_cast<FunctionType*>(mType)->getReturnType()->getDIType());
 
@@ -125,6 +112,24 @@ namespace parser
         }
 
         return function;
+    }
+
+    void Function::setEmittedValue(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
+    {
+        vipir::FunctionType* functionType = dynamic_cast<vipir::FunctionType*>(mType->getVipirType());
+
+        // This should never happen but good to check just in case
+        if (!functionType)
+        {
+            diag.fatalError("mType of parser::Function is not a function type.");
+            std::exit(1);
+        }
+
+        auto mangledName = MangleName(mName, mImplType, static_cast<FunctionType*>(mType));
+
+        vipir::Function* function = vipir::Function::Create(functionType, module, mangledName, false);
+
+        mSymbol->values.push_back({nullptr, function, nullptr, nullptr});
     }
 
     std::vector<ASTNode*> Function::getChildren()
@@ -219,14 +224,14 @@ namespace parser
         if (name == "_start" || name == "main") return name;
 
         std::string ret = "_F";
-        if (implType) ret += "I" + implType->getSymbolID();
+        if (implType) ret += "I" + implType->getSymbolID(nullptr);
 
         ret += std::to_string(name.length());
         ret += name;
 
         for (auto& arg : functionType->getArgumentTypes())
         {
-            ret += arg->getSymbolID();
+            ret += arg->getSymbolID(nullptr);
         }
 
         return ret;

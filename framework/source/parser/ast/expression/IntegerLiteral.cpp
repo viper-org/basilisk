@@ -44,4 +44,9 @@ namespace parser
         }
         return false;
     }
+
+    ASTNodePtr IntegerLiteral::cloneExternal(Scope* in)
+    {
+        return std::make_unique<IntegerLiteral>(in, mValue, mType, mSource);
+    }
 }

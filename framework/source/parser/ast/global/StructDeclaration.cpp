@@ -37,6 +37,7 @@ namespace parser
         {
             auto pending = dynamic_cast<PendingType*>(type);
             pending->set(structTypeFields);
+            mType = type;
         }
         else
         {

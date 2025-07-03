@@ -26,7 +26,7 @@ vipir::Type* BooleanType::getVipirType() const
     return vipir::Type::GetBooleanType();
 }
 
-std::string BooleanType::getSymbolID() const
+std::string BooleanType::getSymbolID(Type*) const
 {
     return "B";
 }

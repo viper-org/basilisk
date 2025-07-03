@@ -1,5 +1,5 @@
 module main;
-import std::sys::syscall;
+import std::os::syscall;
 
 const length = 6;
 

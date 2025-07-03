@@ -56,7 +56,7 @@ Type::CastLevel FunctionType::castTo(Type* destType) const
     return CastLevel::Disallowed;
 }
 
-std::string FunctionType::getSymbolID() const
+std::string FunctionType::getSymbolID(Type*) const
 {
     return "UNIMPLEMENTED";
 }

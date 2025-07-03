@@ -82,11 +82,14 @@ vipir::Type* StructType::getVipirType() const
                 fieldTypes.push_back(vipir::PointerType::GetPointerType(vipir::Type::GetIntegerType(8)));
                 continue;
             }
-	    else if (auto pending = dynamic_cast<PendingType*>(static_cast<PointerType*>(field)->getPointeeType()); pending->get() == this) // this is ugly, you make it good solar :thumbsup:
-	    {
-                fieldTypes.push_back(vipir::PointerType::GetPointerType(vipir::Type::GetIntegerType(8)));
-                continue;
-	    }
+            else if (auto pending = dynamic_cast<PendingType*>(static_cast<PointerType*>(field)->getPointeeType())) // this is ugly, you make it good solar :thumbsup:
+            {
+                if (pending->get() == this)
+                {
+                    fieldTypes.push_back(vipir::PointerType::GetPointerType(vipir::Type::GetIntegerType(8)));
+                    continue;
+                }
+            }
         }
         fieldTypes.push_back(field->getVipirType());
     }
@@ -98,9 +101,13 @@ Type::CastLevel StructType::castTo(Type*) const
     return CastLevel::Disallowed;
 }
 
-std::string StructType::getSymbolID() const
+std::string StructType::getSymbolID(Type* thisType) const
 {
-    return std::to_string(mName.size()) + mName;
+    if (thisType == this)
+    {
+        return "T";
+    }
+    return "S" + std::to_string(mName.size()) + mName;
 }
 
 bool StructType::isStructType() const
@@ -118,6 +125,17 @@ StructType* StructType::Get(std::string name)
     });
     if (it == structTypes.end()) return nullptr;
     return it->get();
+}
+
+std::vector<StructType*> StructType::GetAll()
+{
+    std::vector<StructType*> ret;
+    ret.reserve(structTypes.size());
+    for (const auto& type : structTypes)
+    {
+        ret.push_back(type.get());
+    }
+    return ret;
 }
 
 StructType* StructType::Create(std::string name, std::vector<StructType::Field> fields, int line, int col)

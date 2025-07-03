@@ -30,11 +30,12 @@ public:
     virtual int getSize() const override;
     virtual vipir::Type* getVipirType() const override;
     virtual CastLevel castTo(Type* destType) const override;
-    virtual std::string getSymbolID() const override;
+    virtual std::string getSymbolID(Type* thisType) const override;
 
     bool isStructType() const override;
 
     static StructType* Get(std::string name);
+    static std::vector<StructType*> GetAll();
     static StructType* Create(std::string name, std::vector<Field> fields, int line, int col);
     static void SetDITypes();
     static void Reset();

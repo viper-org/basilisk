@@ -21,6 +21,8 @@ namespace parser
         
         virtual bool triviallyImplicitCast(diagnostic::Diagnostics& diag, Type* destType) override;
 
+        virtual ASTNodePtr cloneExternal(Scope* in) override;
+
     private:
         std::uintmax_t mValue;
     };

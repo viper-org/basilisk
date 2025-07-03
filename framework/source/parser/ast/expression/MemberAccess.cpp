@@ -46,7 +46,13 @@ namespace parser
         // struct types with a pointer to themselves cannot be emitted normally
         if (mStructType->getField(mId)->type->isPointerType())
         {
-            if (static_cast<PointerType*>(mStructType->getField(mId)->type)->getPointeeType() == mStructType)
+            auto pointeeType = static_cast<PointerType*>(mStructType->getField(mId)->type)->getPointeeType();
+            auto pending = dynamic_cast<PendingType*>(pointeeType);
+            if (pending)
+            {
+                pointeeType = pending->get();
+            }
+            if (pointeeType == mStructType)
             {
                 vipir::Type* type = vipir::PointerType::GetPointerType(vipir::PointerType::GetPointerType(mStructType->getVipirType()));
                 gep = builder.CreatePtrCast(gep, type);

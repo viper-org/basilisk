@@ -118,6 +118,17 @@ namespace parser
         }
         else if (mType->isPointerType() && mValue->getType()->isIntegerType())
         {
+            if (mValue->getType()->getSize() < mType->getSize())
+            {
+                if (static_cast<IntegerType*>(mValue->getType())->isSigned())
+                {
+                    value = builder.CreateSExt(value, Type::Get("i64")->getVipirType());
+                }
+                else
+                {
+                    value = builder.CreateZExt(value, Type::Get("u64")->getVipirType());
+                }
+            }
             return builder.CreateIntToPtr(value, mType->getVipirType());
         }
         else if (mType->isSliceType() && mValue->getType()->isSliceType())

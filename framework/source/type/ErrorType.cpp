@@ -23,7 +23,7 @@ vipir::Type* ErrorType::getVipirType() const
     return vipir::Type::GetVoidType();
 }
 
-std::string ErrorType::getSymbolID() const
+std::string ErrorType::getSymbolID(Type*) const
 {
     return "stray error type in program";
 }

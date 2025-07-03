@@ -51,7 +51,7 @@ std::string IntegerType::getImplicitCastWarning(Type* destType) const
         fmt::bold, destType->getName(), fmt::defaults);
 }
 
-std::string IntegerType::getSymbolID() const
+std::string IntegerType::getSymbolID(Type*) const
 {
     if (mSigned)
     {

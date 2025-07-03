@@ -30,7 +30,7 @@ public:
     virtual vipir::Type* getVipirType() const = 0;
     virtual CastLevel castTo(Type* destType) const = 0;
     virtual std::string getImplicitCastWarning(Type* destType) const { return ""; }
-    virtual std::string getSymbolID() const = 0;
+    virtual std::string getSymbolID(Type* thisType) const = 0;
 
     virtual bool isIntegerType()  const { return false; }
     virtual bool isVoidType()     const { return false; }

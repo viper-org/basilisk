@@ -221,7 +221,8 @@ namespace parser
 
     std::string Function::MangleName(std::string name, Type* implType, FunctionType* functionType)
     {
-        if (name == "_start" || name == "main") return name;
+        // puts is just here for testing on windows, it will be removed later
+        if (name == "_start" || name == "main" || name == "puts") return name;
 
         std::string ret = "_F";
         if (implType) ret += "I" + implType->getSymbolID(nullptr);

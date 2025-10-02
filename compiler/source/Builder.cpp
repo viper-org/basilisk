@@ -16,6 +16,7 @@
 #include <vtoml/parser/Parser.h>
 
 #include <vipir/ABI/SysV.h>
+#include <vipir/ABI/WinABI.h>
 #include <vipir/Pass/DefaultPass.h>
 
 #include <vasm/lexer/Lexer.h>
@@ -26,6 +27,7 @@
 #include <vasm/error/ErrorReporter.h>
 
 #include <vasm/codegen/Elf.h>
+#include <vasm/codegen/Pe.h>
 
 #include <filesystem>
 #include <fstream>
@@ -512,7 +514,7 @@ void Builder::linkExecutable(std::filesystem::path projectDir)
         libraries.push_back(archive);
     }
 
-    Linker linker(inputFiles, libraries, outputFile, mDiag);
+    Linker linker(inputFiles, libraries, outputFile.string(), mDiag);
     linker.linkExecutable();
 }
 
@@ -529,7 +531,7 @@ void Builder::linkStaticLibrary(std::filesystem::path projectDir)
         inputFiles.push_back(objectFile.string());
     }
 
-    Linker linker(inputFiles, {}, outputFile, mDiag);
+    Linker linker(inputFiles, {}, outputFile.string(), mDiag);
     linker.linkLibrary();
 
     std::ifstream libFile(outputFile, std::ios::binary);
@@ -698,8 +700,13 @@ void Builder::compileObject(std::filesystem::path inputFilePath, std::filesystem
     diBuilder.setDirectory(inputFilePath.parent_path().string());
     diBuilder.setFilename(inputFilePath.filename().string());
     diBuilder.borrowTypes(&mDiBuilder);
-
-    module.setABI<vipir::abi::SysV>();
+    
+    // TODO: Check if a platform was specified
+#ifdef WIN32
+    module.setABI<vipir::abi::WinABI>();
+#else
+	module.setABI<vipir::abi::SysV>();
+#endif
     // Always do constant folding
     if (module.getPassManager().findPass(vipir::PassType::ConstantFolding) == -1)
         module.getPassManager().insertBefore(vipir::PassType::LIREmission, std::make_unique<vipir::ConstantFoldingPass>());
@@ -750,7 +757,7 @@ void Builder::compileObject(std::filesystem::path inputFilePath, std::filesystem
     checkOne(mCUs[inputFilePath].globalScope.get());
 
     std::ofstream outputFile(outputFilePath);
-    module.setOutputFormat(vipir::OutputFormat::ELF);
+    module.setOutputFormat(vipir::OutputFormat::PE);
     module.emit(outputFile);
 }
 
@@ -768,7 +775,12 @@ void Builder::assembleOne(std::filesystem::path inputFilePath, std::filesystem::
     parsing::Parser parser(inputFilePath.string(), tokens, errorReporter);
     auto instructions = parser.parse();
     
-    codegen::ELFFormat output(inputFilePath.string());
+    // TODO: Check if a platform was specified for outputformat
+#ifdef WIN32
+    codegen::PEFormat output(inputFilePath.string());
+#else
+	codegen::ELFFormat output(inputFilePath.string());
+#endif
     codegen::OpcodeBuilder builder(&output, inputFilePath.string());
     for (auto& inst : instructions)
     {

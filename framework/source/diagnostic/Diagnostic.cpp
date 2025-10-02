@@ -5,6 +5,7 @@
 #include "lexer/SourceLocation.h"
 
 #include <algorithm>
+#include <array>
 #include <format>
 #include <iostream>
 

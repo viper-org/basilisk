@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.26)
 
 
 include(FetchContent)
@@ -17,7 +17,7 @@ set(SOURCES
 set(HEADERS
     "include/Linker.h"
     "include/Builder.h"
-)
+ "include/util/Process.h" "include/util/Linker.h")
 
 source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 

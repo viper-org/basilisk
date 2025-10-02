@@ -2,13 +2,20 @@
 
 #include "Builder.h"
 
+#include "util/Process.h"
+
 using namespace std::literals;
 
 int main(int argc, char** argv)
 {
     diagnostic::Diagnostics diag;
 
-    if (argv[1] == "build"s)
+    if (argc == 1)
+    {
+        //diag.fatalError("no command provided");
+    }
+
+    if(true)//if (argv[1] == "build"s)
     {
         Builder builder = Builder(diag);
         builder.build();
@@ -18,7 +25,7 @@ int main(int argc, char** argv)
         diag.disableAllWarnings();
         Builder builder = Builder(diag);
         builder.build();
-        execl(builder.getOutputFile().c_str(), builder.getOutputFile().c_str(), nullptr);
+        util::ExecuteProcess(builder.getOutputFile());
     }
     else
     {

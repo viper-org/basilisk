@@ -2,6 +2,8 @@
 
 #include "Linker.h"
 
+#include "util/Linker.h"
+
 #include <filesystem>
 #include <format>
 
@@ -72,7 +74,8 @@ void Linker::linkExecutable()
     }
 
     // TODO: Use ld and link with standard library
-    std::string command = "gcc -o " + mOutputFile + " " + inputFileConcat;
+    auto linker = util::FindLinker();
+	std::string command = util::EncodeCommand(linker.string(), mOutputFile, inputFileConcat);
     int ret = std::system(command.c_str());
     if (ret != 0)
     {

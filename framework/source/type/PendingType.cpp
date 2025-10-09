@@ -48,11 +48,6 @@ std::string PendingType::getSymbolID(Type* thisType) const
     return mImpl->getSymbolID(thisType);
 }
 
-bool PendingType::isStructType() const
-{
-    return mImpl->isStructType();
-}
-
 void PendingType::initComplete()
 {
     mImpl = StructType::Create(mName, mFields, mSource.start.line, mSource.start.col);
@@ -65,6 +60,13 @@ void PendingType::initIncomplete()
 {
     incompletes.push_back(std::make_unique<ErrorType>(getSize()));
     mImpl = incompletes.back().get();
+    std::erase(pendings, this);
+    mDiType = mImpl->getDIType();
+}
+
+void PendingType::initAlias(Type* aliasOf)
+{
+    mImpl = aliasOf;
     std::erase(pendings, this);
     mDiType = mImpl->getDIType();
 }

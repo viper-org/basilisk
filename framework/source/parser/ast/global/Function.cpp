@@ -25,7 +25,7 @@ namespace parser
     }
     
 
-    Function::Function(bool exported, Type* implType, std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source, SourcePair blockEnd)
+    Function::Function(bool exported, Type* implType, std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source, SourcePair blockEnd, CallingConvention callingConvention)
         : ASTNode(ownScope->parent, source, functionType)
         , mImplType(implType)
         , mName(std::move(name))
@@ -34,6 +34,7 @@ namespace parser
         , mBody(std::move(body))
         , mBlockEnd(std::move(blockEnd))
         , mOwnScope(std::move(ownScope))
+        , mCallingConvention(callingConvention)
     {
         if (mImplType)
         {
@@ -125,7 +126,7 @@ namespace parser
             std::exit(1);
         }
 
-        auto mangledName = MangleName(mName, mImplType, static_cast<FunctionType*>(mType));
+        auto mangledName = MangleName(mName, mImplType, static_cast<FunctionType*>(mType), mCallingConvention);
 
         vipir::Function* function = vipir::Function::Create(functionType, module, mangledName, false);
 
@@ -210,7 +211,7 @@ namespace parser
     {
         auto ownScope = std::make_unique<Scope>(in);
         auto functionType = static_cast<FunctionType*>(mType);
-        return std::make_unique<Function>(false, mImplType, mName, functionType, mArguments, std::move(ownScope), true, std::vector<ASTNodePtr>(), mSource, mBlockEnd);
+        return std::make_unique<Function>(false, mImplType, mName, functionType, mArguments, std::move(ownScope), true, std::vector<ASTNodePtr>(), mSource, mBlockEnd, mCallingConvention);
     }
 
     std::string Function::getName() const
@@ -219,10 +220,15 @@ namespace parser
     }
 
 
-    std::string Function::MangleName(std::string name, Type* implType, FunctionType* functionType)
+    std::string Function::MangleName(std::string name, Type* implType, FunctionType* functionType, CallingConvention callingConvention)
     {
         // puts is just here for testing on windows, it will be removed later
-        if (name == "_start" || name == "main" || name == "puts") return name;
+        if (name == "_start" || name == "main") return name;
+
+        if (callingConvention == CallingConvention::StdCall)
+        {
+            return name;
+		}
 
         std::string ret = "_F";
         if (implType) ret += "I" + implType->getSymbolID(nullptr);

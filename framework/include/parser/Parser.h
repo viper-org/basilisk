@@ -77,6 +77,7 @@ namespace parser
         GlobalVariableDeclarationPtr parseGlobalVariableDeclaration(bool exported, bool constant, bool globalScope);
         ImportStatementPtr parseImport();
         void parseImpl();
+        void parseAlias();
 
         ReturnStatementPtr parseReturnStatement();
         VariableDeclarationPtr parseVariableDeclaration();

@@ -330,7 +330,8 @@ void Builder::parseLibrary(std::string lib, std::filesystem::path projectDir)
                 true,
                 std::vector<parser::ASTNodePtr>{},
                 source,
-                source
+                source,
+                parser::CallingConvention::Default
             );
             mImportedModules[module.name].push_back(std::move(func));
             auto c = libFile.get(); // null terminator
@@ -756,7 +757,7 @@ void Builder::compileObject(std::filesystem::path inputFilePath, std::filesystem
     };
     checkOne(mCUs[inputFilePath].globalScope.get());
 
-    std::ofstream outputFile(outputFilePath);
+    std::ofstream outputFile(outputFilePath, std::ios::binary);
     module.setOutputFormat(vipir::OutputFormat::PE);
     module.emit(outputFile);
 }

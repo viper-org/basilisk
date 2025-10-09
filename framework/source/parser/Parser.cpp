@@ -150,10 +150,8 @@ namespace parser
         // TODO: Function pointers
 
         Type* type;
-        if (current().getTokenType() == lexer::TokenType::StructKeyword)
+        if (current().getTokenType() == lexer::TokenType::Identifier)
         {
-            consume();
-            expectToken(lexer::TokenType::Identifier);
             std::string name(consume().getText());
             if (auto structType = Type::Get(name))
             {
@@ -249,6 +247,10 @@ namespace parser
 
             case lexer::TokenType::ImplKeyword:
                 parseImpl();
+                return nullptr;
+
+            case lexer::TokenType::TypeKeyword:
+                parseAlias();
                 return nullptr;
 
             case lexer::TokenType::EndOfFile:
@@ -433,6 +435,13 @@ namespace parser
         expectToken(lexer::TokenType::Identifier);
         std::string name(consume().getText());
 
+		CallingConvention callingConvention = CallingConvention::Default;
+        if (current().getTokenType() == lexer::TokenType::StdcallKeyword)
+        {
+			callingConvention = CallingConvention::StdCall;
+            consume();
+        }
+
         expectToken(lexer::TokenType::LeftParen);
         consume();
         std::vector<FunctionArgument> arguments;
@@ -482,7 +491,8 @@ namespace parser
                 true,
                 std::move(body),
                 std::move(source),
-                std::move(blockEnd)
+                std::move(blockEnd),
+                callingConvention
             );
         }
 
@@ -520,7 +530,8 @@ namespace parser
             external,
             std::move(body),
             std::move(source),
-            std::move(blockEnd)
+            std::move(blockEnd),
+            callingConvention
         );
     }
 
@@ -673,6 +684,35 @@ namespace parser
             mInsertNodeFn(func);
         }
         consume();
+    }
+
+    void Parser::parseAlias()
+    {
+        SourcePair source;
+		source.start = current().getStartLocation();
+
+        consume(); // type
+		expectToken(lexer::TokenType::Identifier);
+        std::string name(consume().getText());
+        expectToken(lexer::TokenType::Equal);
+        consume();
+        auto type = parseType();
+        expectToken(lexer::TokenType::Semicolon);
+        consume();
+
+		source.end = peek(-1).getEndLocation();
+		
+        if (auto existing = Type::Get(name))
+        {
+            if (auto pending = dynamic_cast<PendingType*>(existing))
+            {
+                pending->initAlias(type);
+                return;
+            }
+            // TODO: Probably error here
+        }
+        auto pendingType = PendingType::Create(std::move(source), std::move(name), {});
+        pendingType->initAlias(type);
     }
 
 

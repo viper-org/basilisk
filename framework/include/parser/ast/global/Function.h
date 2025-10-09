@@ -13,6 +13,12 @@
 
 namespace parser
 {
+    enum class CallingConvention
+    {
+        Default,
+        StdCall
+    };
+
     struct FunctionArgument
     {
         FunctionArgument(Type* type, std::string name);
@@ -25,7 +31,19 @@ namespace parser
     class Function : public ASTNode
     {
     public:
-        Function(bool exported, Type* implType, std::string name, FunctionType* functionType, std::vector<FunctionArgument> arguments, ScopePtr ownScope, bool external, std::vector<ASTNodePtr> body, SourcePair source, SourcePair blockEnd);
+        Function(
+            bool exported,
+            Type* implType,
+            std::string name,
+            FunctionType* functionType,
+            std::vector<FunctionArgument> arguments,
+            ScopePtr ownScope,
+            bool external,
+            std::vector<ASTNodePtr> body,
+            SourcePair source,
+            SourcePair blockEnd,
+			CallingConvention callingConvention
+        );
 
         virtual vipir::Value* codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
         virtual void setEmittedValue(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag) override;
@@ -45,12 +63,13 @@ namespace parser
         bool mExternal;
         std::vector<ASTNodePtr> mBody;
         SourcePair mBlockEnd;
+        CallingConvention mCallingConvention;
 
         ScopePtr mOwnScope;
         Symbol* mSymbol;
 
 
-        static std::string MangleName(std::string name, Type* implType, FunctionType* functionType);
+        static std::string MangleName(std::string name, Type* implType, FunctionType* functionType, CallingConvention callingConvention);
     };
     using FunctionPtr = std::unique_ptr<Function>;
 }

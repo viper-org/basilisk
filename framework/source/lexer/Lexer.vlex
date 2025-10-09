@@ -43,8 +43,11 @@ tokens basilisk {
     ::
 
     func
+    stdcall
+
     struct
     impl
+    type
     
     module
     import

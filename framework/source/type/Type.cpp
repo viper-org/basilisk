@@ -106,7 +106,8 @@ void Type::FinalizeDITypes()
     {
         if (auto pending = dynamic_cast<PendingType*>(type.get()))
         {
-            pending->mDiType = pending->get()->mDiType;
+            if (pending->get()) // Only if it holds a struct type
+                pending->mDiType = pending->get()->mDiType;
         }
     }
     PointerType::SetDITypes();

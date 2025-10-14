@@ -12,10 +12,14 @@ int main(int argc, char** argv)
 
     if (argc == 1)
     {
+        // Assume builder for now
+        Builder builder = Builder(diag);
+        builder.build();
+        return 0;
         //diag.fatalError("no command provided");
     }
 
-    if(true)//if (argv[1] == "build"s)
+    if (argv[1] == "build"s)
     {
         Builder builder = Builder(diag);
         builder.build();

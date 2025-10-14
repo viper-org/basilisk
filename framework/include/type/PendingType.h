@@ -35,6 +35,7 @@ public:
     void set(std::vector<StructType::Field> fields);
 
     StructType* get();
+    Type* impl();
 
     static PendingType* Create(SourcePair source, std::string name, std::vector<StructType::Field> fields);
     static std::vector<PendingType*>& GetPending();

@@ -307,6 +307,10 @@ void Builder::parseLibrary(std::string lib, std::filesystem::path projectDir)
             std::string name(nameSize, '\0');
             libFile.read(name.data(), nameSize);
 
+            char callingConventionCode = libFile.get();
+            parser::CallingConvention callingConvention = parser::CallingConvention::Default;
+            if (callingConventionCode == 's') callingConvention = parser::CallingConvention::StdCall;
+
             std::vector<Type*> argTypes;
             while (true)
             {
@@ -331,7 +335,7 @@ void Builder::parseLibrary(std::string lib, std::filesystem::path projectDir)
                 std::vector<parser::ASTNodePtr>{},
                 source,
                 source,
-                parser::CallingConvention::Default
+                callingConvention
             );
             mImportedModules[module.name].push_back(std::move(func));
             auto c = libFile.get(); // null terminator
@@ -347,8 +351,14 @@ void Builder::parseLibrary(std::string lib, std::filesystem::path projectDir)
 
     std::filesystem::create_directories(projectDir / "build");
     auto archivePath = projectDir / "build" / lib;
+// Should probably move this to a platform specific area
+#ifdef WIN32
+    archivePath.replace_extension(".lib");
+#else
     archivePath.replace_extension(".a");
-    std::ofstream archive(archivePath);
+#endif
+
+    std::ofstream archive(archivePath, std::ios::binary);
     archive.write(data.data(), data.size());
     mArchives.push_back(archivePath.string());
     archive.close();
@@ -442,6 +452,15 @@ void Builder::generateSymbolFile(std::filesystem::path projectDir)
                 uint32_t nameSize = name.size();
                 lib.write(nameSize);
                 lib.write(name);
+                switch (func->getCallingConvention())
+                {
+                    case parser::CallingConvention::Default:
+                        lib.write((uint8_t)'d');
+                        break;
+                    case parser::CallingConvention::StdCall:
+                        lib.write((uint8_t)'s');
+                        break;
+                }
                 auto functionType = static_cast<FunctionType*>(func->getType());
                 for (auto argType : functionType->getArgumentTypes())
                 {
@@ -524,7 +543,12 @@ void Builder::linkStaticLibrary(std::filesystem::path projectDir)
     generateSymbolFile(projectDir);
 
     auto outputFile = projectDir / "build" / ("lib" + mConfig["name"]->toString());
+// Should probably move this to a specific platform-dependent area
+#ifdef WIN32
+    outputFile.replace_extension(".lib");
+#else
     outputFile.replace_extension(".a");
+#endif
 
     std::vector<std::string> inputFiles;
     for (auto objectFile : mObjects)

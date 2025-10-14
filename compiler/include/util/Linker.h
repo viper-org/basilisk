@@ -4,6 +4,7 @@
 #define BASILISK_COMPILER_UTIL_PROCESS_H 1
 
 #include <filesystem>
+#include <format>
 #include <string>
 
 #ifdef WIN32
@@ -13,7 +14,7 @@
 
 namespace util
 {
-    static inline std::filesystem::path FindLinker()
+    static inline std::string FindExecLinker()
     {
 #ifdef WIN32
         /*PWSTR szPath;
@@ -33,12 +34,43 @@ namespace util
 #endif
     }
 
-    static inline std::string EncodeCommand(std::string linker, std::string outputFile, std::string inputFiles)
+    static inline std::string FindLibLinker()
+    {
+#ifdef WIN32
+        return "C:\\\"Program Files\"\\\"Microsoft Visual Studio\"\\2022\\Community\\Common7\\Tools\\VsDevCmd.bat -arch=amd64 && lib.exe";
+#else
+        return "ar";
+#endif
+    }
+
+    static inline std::string EncodeExecLinkCommand(std::string linker, std::string outputFile, std::string inputFiles)
     {
 #ifdef WIN32
 		return std::format("{} {} libcmt.lib kernel32.lib user32.lib /SUBSYSTEM:CONSOLE /OUT:{}.exe", linker, inputFiles, outputFile);
 #else
 		return std::format("{} -o {} {}", linker, outputFile, inputFiles);
+#endif
+    }
+
+    static inline std::string EncodeLibLinkCommand(std::string linker, std::string outputFile, std::string inputFiles)
+    {
+#ifdef WIN32
+		return std::format("{} /OUT:{} {}", linker, outputFile, inputFiles);
+#else
+        return std::format("{} -rcs {} {}", linker, outputFile, inputFiles);
+#endif
+    }
+
+
+    static inline std::string AppendLibrary(std::string& concat, std::filesystem::path library)
+    {
+#ifdef WIN32
+        concat += " " + library.string();
+        return concat;
+#else
+        concat += " -L " + library.parent_path().string();
+		concat += " -l:" + library.filename().string();
+        return concat;
 #endif
     }
 }

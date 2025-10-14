@@ -5,6 +5,7 @@
 #include "type/IntegerType.h"
 #include "type/SliceType.h"
 #include "type/PointerType.h"
+#include "type/PendingType.h"
 
 #include <vipir/Module.h>
 
@@ -34,6 +35,21 @@ namespace parser
     vipir::Value* CastExpression::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
         auto value = mValue->dcodegen(builder, diBuilder, module, diag);
+        if (auto pendingA = dynamic_cast<PendingType*>(mType))
+        {
+            if (pendingA->impl() == mValue->getType())
+            {
+                return value;
+            }
+        }
+        if (auto pendingB = dynamic_cast<PendingType*>(mValue->getType()))
+        {
+            if (pendingB->impl() == mType)
+            {
+                return value;
+            }
+        }
+
         if (mType->isIntegerType() && mValue->getType()->isIntegerType())
         {
             auto intA = static_cast<IntegerType*>(mType);

@@ -55,6 +55,7 @@ namespace parser
         virtual ASTNodePtr cloneExternal(Scope* in) override;
 
         std::string getName() const;
+        CallingConvention getCallingConvention() const;
 
     private:
         Type* mImplType;

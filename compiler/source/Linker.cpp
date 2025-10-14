@@ -28,7 +28,7 @@ void Linker::linkLibrary()
     std::string inputFileConcat;
     for (auto inputFile : mInputFiles)
     {
-        if (!inputFile.ends_with(".o") && !inputFile.ends_with(".a"))
+        if (!inputFile.ends_with(".o") && !inputFile.ends_with(".a") && !inputFile.ends_with(".lib"))
         {
             mDiag.fatalError(std::format("file '{}{}{}' has unrecognized file format", fmt::bold, inputFile, fmt::defaults));
             std::exit(1);
@@ -36,7 +36,9 @@ void Linker::linkLibrary()
         inputFileConcat += inputFile + " ";
     }
 
-    std::string command = "ar -rcs " + mOutputFile + " " + inputFileConcat;
+    auto linker = util::FindLibLinker();
+	std::string command = util::EncodeLibLinkCommand(linker, mOutputFile, inputFileConcat);
+
     int ret = std::system(command.c_str());
     if (ret != 0)
     {
@@ -68,14 +70,12 @@ void Linker::linkExecutable()
     for (auto library : mLibraries)
     {
         std::filesystem::path libPath = library;
-        inputFileConcat += "-L " + libPath.parent_path().string();
-
-        inputFileConcat += " -l:" + libPath.filename().string() + " ";
+        util::AppendLibrary(inputFileConcat, libPath);
     }
 
     // TODO: Use ld and link with standard library
-    auto linker = util::FindLinker();
-	std::string command = util::EncodeCommand(linker.string(), mOutputFile, inputFileConcat);
+    auto linker = util::FindExecLinker();
+	std::string command = util::EncodeExecLinkCommand(linker, mOutputFile, inputFileConcat);
     int ret = std::system(command.c_str());
     if (ret != 0)
     {

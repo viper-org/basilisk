@@ -1,6 +1,7 @@
 // Copyright 2025 solar-mist
 
 #include "type/PointerType.h"
+#include "type/PendingType.h"
 
 #include <format>
 #include <algorithm>
@@ -34,7 +35,13 @@ Type::CastLevel PointerType::castTo(Type* destType) const
         {
             return Type::CastLevel::Implicit;
         }
-        if (mPointeeType->isVoidType() || static_cast<PointerType*>(destType)->mPointeeType->isVoidType())
+        Type* pointerType;
+        if (auto pending = dynamic_cast<PendingType*>(destType))
+			pointerType = pending->impl();
+        else
+			pointerType = static_cast<PointerType*>(destType);
+
+        if (mPointeeType->isVoidType() || static_cast<PointerType*>(pointerType)->getPointeeType()->isVoidType())
         {
             return Type::CastLevel::Implicit;
         }

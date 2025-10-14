@@ -83,6 +83,11 @@ StructType* PendingType::get()
     return dynamic_cast<StructType*>(mImpl);
 }
 
+Type* PendingType::impl()
+{
+    return mImpl;
+}
+
 PendingType* PendingType::Create(SourcePair source, std::string name, std::vector<StructType::Field> fields)
 {
     void AddType(std::string name, std::unique_ptr<Type> type);

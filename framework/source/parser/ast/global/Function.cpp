@@ -219,6 +219,11 @@ namespace parser
         return mName;
     }
 
+    CallingConvention Function::getCallingConvention() const
+    {
+        return mCallingConvention;
+    }
+
 
     std::string Function::MangleName(std::string name, Type* implType, FunctionType* functionType, CallingConvention callingConvention)
     {

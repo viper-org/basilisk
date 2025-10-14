@@ -68,19 +68,25 @@ namespace parser
                 if (auto var = dynamic_cast<VariableExpression*>(mOperand.get()))
                 {
                     auto symbol = mScope->resolveSymbol(var->getName());
-                    if (auto alloca = dynamic_cast<vipir::AllocaInst*>(symbol->getLatestValue()->value))
+                    if (operand)
                     {
-                        return builder.CreateAddrOf(alloca, symbol->diVariable);
+                        if (auto alloca = dynamic_cast<vipir::AllocaInst*>(symbol->getLatestValue()->value))
+                        {
+                            return builder.CreateAddrOf(alloca, symbol->diVariable);
+                        }
                     }
 
                     builder.insertAfter(operand);
                     auto alloca = builder.CreateAlloca(symbol->type->getVipirType());
                     builder.insertAfter(alloca);
-                    builder.CreateStore(alloca, operand);
+                    if (operand)
+                    {
+                        builder.CreateStore(alloca, operand);
+                    }
                     builder.insertAfter(nullptr);
 
                     auto q2 = builder.CreateQueryAddress();
-                    symbol->getLatestValue()->end = q2;
+                    if (operand) symbol->getLatestValue()->end = q2;
                     symbol->values.push_back({builder.getInsertPoint(), alloca, q2, nullptr });
 
                     return builder.CreateAddrOf(alloca, symbol->diVariable);

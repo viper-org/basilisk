@@ -35,6 +35,7 @@ struct Symbol
     Symbol(std::string name, Type* type);
 
     SymbolValue* getLatestValue(vipir::BasicBlock* basicBlock = nullptr);
+    SymbolValue* getLatestValueImp(vipir::BasicBlock* basicBlock = nullptr);
     // Only checks the specific basicblock provided
     SymbolValue* getLatestValueX(vipir::BasicBlock* basicBlock);
 

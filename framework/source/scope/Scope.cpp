@@ -12,6 +12,13 @@ Symbol::Symbol(std::string name, Type* type)
 
 SymbolValue* Symbol::getLatestValue(vipir::BasicBlock* basicBlock)
 {
+    auto ret = getLatestValueImp(basicBlock);
+    searched.clear();
+    return ret;
+}
+
+SymbolValue* Symbol::getLatestValueImp(vipir::BasicBlock* basicBlock)
+{
     if (!basicBlock)
     {
         return &values.back();

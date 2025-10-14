@@ -47,6 +47,12 @@ namespace parser
                     return builder.CreateLoad(symbol->values[0].value);
                 }
             }
+            else if (symbol->values.size() == 0)
+            {
+                // This should only happen in the case of an uninitialized variable having its address taken,
+                // so it will be handled in UnaryExpression
+				return nullptr;
+            }
         }
 
         if (dynamic_cast<vipir::AllocaInst*>(latestValue->value) || dynamic_cast<vipir::GlobalVar*>(latestValue->value))

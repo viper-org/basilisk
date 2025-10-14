@@ -46,7 +46,7 @@ namespace util
     static inline std::string EncodeExecLinkCommand(std::string linker, std::string outputFile, std::string inputFiles)
     {
 #ifdef WIN32
-		return std::format("{} {} libcmt.lib kernel32.lib user32.lib /SUBSYSTEM:CONSOLE /OUT:{}.exe", linker, inputFiles, outputFile);
+		return std::format("{} {} kernel32.lib user32.lib /SUBSYSTEM:CONSOLE /OUT:{}.exe /ENTRY:_start", linker, inputFiles, outputFile);
 #else
 		return std::format("{} -o {} {}", linker, outputFile, inputFiles);
 #endif

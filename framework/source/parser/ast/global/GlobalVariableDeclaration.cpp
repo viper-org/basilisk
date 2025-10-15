@@ -2,6 +2,8 @@
 
 #include "parser/ast/global/GlobalVariableDeclaration.h"
 
+#include "parser/ast/expression/IntegerLiteral.h"
+
 #include <vipir/IR/GlobalVar.h>
 #include <vipir/Module.h>
 #include <vipir/IR/Instruction/AllocaInst.h>
@@ -114,5 +116,24 @@ namespace parser
 
         auto newInitValue = mInitValue ? mInitValue->cloneExternal(in) : nullptr;
         return std::make_unique<GlobalVariableDeclaration>(in, mName, mType, std::move(newInitValue), false, constant, mSource);
+    }
+
+    bool GlobalVariableDeclaration::isConstant() const
+    {
+        return mSymbol->constant;
+	}
+
+    uintmax_t GlobalVariableDeclaration::getConstantValue()
+    {
+        if (auto intLiteral = dynamic_cast<IntegerLiteral*>(mInitValue.get()))
+        {
+            return intLiteral->getValue();
+        }
+        return -1; // Handle other cases (but right now none of them actually exist)
+	}
+
+    std::string GlobalVariableDeclaration::getName() const
+    {
+        return mName;
     }
 }

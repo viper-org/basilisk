@@ -22,6 +22,10 @@ namespace parser
 
         virtual ASTNodePtr cloneExternal(Scope* in) override;
 
+        bool isConstant() const;
+        uintmax_t getConstantValue();
+        std::string getName() const;
+
     private:
         std::string mName;
         ASTNodePtr mInitValue;

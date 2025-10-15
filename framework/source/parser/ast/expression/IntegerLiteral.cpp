@@ -49,4 +49,9 @@ namespace parser
     {
         return std::make_unique<IntegerLiteral>(in, mValue, mType, mSource);
     }
+
+    std::uintmax_t IntegerLiteral::getValue()
+    {
+		return mValue;
+    }
 }

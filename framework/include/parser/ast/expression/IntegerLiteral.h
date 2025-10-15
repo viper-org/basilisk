@@ -23,6 +23,8 @@ namespace parser
 
         virtual ASTNodePtr cloneExternal(Scope* in) override;
 
+        std::uintmax_t getValue();
+
     private:
         std::uintmax_t mValue;
     };

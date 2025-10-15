@@ -49,6 +49,8 @@ struct ModuleDetails
     uint32_t funcLength;
     uint32_t structOffset;
     uint32_t structLength;
+    uint32_t constsOffset;
+    uint32_t constsLength;
 };
 
 class BSLib

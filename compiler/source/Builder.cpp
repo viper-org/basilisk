@@ -195,12 +195,14 @@ void Builder::parseLibrary(std::string lib, std::filesystem::path projectDir)
         {
             moduleName += c;
         }
-        uint32_t funcOffset, funcLength, structOffset, structLength;
+        uint32_t funcOffset, funcLength, structOffset, structLength, constsOffset, constsLength;
         libFile.read(reinterpret_cast<char*>(&funcOffset), sizeof(funcOffset));
         libFile.read(reinterpret_cast<char*>(&funcLength), sizeof(funcLength));
         libFile.read(reinterpret_cast<char*>(&structOffset), sizeof(structOffset));
         libFile.read(reinterpret_cast<char*>(&structLength), sizeof(structLength));
-        modules.push_back({moduleName, funcOffset, funcLength, structOffset, structLength});
+        libFile.read(reinterpret_cast<char*>(&constsOffset), sizeof(constsOffset));
+        libFile.read(reinterpret_cast<char*>(&constsLength), sizeof(constsLength));
+        modules.push_back({moduleName, funcOffset, funcLength, structOffset, structLength, constsOffset, constsLength });
     }
 
     std::function<Type*(uint8_t, Type*)> parseType;
@@ -342,6 +344,36 @@ void Builder::parseLibrary(std::string lib, std::filesystem::path projectDir)
         }
     }
 
+    for (auto& module : modules)
+    {
+        libFile.seekg(module.constsOffset);
+        while (libFile.tellg() < module.constsOffset + module.constsLength)
+        {
+            uint32_t nameSize;
+            libFile.read(reinterpret_cast<char*>(&nameSize), sizeof(nameSize));
+            std::string name(nameSize, '\0');
+            libFile.read(name.data(), nameSize);
+
+            char c;
+            libFile.get(c);
+            Type* constType = parseType(c, nullptr);
+
+            std::uintmax_t value;
+            libFile.read(reinterpret_cast<char*>(&value), sizeof(value));
+            auto literal = std::make_unique<parser::IntegerLiteral>(&mLibraryScope, (int64_t)value, constType, SourcePair{});
+            auto constDecl = std::make_unique<parser::GlobalVariableDeclaration>(
+                &mLibraryScope,
+                name,
+                constType,
+                std::move(literal),
+                true,
+                true,
+                SourcePair{}
+            );
+            mImportedModules[module.name].push_back(std::move(constDecl));
+        }
+    }
+
     libFile.seekg(0, std::ios::end);
     int fileSize = libFile.tellg();
     std::string data;
@@ -436,6 +468,8 @@ void Builder::generateSymbolFile(std::filesystem::path projectDir)
         lib.write((uint32_t)0); // Length of functions section for this module
         lib.write((uint32_t)0); // Offset of structs for this module
         lib.write((uint32_t)0); // Length of structs section for this module
+        lib.write((uint32_t)0); // Offset of consts for this module
+		lib.write((uint32_t)0); // Length of consts section for this module
         // TODO: Add typedefs, enums etc
     }
 
@@ -511,6 +545,32 @@ void Builder::generateSymbolFile(std::filesystem::path projectDir)
         }
         header = (uint32_t*)(lib.getBuffer().data() + entry.headerOffset);
         *(header + 3) = lib.getBuffer().size() - structsStart;
+    }
+    for (auto& [moduleName, entry] : mSymbolEntries)
+    {
+        uint32_t* header = (uint32_t*)(lib.getBuffer().data() + entry.headerOffset);
+        auto constsStart = lib.getBuffer().size();
+        *(header + 4) = constsStart;
+        for (auto& symbol : entry.symbols)
+        {
+            if (auto global = dynamic_cast<parser::GlobalVariableDeclaration*>(symbol))
+            {
+                if (global->isConstant())
+                {
+                    auto name = global->getName();
+                    uint32_t nameSize = name.size();
+                    lib.write(nameSize);
+                    lib.write(name);
+
+                    auto type = global->getType();
+                    lib.write(type->getSymbolID(nullptr));
+
+                    lib.write(global->getConstantValue());
+                }
+            }
+        }
+        header = (uint32_t*)(lib.getBuffer().data() + entry.headerOffset);
+        *(header + 5) = lib.getBuffer().size() - constsStart;
     }
     *(uint32_t*)(lib.getBuffer().data() + lengthOff) = lib.getBuffer().size();
 
@@ -642,6 +702,10 @@ void Builder::parseOne(std::filesystem::path inputFilePath)
         else if (auto structDecl = dynamic_cast<parser::StructDeclaration*>(node.get()))
         {
             mSymbolEntries[mCUs[inputFilePath].moduleName].symbols.push_back(structDecl);
+        }
+        else if (auto global = dynamic_cast<parser::GlobalVariableDeclaration*>(node.get()))
+        {
+            mSymbolEntries[mCUs[inputFilePath].moduleName].symbols.push_back(global);
         }
     }
 }

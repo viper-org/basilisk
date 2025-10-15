@@ -1030,7 +1030,14 @@ namespace parser
         expectToken(lexer::TokenType::LeftParen);
         consume();
         
-        if (current().getTokenType() == lexer::TokenType::StructKeyword || current().getTokenType() == lexer::TokenType::Type)
+        bool isType = false;
+        if (current().getTokenType() == lexer::TokenType::Identifier || current().getTokenType() == lexer::TokenType::Type)
+        {
+            std::string text{ current().getText() };
+            if (Type::Get(text)) isType = true;
+            else if (StructType::Get(text)) isType = true;
+        }
+        if (isType)
         {
             auto type = parseType();
 

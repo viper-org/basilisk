@@ -99,8 +99,8 @@ namespace parser
 
     vipir::Value* BinaryExpression::codegen(vipir::IRBuilder& builder, vipir::DIBuilder& diBuilder, vipir::Module& module, diagnostic::Diagnostics& diag)
     {
-        vipir::Value* left = mLeft->dcodegen(builder, diBuilder, module, diag);
         vipir::Value* right = mRight->dcodegen(builder, diBuilder, module, diag);
+        vipir::Value* left = mLeft->dcodegen(builder, diBuilder, module, diag);
 
         auto createAssign = [&](vipir::Value* left, vipir::Value* right, bool eraseLeft = true) -> vipir::Value* {
             if (auto variableExpression = dynamic_cast<VariableExpression*>(mLeft.get()))
